@@ -12,12 +12,13 @@
 #include <time.h>
 #include <fstream>
 #include <math.h>
+#include "census_computation.h"
 
 class MatchingAlgorithm
 {
 
 	public:
-		MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2);
+		MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2,std::string dataTermOption,int tsize,signed int offset,int Niter,std::string path_to_disparity);
 		~MatchingAlgorithm();
 		
 		static cv::Mat  projCh(const cv::Mat &v);
@@ -51,7 +52,7 @@ class MatchingAlgorithm
 		static cv::Mat getRow2D(const cv::Mat &Matrix2D,int numberRow);
 		static void printContentsOf3DCVMat(const cv::Mat matrix,bool writeOnFile=true,std::string filename="FileStorage.txt");
 
-
+		
 	private:
 
 		cv::Mat *m_image1;
@@ -68,6 +69,7 @@ class MatchingAlgorithm
 		double m_tau;
 		double m_sigma;
 
+		int m_offset;
 		int m_iteration;
 		double m_gap;
 		double m_gapInit;
@@ -76,9 +78,12 @@ class MatchingAlgorithm
 		int m_Niter;
 		int m_t_size;
 		double m_s;
+		std::string m_dataTermOption;
+		std::string m_path_to_disparity;
 		// std::vector<std::vector<double> > m_cost;
 		// std::deque<int> m_indexOrderedImages; //ordered index images that we wish to construct
 		// std::deque<int> m_distances;//equivalent distances of the m_indexOrderedImages
 
 };
+
 #endif

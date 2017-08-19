@@ -8,114 +8,52 @@
 #include <iostream>
 #include <vector>
 #include "MatchingAlgorithm.h"
-#include <getopt.h>
-#include <unistd.h>
-static int verbose_flag;
-
-// #include <opencv2/imgproc.hpp>
-// #include <opencv2/highgui.hpp>
-// extern char *optarg;
-// extern int optind, opterr, optopt;
-void read_option(int argc, char* argv[],cv::Mat &image1,cv::Mat &image2)
-{
-	int c;
-	while (1)
-    {
-      static struct option long_options[] =
-        {
-          /* These options set a flag. */
-          {"verbose", no_argument,       &verbose_flag, 1},
-          {"brief",   no_argument,       &verbose_flag, 0},
-          /* These options don’t set a flag.
-             We distinguish them by their indices. */
-         
-          {"im1",  required_argument, 0, 'a'},
-          {"im2",  required_argument, 0, 'b'},
-          {"Niter",  optional_argument, 0, 'c'},
-          {0, 0, 0, 0}
-        };
-      /* getopt_long stores the option index here. */
-      int option_index = 0;
-
-      c = getopt_long (argc, argv, "a:b:",
-                       long_options, &option_index);
-
-      /* Detect the end of the options. */
-      if (c == -1)
-        break;
-
-      switch (c)
-        {
-        // case 1:
-        //   printf("this algorithm compute the disparity map of two rectified image according to the article ''GLOBAL SOLUTIONS OF VARIATIONAL MODELS WITH CONVEX REGULARIZATION'', it needs the following syntax : \n ./exec -im1 path_to_image1 -im2 path_to_image2 " );
-        case 0:
-          /* If this option set a flag, do nothing else now. */
-          if (long_options[option_index].flag != 0)
-            break;
-          printf ("option %s", long_options[option_index].name);
-          if (optarg)
-            printf (" with arg %s", optarg);
-          printf ("\n");
-          break;
-        case 'a':
-          printf ("path to image 1 `%s'\n", optarg);
-          image1=cv::imread(optarg);
-          break;
-
-        case 'b':
-          printf ("path to image 2 `%s'\n", optarg);
-          image2=cv::imread(optarg);
-          break;
-        // case 'c':
-        //   printf ("number of maximal iteration `%s'\n", optarg);
-        //   Niter=atoi(optarg);
-        //   break;
-        case '?':
-          /* getopt_long already printed an error message. */
-          break;
-
-        default:
-          abort ();
-        }
-    }
-    /* Instead of reporting ‘--verbose’
-     and ‘--brief’ as they are encountered,
-     we report the final status resulting from them. */
-  if (verbose_flag)
-  	printf("This algorithm compute the disparity map of two rectified image according to the article ''GLOBAL SOLUTIONS OF VARIATIONAL MODELS WITH CONVEX REGULARIZATION'', it needs the following syntax : \n ./exec -im1 path_to_image1 -im2 path_to_image2 \n" );
-    // puts ("verbose flag is set");
-
-  /* Print any remaining command line arguments (not options). */
-  if (optind < argc)
-    {
-      printf ("non-option ARGV-elements: ");
-      while (optind < argc)
-        printf ("%s ", argv[optind++]);
-      putchar ('\n');
-    }
-
-}
+#include "toolsForReading.h"
 
 int main(int argc, char* argv[])
 {
-	
+	// cv::Vec<int,2> curPixel;
+	// std::vector<cv::Vec<int,2> > neighbors;neighbors.resize(8);
+	// curPixel[0]=1;
+	// curPixel[1]=1;
+	// computeNeighbors(curPixel,neighbors);
+	// double m[3][3] = {{0,1,2}, {3,4,5}, {6,7,8}};
+	// cv::Mat M = cv::Mat(3, 3, CV_64FC1, m);
 
-		// Hello();
-	// char *cvalue = NULL;
-	// getopt(argc,argv,"im2:");
-	// // std::cout<<argv[optind]<<std::endl;
-	// cvalue=optarg;
-	// // std::cout<<cvalue<<std::endl;
-	// printf ("cvalue = %s\n",cvalue);
-	// optind=1;
-	// std::cout<<optstring<<std::endl;
-	// getopt(argc,argv,"-im1:");
-	// std::cout<<argv[optind]<<std::endl;
-	
+	// double * Im1=M.ptr<double>(0);
+	// double * I=M.ptr<double>(1);
+	// double * Ip1=M.ptr<double>(2);
+	// // M.at<double>(1,1);
+	// // curPixel[0]=1;curPixel[1]=1;
+	// std::cout<<M<<std::endl;
+	// // std::vector< double > intensityNeighbors;intensityNeighbors.resize(8);
+	// double intensityNeighbors[8];
+	// getIntensityNeighbors(curPixel,intensityNeighbors,Im1,I,Ip1);
 
+
+	// cv::Mat image1=cv::imread("input_pair/rectified_ref_rescaled.tif");//, cv::IMREAD_LOAD_GDAL);
+	// cv::Mat image2=cv::imread("input_pair/rectified_sec_rescaled.tif");//, cv::IMREAD_LOAD_GDAL);
+	// cv::Mat ternaryCensusSignature1;
+	// cv::Mat ternaryCensusSignature2;
+
+	// ternaryCensusSignature(image1,ternaryCensusSignature1,0.5);
+	// ternaryCensusSignature(image2,ternaryCensusSignature2,0.5);
+	// std::vector<cv::Mat> imagesToShow;
+	// imagesToShow.push_back(image1);
+	// imagesToShow.push_back(image2);
+	// imagesToShow.push_back(MatchingAlgorithm::getLayer(ternaryCensusSignature1,2));
+	// imagesToShow.push_back(MatchingAlgorithm::getLayer(ternaryCensusSignature2,2));
+	// imagesToShow.push_back(MatchingAlgorithm::getLayer(ternaryCensusSignature1,3));
+	// imagesToShow.push_back(MatchingAlgorithm::getLayer(ternaryCensusSignature2,4));
+	// showImages(imagesToShow);
+
+// std::cout<<"it's over"<<std::endl;
 	cv::Mat image1;//=cv::imread("input_pair/rectified_ref.tif");//, cv::IMREAD_LOAD_GDAL);
 	cv::Mat image2;//=cv::imread("input_pair/rectified_sec.tif");//, cv::IMREAD_LOAD_GDAL);
-	read_option(argc,argv,image1,image2);
+	std::string data_term_option;
+	// read_option(argc,argv,image1,image2,data_term_option);
+	int t_size;signed int offset;int Niter;std::string path_to_disparity;
+	read_option(argc,argv,image1,image2,data_term_option,t_size,offset,Niter,path_to_disparity);
 	cv::Mat image1Gray;
 	cv::Mat image2Gray;
 	cv::Mat image1GrayDouble;
@@ -124,14 +62,11 @@ int main(int argc, char* argv[])
 	cv::cvtColor(image2, image2Gray, CV_RGB2GRAY);
 	image1Gray.convertTo(image1GrayDouble, CV_64FC1);
 	image2Gray.convertTo(image2GrayDouble, CV_64FC1);
-	// cv::Mat m = cv::Mat::ones(2, 2,image1Gray.type());
-	// std::cout<<m<<std::endl;
-	// std::cout<< image1Gray.type()<<std::endl;
-	// cv::namedWindow("Output Image");
-	// cv::Size a=image1.size();
-	// std::cout<<"width :"<<a.width<<"height : "<<a.height<<std::endl;
-	MatchingAlgorithm theAlgorithm = MatchingAlgorithm(image1GrayDouble,image2GrayDouble);
+	// int tsize=40;
+	// signed int offset=-20;
+	// int Niter=400;
 
+	MatchingAlgorithm theAlgorithm = MatchingAlgorithm(image1GrayDouble,image2GrayDouble,data_term_option, t_size,offset,Niter,path_to_disparity);
 
 	// double m_sigma=0.45;
 	// int size[2] = { 10, 10};

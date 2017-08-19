@@ -1,6 +1,6 @@
 #include "MatchingAlgorithm.h"
 
-MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2)
+MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2,std::string dataTermOption,int t_size,signed int offset,int Niter,std::string path_to_disparity)
 // tahe as input two gray images
 {
 	m_image1=new cv::Mat(image1.size(),image1.type());
@@ -9,80 +9,34 @@ MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2
 	image2.copyTo(*m_image2);
 	m_y_size=m_image1->size().height;
 	m_x_size=m_image1->size().width;
+	m_path_to_disparity=path_to_disparity;
 	// m_disparity=cv::Mat(m_y_size,m_x_size,CV_64FC1,0.0);
 	
 	m_mu = 75.0/255.0;
 	m_tau = 1.0/sqrt(12.0) ;
 	m_sigma = 1.0/sqrt(12.0) ;
-	m_s=0.3;
+	m_s=0.5;
 
-	m_Niter = 500;
+
+	m_Niter = Niter;//700;
 	m_factor=0.05;
-	m_t_size = 20 ; //need to impose that m_t_size is smaller than m_x_size
+	m_t_size = t_size ; //need to impose that m_t_size is smaller than m_x_size
+	m_offset=offset;
+	// m_offset=int(-double(m_t_size)/2.0);
 	// m_disorderedImages= new std::vector<cv::Mat>;
 	// m_g.resize(m_t_size);
 
 	m_iteration=0; // at the begining no iteration is done
+	m_dataTermOption=dataTermOption;
+	printProperties();
 	data_term_effic();
 	init();
 
-
-	// data_term();
-	// printContentsOf3DCVMat(m_g,true,"m_g_before");
-	// cv::Mat m_g_before;m_g.copyTo(m_g_before);
-	// data_term_effic();
-	// printContentsOf3DCVMat(m_g,true,"m_g_after");
-	// cv::Mat m_g_after;m_g.copyTo(m_g_after);
-	// cv::Mat diff_m_g;cv::absdiff(m_g_after,m_g_before,diff_m_g);
-	// double	a=double(cv::sum(diff_m_g)[0]);
-	// std::cout<<a<<std::endl;
-
-
-	// helpDebug();
-
-	// showImages();
 	launch();
 
-	// std::cout<<"show data term in imageForm, choose a number between : "<<0<<"and tha maximum of dispartity map :"<<m_t_size<<std::endl;
-			// std::cin>>number;
-	// cv::namedWindow("v_layer");
-	// cv::Mat m_v_layer=getLayer(m_v,10);	
-	// 		// // cv::Mat m_g[number].copyTo(imageToShow);
-	// 		// // m_g[number].convertTo(m_g[number], CV_8U);
-	// cv::imshow("v_layer",m_v_layer);
-	// cv::waitKey(0);
-	// // double a=m_v.at<double>(10,10,0);
-	// // double b=m_v.at<double>(10,10,m_v.size[2]-1);
-	// cv::Mat m_vlayerConverted;
-	// // (getLayer(m_v,10)).convertTo(m_vlayerConverted, CV_8U);
-	// // imwrite("vlayer.jpg",getLayer(m_v,10));
-
-	// cv::namedWindow("Output vlayer10");
-	// cv::imshow("Output vlayer10", m_vlayerConverted);
-	// cv::waitKey(0);
 
 	disparity_estimation();
-	// std::cout<<m_iteration<<std::endl;
-	// iterate_algorithm();
-	// std::cout<<m_iteration<<std::endl;
-	// computePrimalDualGap();
-	// std::cout<<computePrimalDualGap()<<std::endl;
-	// std::cout<<m_iteration<<std::endl;
 
-
-	// showImages();
-	// for (int i=0;i <m_g.size();i++)
-	// 	{
-	// 		m_g[i]=cv::Mat::ones(m_x_size,m_y_size)
-	// 		// disorderedImages[i].copyTo((*)[i]);
-	// 		// disorderedImages[i].copyTo((*m_orderedImages)[i]);
-	// 	}
-	// m_g=cv::Mat::ones(m_x_size,m_y_size,m_t_size,m_t_size);
-	// m_g=std::std::vector<> v;
-	// for (int i;i<m_g.size)
-	// if (m_image2 != m_image1):
-			// print("images of differents size")
-	// return 
 }
 
 MatchingAlgorithm::~MatchingAlgorithm()
@@ -137,8 +91,13 @@ void MatchingAlgorithm::data_term_effic() //(Im1,Im2,Nt,mu)
 
 //m_t_size should be smaller than m_x_size and m_y_size
 
-	int size[3] = { m_y_size, m_x_size, m_t_size };
-	m_g=cv::Mat(3, size, CV_64FC1, 500.0);
+int size[3] = { m_y_size, m_x_size, m_t_size };
+m_g=cv::Mat(3, size, CV_64FC1, 500.0);
+// printContentsOf3DCVMat(*m_image1,false);
+// cv::waitKey(100);
+// printContentsOf3DCVMat(*m_image2,false);return;
+if (m_dataTermOption=="absdiff")
+	{
 
 		for (int i=0;i<m_y_size;i++)
 		{
@@ -146,40 +105,31 @@ void MatchingAlgorithm::data_term_effic() //(Im1,Im2,Nt,mu)
 			double * m_image1iPtr= m_image1->ptr<double>(i);
 			double * m_image2iPtr= m_image2->ptr<double>(i);
 			cv::Mat m_gi=getRow3D(m_g,i);
-			// uchar* data_out_line_i= m_g[k].ptr<uchar>(i);
-			// std::cout<<"data 1 : "<<(*data_in_1_line_i) <<std::endl;
-			// std::cout<<"data 2 : "<<(*data_in_2_line_i) <<std::endl;
-			// for (int k=0;k<m_t_size;k++)
-			// 	{
-			// 		// double * m_gik=m_gi.ptr<double>(k);
-
-			// 		for (int j=k;j<m_x_size;j++)
-			// 			{
-
-			// 		// data_out_line_i[j]=m_mu*abs(data_in_1_line_i[j]-data_in_2_line_i[j-k]);
-			// 				m_gik[j]=m_mu*abs(m_image1iPtr[j]-m_image2iPtr[j-k]);
-			// 			}
-			// 	}
-			// if (m_y_size <= m_t_size or m_x_size <= m_t_size)
-			// {
-			// 	throw std::invalid_argument( "m_t_size should be smaller than m_x_size and m_y_size" );
-			// }
-
 			for (int j=0;j<m_x_size;j++)
 			{
 				double * m_gij=m_gi.ptr<double>(j);
-				int minj_m_t_size=std::min(j,m_t_size-1);
-				for(int k=0;k<=minj_m_t_size;k++)
+				int maxk=std::min(j-m_offset,m_t_size-1);
+				int mink=std::max(j-m_offset-m_x_size,0);
+				for(int k=mink;k<=maxk;k++)
 				{
 			// for (int km
-					m_gij[k]=m_mu*abs(m_image1iPtr[j]-m_image2iPtr[j-k]);
+					m_gij[k]=m_mu*abs(m_image1iPtr[j]-m_image2iPtr[j-k-m_offset]);
 				}
 				// delete m_gij;
 			}
 		}
 			// delete m_image1iPtr;
 			// delete m_image2iPtr;
-	
+	}
+else if (m_dataTermOption=="census")
+	{
+		data_term_census(*m_image1,*m_image2,m_g);
+		m_g=m_mu*m_g;
+	}
+else 
+{
+	throw std::invalid_argument( "intern problem on MatchingAlgorithm.cpp" );
+}
 }
 cv::Mat  MatchingAlgorithm::projCh(const cv::Mat &v)
 {
@@ -246,51 +196,6 @@ cv::Mat  MatchingAlgorithm::projCh_effic(const cv::Mat &v)//,std::vector<cv::Mat
 	}
 	return vproj;
 }
-
-				// double * divvij=divvi.ptr<double>(j);
-				// // cv::Mat vyip1j = MatchingAlgorithm::getRow2D(vyip1,j);
-				// // cv::Mat vyip1j = MatchingAlgorithm::getRow2D(vyip1,j);
-				// // cv::Mat divvi = MatchingAlgorithm::getRow(v,i);
-				// for (int k = 0; k < size[2]-1; k++)
-				// {
-				// 	// int kptr=k*sizeof();
-				// 	divvij[k]=vyijPtr[k]+vxijPtr[k]+vtijPtr[k]-vyip1jPtr[k]-vxijp1Ptr[k]-vtijPtr[k+1];
-
-// cv::Mat  MatchingAlgorithm::projKh(const cv::Mat &phi)
-// // phi if of size {3, m_y_size, m_x_size, m_t_size }, the first term id phiy, the second phix and the last one phit
-// {
-// 	int size1[4] = {3, m_y_size, m_x_size, m_t_size };
-// 	int size2[3] = {m_y_size, m_x_size, m_t_size };
-// 	cv::Mat q(4, size1, CV_64FC1, 1.0);
-// 	phi.copyTo(q);
-// 	// (phi.row(0)).copyTo(q.row(0));
-// 	// (phi.row(1)).copyTo(q.row(1));
-// 	// (phi.row(2)).copyTo(q.row(2));
-// 	cv::add(getRow(q,2).clone(),m_g,getRow(q,2));
-// 	cv::Mat normqyx(3, size2, CV_64FC1, 0.0);
-// 	cv::accumulateSquare(getRow(q,0),normqyx);cv::accumulateSquare(getRow(q,1),normqyx);
-// 	cv::sqrt(normqyx,normqyx);
-// 	cv::max(normqyx,0.00001,normqyx);
-
-
-// 	cv::Mat qproj(4, size1, CV_64FC1, 1.0);
-// 	cv::max(normqyx,1.0,getRow(qproj,0));
-// 	getRow(qproj,0).copyTo(getRow(qproj,1));// qproj.row(0) and qproj.row(0) have the valeu of the denominator
-// 	// 
-// 	// cv::accumulateProduct(,,qproj.row(0));
-// 	cv::divide(getRow(q,0).clone(),getRow(qproj,0),getRow(qproj,0));cv::divide(getRow(q,1).clone(),getRow(qproj,1),getRow(qproj,1));
-// 	cv::max(getRow(q,2).clone(),0.0,getRow(qproj,2));
-
-// 	// cv::Mat phiproj(4, size1, CV_64FC1, 1.0);
-// 	// cv::Mat (qproj.row(0)).copyTo(phiproj.row(0));
-// 	// cv::Mat (qproj.row(1)).copyTo(phiproj.row(1));
-// 	// cv::Mat (qproj.row(2)).copyTo(phiproj.row(2));
-// 	// qproj.copyTo(phiproj);
-// 	cv::Mat phiproj=qproj;
-// 	cv::scaleAdd(m_g,-1.0,getRow(phiproj,2),getRow(phiproj,2));
-// 	return phiproj;
-
-// }
 
 
 cv::Mat  MatchingAlgorithm::projKh(const cv::Mat &phi,const cv::Mat &g)
@@ -412,32 +317,32 @@ cv::Mat  MatchingAlgorithm::projKh_effic(const cv::Mat &phi,const cv::Mat &g)
 
 
 
-	// cv::Mat MatchingAlgorithm::gradh(const cv::Mat &v)
-	// //operateur defini par "Variational Models with Convex Regularization"
+	cv::Mat MatchingAlgorithm::gradh(const cv::Mat &v)
+	//operateur defini par "Variational Models with Convex Regularization"
 
-	// // -input: div is of dimension 3 
+	// -input: div is of dimension 3 
 
-	// // -ouput: of dimension 4 and of size {3,v.size[0],v.size[1],v.size[2]}
+	// -ouput: of dimension 4 and of size {3,v.size[0],v.size[1],v.size[2]}
 
-	// {
-	// 	// function [ delta_y,delta_x,delta_t ] = gradh(v)
-	// 	int size[4]= {3,v.size[0],v.size[1],v.size[2]};
-	// 	cv::Mat delta(4,size,CV_64FC1,0.0);
-	// 	for (int i = 0; i < v.size[0]-1; i++)
-	// 	{
-	// 		for (int j = 0; j < v.size[1]-1; j++)
-	// 		{
-	// 			for (int k = 0; k < v.size[2]-1; k++)
-	// 			{
-	// 				// cv::Vec<int,3>(i,j,k);
-	// 				delta.at<double>(cv::Vec<int,4>(0,i,j,k))=v.at<double>(i+1,j,k)-v.at<double>(i,j,k); // the y component
-	// 				delta.at<double>(cv::Vec<int,4>(1,i,j,k))=v.at<double>(i,j+1,k)-v.at<double>(i,j,k); // the x component
-	// 				delta.at<double>(cv::Vec<int,4>(2,i,j,k))=v.at<double>(i,j,k+1)-v.at<double>(i,j,k); // the t component
-	// 			}
-	// 		}
-	// 	}
-	// 	return delta;
-	// }
+	{
+		// function [ delta_y,delta_x,delta_t ] = gradh(v)
+		int size[4]= {3,v.size[0],v.size[1],v.size[2]};
+		cv::Mat delta(4,size,CV_64FC1,0.0);
+		for (int i = 0; i < v.size[0]-1; i++)
+		{
+			for (int j = 0; j < v.size[1]-1; j++)
+			{
+				for (int k = 0; k < v.size[2]-1; k++)
+				{
+					// cv::Vec<int,3>(i,j,k);
+					delta.at<double>(cv::Vec<int,4>(0,i,j,k))=v.at<double>(i+1,j,k)-v.at<double>(i,j,k); // the y component
+					delta.at<double>(cv::Vec<int,4>(1,i,j,k))=v.at<double>(i,j+1,k)-v.at<double>(i,j,k); // the x component
+					delta.at<double>(cv::Vec<int,4>(2,i,j,k))=v.at<double>(i,j,k+1)-v.at<double>(i,j,k); // the t component
+				}
+			}
+		}
+		return delta;
+	}
 
 
 
@@ -490,19 +395,6 @@ cv::Mat  MatchingAlgorithm::projKh_effic(const cv::Mat &phi,const cv::Mat &g)
 		}
 		return delta;
 	}
-
-	// cv::Mat vy=MatchingAlgorithm::getRow(v,0);
-	// cv::Mat vx=MatchingAlgorithm::getRow(v,1);
-	// cv::Mat vt=MatchingAlgorithm::getRow(v,2);
-	// 			double * vyijPtr=vyi.ptr<double>(j);
-	// 			double * vxijPtr=vxi.ptr<double>(j);
-	// 			double * vtijPtr=vti.ptr<double>(j);
-
-	// 			double * vyip1jPtr=vyip1.ptr<double>(j);
-	// 			double * vxijp1Ptr=vxi.ptr<double>(j+1);
-	// 			// double * vtijPtr=vti.ptr<double>(j);
-	// 			double * divvij=divvi.ptr<double>(j);
-
 
 cv::Mat MatchingAlgorithm::divh(const cv::Mat &v)
 // // -Description: a discretisation of -div and not div, we denote by divh the adjoint of the gradient operator
@@ -599,13 +491,6 @@ void MatchingAlgorithm::init()
 	
 	
 	m_phih=projKh(m_phih,m_g);
-	// printContentsOf3DCVMat(m_phih);
-	// printContentsOf3DCVMat(m_v);
-	// printContentsOf3DCVMat(m_vbar);
-	// printContentsOf3DCVMat(getLayer(getRow(m_phih,0),0),false);
-	// printContentsOf3DCVMat(getLayer(getRow(m_phih,0),),false);
-	// printContentsOf3DCVMat(getLayer(getRow(m_phih,0),0),false);
-	// printContentsOf3DCVMat(getLayer(getRow(m_phih,0),0),false);
 	m_gapInit=computePrimalDualGap();
 	m_gap=m_gapInit;
 }
@@ -615,33 +500,14 @@ double MatchingAlgorithm::computePrimalDualGap()
 	// int sizeCh1[3]= {m_y_size,m_x_size,m_t_size};
 	cv::Mat delta = gradh_effic(m_v) ;
 	cv::Mat divv = divh_effic(m_phih) ;
-	// printContentsOf3DCVMat(getLayer(getRow(m_phih,0),0));
-	// printContentsOf3DCVMat(delta);
-	// printContentsOf3DCVMat(divv);
-	// cv::Mat v0;
-    // cv::compare(divv,0.0,v0,3);
+
     cv::Mat v0 = (divv < 0.0);
-    // printContentsOf3DCVMat(getRow(m_phih,0),true);
-    // printContentsOf3DCVMat(getRow(m_phih,1),true);
-    // printContentsOf3DCVMat(getRow(m_phih,2),true);
-	// printContentsOf3DCVMat(getLayer(getRow(m_phih,0),1),true);
-	// printContentsOf3DCVMat(getLayer(getRow(m_phih,0),2),true);
-	// printContentsOf3DCVMat(getLayer(getRow(m_phih,0),3),true);
-	// printContentsOf3DCVMat(getLayer(getRow(m_phih,0),4),true);
-    // printContentsOf3DCVMat(getLayer(divv,3),true,"divv.txt");
-    // printContentsOf3DCVMat(getLayer(v0,3),true,"v0.txt");
+
 	cv::Mat doubleV0;
     v0.convertTo(doubleV0, CV_64FC1); // converting for boolean to double
     // printContentsOf3DCVMat(getLayer(doubleV0,0));
 	doubleV0 = projCh_effic(doubleV0) ;
-	// printContentsOf3DCVMat(getLayer(doubleV0,0));
-	// double a=cv::sum(getLayer(doubleV0,0))[0];
-	// double a1=cv::sum(getLayer(doubleV0,1))[0];
-	// double a2=cv::sum(getLayer(doubleV0,2))[0];
-	// double a3=cv::sum(getLayer(doubleV0,3))[0];
-	// double a4=cv::sum(getLayer(doubleV0,4))[0];
-	// cv::Mat aaa(3,sizeCh,CV_64FC1,1.0);
-	// cv::Mat aaa(3,sizeCh1,CV_64FC1,0.0);
+
 	cv::Mat gapPerPixel(3,sizeCh,CV_64FC1,0.0);
 	// cv::Mat temp(3,sizeCh,CV_64FC1,1.0);temp=temp-getRow(delta,1);
 	cv::Mat deltay=getRow(delta,0);
@@ -650,10 +516,6 @@ double MatchingAlgorithm::computePrimalDualGap()
 
 	// cv::accumulateSquare(getRow(delta,0),gapPerPixel);cv::accumulateSquare(getRow(delta,1),gapPerPixel);
 	gapPerPixel+=deltay.mul(deltay)+deltax.mul(deltax);
-
-	// double * deltaxPtr=deltax.ptr<double>(0);
-	// double * deltayPtr=deltay.ptr<double>(0);
-	// double * gapPerPixelPtr=gapPerPixel.ptr<double>(0);
 	cv::sqrt(gapPerPixel,gapPerPixel);
 
 
@@ -703,6 +565,7 @@ void MatchingAlgorithm::launch()
 	while( m_iteration < m_Niter and ( m_gap >= m_factor*m_gapInit ) )
 	{
 		iterate_algorithm();
+		if(m_iteration%10==0) disparity_estimation();
 	}
 }
 
@@ -745,6 +608,7 @@ void MatchingAlgorithm::disparity_estimation()
 				// m_disparity.at<double>(i,j)+=1;
 			// 	// }
 			}
+			// m_disparity.at<double>(i,j)+=m_offset;
 			m_disparity.at<double>(i,j)*=zoomFactor;
 			// double b=thresholdedij.at<double>(i,j);
 			// double a=cv::sum(thresholdedij)[0];
@@ -752,11 +616,11 @@ void MatchingAlgorithm::disparity_estimation()
 		}
 	}
 	// m_disparity.convertTo(m_disparity, CV_8U);
-    imwrite("disparityMap.tif",m_disparity);
-	cv::namedWindow("disparity Map");
-	cv::imshow("disparity Map", m_disparity);
+    imwrite(m_path_to_disparity,m_disparity);
+	//cv::namedWindow("disparity Map");
+	//cv::imshow("disparity Map", m_disparity);
 	// printContentsOf3DCVMat(m_disparity,true,"disparity_map");
-	cv::waitKey(0);
+	//cv::waitKey(0);
 }
 
 
@@ -802,8 +666,198 @@ void MatchingAlgorithm::disparity_estimation()
 void MatchingAlgorithm::printProperties()
 {
 	// printf("images of type: ")
-	printf ("size_of_images: width (y variable) : %4.2f height (x variable) : %4.2f \n", m_x_size, m_y_size);
+	printf ("size_of_images: width (y variable) : %i height (x variable) : %i \n", m_x_size, m_y_size);
+	printf("value of mu : %4.2f, tau %4.2f, sigma %4.2f, s %4.2f, Niter %i, m_factor %4.2f, t_size %i and offset %i",m_mu,m_tau,m_sigma,m_s,m_Niter,m_factor,m_t_size,m_offset);
+	// m_mu = 75.0/255.0;
+	// m_tau = 1.0/sqrt(12.0) ;
+	// m_sigma = 1.0/sqrt(12.0) ;
+	// m_s=0.3;
+
+	// m_Niter = Niter;//700;
+	// m_factor=0.05;
+	// m_t_size = t_size ; //need to impose that m_t_size is smaller than m_x_size
+	// m_offset=offset;
 }
+
+
+
+void MatchingAlgorithm::showImages()
+{
+	cv::namedWindow("Output Image1");
+	cv::namedWindow("Output Image2");
+	m_image1->convertTo(*m_image1, CV_8U);
+	m_image2->convertTo(*m_image2, CV_8U);
+	cv::imshow("Output Image1", *m_image1);
+	cv::imshow("Output Image2", *m_image2);
+	cv::waitKey(0);
+}
+
+cv::Mat MatchingAlgorithm::getLayer(cv::Mat Matrix3D,int layer_number)
+{
+	// 	m_y_size=m_image1->size().height;
+	// m_x_size=m_image1->size().width;
+	int size[2] = { (Matrix3D.size()).height, (Matrix3D.size()).width};
+	cv::Mat layer(2, size, CV_64FC1, 0.0);
+	for (int i=0;i<size[0];i++)
+				{
+					cv::Mat matrix3Di=getRow3D(Matrix3D,i);
+					cv::Mat layeri=getRow2D(layer,i);
+				for (int j=0;j<size[1];j++)
+					{
+					// for (int k=0;k<m_t_size,k++)
+					// 	{
+							layeri.at<double>(j)=matrix3Di.at<double>(j,layer_number);
+						// }
+					}
+				}
+	return layer;
+}
+cv::Mat MatchingAlgorithm::getRow(const cv::Mat &Matrix4D,int numberRow,bool newOne)
+// get the  row numer numberRow from a 4D matrix
+{
+	// if (Matrix4D.dims==4)
+	// {
+	int dims[] = { Matrix4D.size[1], Matrix4D.size[2],Matrix4D.size[3]};
+	if (numberRow > Matrix4D.size[0] or numberRow < 0)
+		{
+			throw std::invalid_argument( "received false row" );
+		}
+	cv::Mat extractedMatrix(3,dims, CV_64FC1, Matrix4D.data + Matrix4D.step[0] * numberRow);
+	// if (newOne==true)
+	// {
+	// 	cv::Mat extractedMatrixCloned=extractedMatrix.clone();//(3,dims, CV_64FC1, 0.0);
+	// // extractedMatrix.copyTo(extractedMatrixCloned);//(3,dims, CV_64FC1, 0.0);
+	// 	return extractedMatrixCloned;
+	// }
+	// else
+	// {
+	return extractedMatrix;
+	// }
+
+}
+
+cv::Mat MatchingAlgorithm::getRow3D(const cv::Mat &Matrix3D,int numberRow)
+// get the  row numer numberRow from a 4D matrix
+{
+	// if (Matrix4D.dims==4)
+	// {
+	int dims[] = { Matrix3D.size[1], Matrix3D.size[2]};
+	if (numberRow > Matrix3D.size[0] or numberRow < 0)
+		{
+			throw std::invalid_argument( "received false row" );
+		}
+	cv::Mat extractedMatrix(2,dims, CV_64FC1, Matrix3D.data + Matrix3D.step[0] * numberRow);
+	return extractedMatrix;
+}
+
+
+cv::Mat MatchingAlgorithm::getRow2D(const cv::Mat &Matrix2D,int numberRow)
+// get the  row numer numberRow from a 4D matrix
+{
+	// if (Matrix4D.dims==4)
+	// {
+	int dims[] = { Matrix2D.size[1]};
+	if (numberRow > Matrix2D.size[0] or numberRow < 0)
+		{
+			throw std::invalid_argument( "received false row" );
+		}
+	cv::Mat extractedMatrix(1,dims, CV_64FC1, Matrix2D.data + Matrix2D.step[0] * numberRow);
+	return extractedMatrix;
+}
+
+void MatchingAlgorithm::printContentsOf3DCVMat(const cv::Mat matrix,bool writeOnFile,std::string filename)
+{
+	if (writeOnFile==false)
+	{
+ 	if(matrix.dims==3)
+ 	{
+	for (int i=0;i<matrix.size[0];i++)
+		{
+			cv::Mat matrixi=getRow3D(matrix,i);
+			for (int j=0;j<matrix.size[1];j++)
+				{
+					cv::Mat matrixij=getRow2D(matrixi,j);
+					for (int k=0;k<matrix.size[2];k++)
+						{
+							std::cout<<"value of pixel"<<i <<" and "<<j<<" and "<<k<<" : "<< matrixij.at<double>(k)<<"  "<<std::endl;
+						}	
+				}
+		}
+	// std::cout << "matrix = "<< std::endl << " "  << M << std::endl << std::endl;
+	}
+	if(matrix.dims==2)
+ 	{
+	for (int i=0;i<matrix.size[0];i++)
+		{
+			cv::Mat matrixi=getRow2D(matrix,i);
+			for (int j=0;j<matrix.size[1];j++)
+				{
+
+					std::cout<<"value of pixel"<<i <<" and "<<j<<" : "<< matrixi.at<double>(j)<<"  "<<std::endl;
+				}
+		}
+	// std::cout << "matrix = "<< std::endl << " "  << M << std::endl << std::endl;
+	}
+	}
+	else
+	{
+	// Declare what you need
+		cv::FileStorage file(filename, cv::FileStorage::WRITE);
+		// std::ofstream file("FileStorage.txt");
+		// if(!file)
+    	// {
+        	// std::cout<<"File Not Opened"<<std::endl;  return;
+    	// }
+	// cv::Mat matrix;
+		// for (int i=0;i<matrix.size[0];i++)
+		// {
+		// 	cv::Mat matrixi=getRow3D(matrix,i);
+		// 	for (int j=0;j<matrix.size[1];j++)
+		// 		{
+		// 			cv::Mat matrixij=getRow2D(matrixi,j);
+		// 			for (int k=0;k<matrix.size[2];k++)
+		// 				{
+		// 					file<<"value of pixel"<<i <<" and "<<j<<" and "<<k<<" : "<< matrixij.at<double>(k)<<std::endl;
+		// 				}	
+		// 		}
+		// }
+		// file.close();
+	// Write to file!
+    	// file.writeObj("matrix.txt",&matrix);
+    	// file<<"matrixSize"<<5;
+		file <<"the matrix"<< matrix;
+	}
+}
+
+// string type2str(int type) {
+//   string r;
+
+//   uchar depth = type & CV_MAT_DEPTH_MASK;
+//   uchar chans = 1 + (type >> CV_CN_SHIFT);
+
+//   switch ( depth ) {
+//     case CV_8U:  r = "8U"; break;
+//     case CV_8S:  r = "8S"; break;
+//     case CV_16U: r = "16U"; break;
+//     case CV_16S: r = "16S"; break;
+//     case CV_32S: r = "32S"; break;
+//     case CV_32F: r = "32F"; break;
+//     case CV_64F: r = "64F"; break;
+//     default:     r = "User"; break;
+//   }
+
+//   r += "C";
+//   r += (chans+'0');
+
+//   return r;
+// }
+
+
+
+
+
+
+
 void MatchingAlgorithm::helpDebug()
 {
 	std::cout<<"choissisez un entier associé aux objets à afficher : \n 1:contenu image1,\n 2:contenu image2,\n 3:affichage data_term, \n 4:affichage 10 sliceth of v \n 5: contenu terme de données \n 6: test de projCh \n 7: test of projKh\n 8: test of gradh \n 9:testing difference between projKh and projKh_effic 20: quit \n "<<std::endl;
@@ -1055,175 +1109,3 @@ void MatchingAlgorithm::helpDebug()
 		}
 	}while(!finishTest);
 }
-
-
-void MatchingAlgorithm::showImages()
-{
-	cv::namedWindow("Output Image1");
-	cv::namedWindow("Output Image2");
-	m_image1->convertTo(*m_image1, CV_8U);
-	m_image2->convertTo(*m_image2, CV_8U);
-	cv::imshow("Output Image1", *m_image1);
-	cv::imshow("Output Image2", *m_image2);
-	cv::waitKey(0);
-}
-
-cv::Mat MatchingAlgorithm::getLayer(cv::Mat Matrix3D,int layer_number)
-{
-	// 	m_y_size=m_image1->size().height;
-	// m_x_size=m_image1->size().width;
-	int size[2] = { (Matrix3D.size()).height, (Matrix3D.size()).width};
-	cv::Mat layer(2, size, CV_64FC1, 0.0);
-	for (int i=0;i<size[0];i++)
-				{
-					cv::Mat matrix3Di=getRow3D(Matrix3D,i);
-					cv::Mat layeri=getRow2D(layer,i);
-				for (int j=0;j<size[1];j++)
-					{
-					// for (int k=0;k<m_t_size,k++)
-					// 	{
-							layeri.at<double>(j)=matrix3Di.at<double>(j,layer_number);
-						// }
-					}
-				}
-	return layer;
-}
-cv::Mat MatchingAlgorithm::getRow(const cv::Mat &Matrix4D,int numberRow,bool newOne)
-// get the  row numer numberRow from a 4D matrix
-{
-	// if (Matrix4D.dims==4)
-	// {
-	int dims[] = { Matrix4D.size[1], Matrix4D.size[2],Matrix4D.size[3]};
-	if (numberRow > Matrix4D.size[0] or numberRow < 0)
-		{
-			throw std::invalid_argument( "received false row" );
-		}
-	cv::Mat extractedMatrix(3,dims, CV_64FC1, Matrix4D.data + Matrix4D.step[0] * numberRow);
-	// if (newOne==true)
-	// {
-	// 	cv::Mat extractedMatrixCloned=extractedMatrix.clone();//(3,dims, CV_64FC1, 0.0);
-	// // extractedMatrix.copyTo(extractedMatrixCloned);//(3,dims, CV_64FC1, 0.0);
-	// 	return extractedMatrixCloned;
-	// }
-	// else
-	// {
-	return extractedMatrix;
-	// }
-
-}
-
-cv::Mat MatchingAlgorithm::getRow3D(const cv::Mat &Matrix3D,int numberRow)
-// get the  row numer numberRow from a 4D matrix
-{
-	// if (Matrix4D.dims==4)
-	// {
-	int dims[] = { Matrix3D.size[1], Matrix3D.size[2]};
-	if (numberRow > Matrix3D.size[0] or numberRow < 0)
-		{
-			throw std::invalid_argument( "received false row" );
-		}
-	cv::Mat extractedMatrix(2,dims, CV_64FC1, Matrix3D.data + Matrix3D.step[0] * numberRow);
-	return extractedMatrix;
-}
-
-
-cv::Mat MatchingAlgorithm::getRow2D(const cv::Mat &Matrix2D,int numberRow)
-// get the  row numer numberRow from a 4D matrix
-{
-	// if (Matrix4D.dims==4)
-	// {
-	int dims[] = { Matrix2D.size[1]};
-	if (numberRow > Matrix2D.size[0] or numberRow < 0)
-		{
-			throw std::invalid_argument( "received false row" );
-		}
-	cv::Mat extractedMatrix(1,dims, CV_64FC1, Matrix2D.data + Matrix2D.step[0] * numberRow);
-	return extractedMatrix;
-}
-
-void MatchingAlgorithm::printContentsOf3DCVMat(const cv::Mat matrix,bool writeOnFile,std::string filename)
-{
-	if (writeOnFile==false)
-	{
- 	if(matrix.dims==3)
- 	{
-	for (int i=0;i<matrix.size[0];i++)
-		{
-			cv::Mat matrixi=getRow3D(matrix,i);
-			for (int j=0;j<matrix.size[1];j++)
-				{
-					cv::Mat matrixij=getRow2D(matrixi,j);
-					for (int k=0;k<matrix.size[2];k++)
-						{
-							std::cout<<"value of pixel"<<i <<" and "<<j<<" and "<<k<<" : "<< matrixij.at<double>(k)<<"  "<<std::endl;
-						}	
-				}
-		}
-	// std::cout << "matrix = "<< std::endl << " "  << M << std::endl << std::endl;
-	}
-	if(matrix.dims==2)
- 	{
-	for (int i=0;i<matrix.size[0];i++)
-		{
-			cv::Mat matrixi=getRow2D(matrix,i);
-			for (int j=0;j<matrix.size[1];j++)
-				{
-
-					std::cout<<"value of pixel"<<i <<" and "<<j<<" : "<< matrixi.at<double>(j)<<"  "<<std::endl;
-				}
-		}
-	// std::cout << "matrix = "<< std::endl << " "  << M << std::endl << std::endl;
-	}
-	}
-	else
-	{
-	// Declare what you need
-		cv::FileStorage file(filename, cv::FileStorage::WRITE);
-		// std::ofstream file("FileStorage.txt");
-		// if(!file)
-    	// {
-        	// std::cout<<"File Not Opened"<<std::endl;  return;
-    	// }
-	// cv::Mat matrix;
-		// for (int i=0;i<matrix.size[0];i++)
-		// {
-		// 	cv::Mat matrixi=getRow3D(matrix,i);
-		// 	for (int j=0;j<matrix.size[1];j++)
-		// 		{
-		// 			cv::Mat matrixij=getRow2D(matrixi,j);
-		// 			for (int k=0;k<matrix.size[2];k++)
-		// 				{
-		// 					file<<"value of pixel"<<i <<" and "<<j<<" and "<<k<<" : "<< matrixij.at<double>(k)<<std::endl;
-		// 				}	
-		// 		}
-		// }
-		// file.close();
-	// Write to file!
-    	// file.writeObj("matrix.txt",&matrix);
-    	// file<<"matrixSize"<<5;
-		file <<"the matrix"<< matrix;
-	}
-}
-
-// string type2str(int type) {
-//   string r;
-
-//   uchar depth = type & CV_MAT_DEPTH_MASK;
-//   uchar chans = 1 + (type >> CV_CN_SHIFT);
-
-//   switch ( depth ) {
-//     case CV_8U:  r = "8U"; break;
-//     case CV_8S:  r = "8S"; break;
-//     case CV_16U: r = "16U"; break;
-//     case CV_16S: r = "16S"; break;
-//     case CV_32S: r = "32S"; break;
-//     case CV_32F: r = "32F"; break;
-//     case CV_64F: r = "64F"; break;
-//     default:     r = "User"; break;
-//   }
-
-//   r += "C";
-//   r += (chans+'0');
-
-//   return r;
-// }
