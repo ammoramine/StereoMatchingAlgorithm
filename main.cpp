@@ -9,9 +9,24 @@
 #include <vector>
 #include "MatchingAlgorithm.h"
 #include "toolsForReading.h"
-
+#include "ROF.h"
 int main(int argc, char* argv[])
 {
+	// double aArray[] = {1,1,1,1,1,1,1,1,1,1};
+  	// std::vector<double> a (aArray, aArray + sizeof(aArray) / sizeof(double) );
+  	// double bArray[] = {1,1,1,1,1};
+  	// std::vector<double> a (aArray, lArray + sizeof(lArray) / sizeof(double) );
+  	// double ratio=4;
+  	// std::vector<double> b(a);for(int i=0;i<b.size();i++) b[i]*=ratio;
+	// ROF rof=ROF(a,b);
+	double tau=1.0;double l=4.0;int lengthROF=30;
+	ROF rof=ROF(tau,l,lengthROF);
+	// rof.computeROF();
+	rof.getSolution(true);
+	// computeROF();
+
+
+
 	// cv::Vec<int,2> curPixel;
 	// std::vector<cv::Vec<int,2> > neighbors;neighbors.resize(8);
 	// curPixel[0]=1;
@@ -47,26 +62,53 @@ int main(int argc, char* argv[])
 	// imagesToShow.push_back(MatchingAlgorithm::getLayer(ternaryCensusSignature2,4));
 	// showImages(imagesToShow);
 
-// std::cout<<"it's over"<<std::endl;
-	cv::Mat image1;//=cv::imread("input_pair/rectified_ref.tif");//, cv::IMREAD_LOAD_GDAL);
-	cv::Mat image2;//=cv::imread("input_pair/rectified_sec.tif");//, cv::IMREAD_LOAD_GDAL);
-	std::string data_term_option;
-	// read_option(argc,argv,image1,image2,data_term_option);
-	int t_size;signed int offset;int Niter;std::string path_to_disparity;
-	read_option(argc,argv,image1,image2,data_term_option,t_size,offset,Niter,path_to_disparity);
-	cv::Mat image1Gray;
-	cv::Mat image2Gray;
-	cv::Mat image1GrayDouble;
-	cv::Mat image2GrayDouble;
-	cv::cvtColor(image1, image1Gray, CV_RGB2GRAY);
-	cv::cvtColor(image2, image2Gray, CV_RGB2GRAY);
-	image1Gray.convertTo(image1GrayDouble, CV_64FC1);
-	image2Gray.convertTo(image2GrayDouble, CV_64FC1);
-	// int tsize=40;
-	// signed int offset=-20;
-	// int Niter=400;
 
-	MatchingAlgorithm theAlgorithm = MatchingAlgorithm(image1GrayDouble,image2GrayDouble,data_term_option, t_size,offset,Niter,path_to_disparity);
+
+
+
+
+
+
+
+
+// // std::cout<<"it's over"<<std::endl;
+// 	cv::Mat image1;//=cv::imread("input_pair/rectified_ref.tif");//, cv::IMREAD_LOAD_GDAL);
+// 	cv::Mat image2;//=cv::imread("input_pair/rectified_sec.tif");//, cv::IMREAD_LOAD_GDAL);
+// 	std::string data_term_option;
+// 	// read_option(argc,argv,image1,image2,data_term_option);
+// 	int t_size;signed int offset;int Niter;std::string path_to_disparity;
+// 	read_option(argc,argv,image1,image2,data_term_option,t_size,offset,Niter,path_to_disparity);
+// 	cv::Mat image1Gray;
+// 	cv::Mat image2Gray;
+// 	cv::Mat image1GrayDouble;
+// 	cv::Mat image2GrayDouble;
+// 	cv::cvtColor(image1, image1Gray, CV_RGB2GRAY);
+// 	cv::cvtColor(image2, image2Gray, CV_RGB2GRAY);
+// 	image1Gray.convertTo(image1GrayDouble, CV_64FC1);
+// 	image2Gray.convertTo(image2GrayDouble, CV_64FC1);
+// 	// int tsize=40;
+// 	// signed int offset=-20;
+// 	// int Niter=400;
+
+// 	MatchingAlgorithm theAlgorithm = MatchingAlgorithm(image1GrayDouble,image2GrayDouble,data_term_option, t_size,offset,Niter,path_to_disparity);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	// double m_sigma=0.45;
 	// int size[2] = { 10, 10};
