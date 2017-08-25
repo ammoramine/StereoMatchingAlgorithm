@@ -1,5 +1,5 @@
-#ifndef ROFBIS_INCLUDED_H
-#define ROFBIS_INCLUDED_H
+#ifndef ROF_INCLUDED_H
+#define ROF_INCLUDED_H
 #include <vector>
 #include <deque>
 #include <stdexcept>
