@@ -11,6 +11,7 @@
 class ROF 
 {
 	public:
+		ROF(const double &tau,const std::vector<double> &l,const std::vector<double> &costij);
 		ROF(const double &tau,const std::vector<double> &l);
 		ROF(const std::vector<double> &a,const std::vector<double> &b);
 		void computeROF();
@@ -40,8 +41,8 @@ class ROF
 		// sp are the breakpoints  , and lambdap the consecutives slopes
 		//the size of m_message should always be odd
 
-		std::deque<signed int> m_omegaijMinus;
-		std::deque<signed int> m_omegaijPlus;
+		std::deque<double> m_omegaijMinus;
+		std::deque<double> m_omegaijPlus;
 		std::vector<double> m_lambdaMinVect;
 		std::vector<double> m_lambdaPlusVect;
 		int m_index_root;

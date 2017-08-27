@@ -1,6 +1,25 @@
 #include "ROF.h"
 
+ROF::ROF(const double &tau,const std::vector<double> &l,const std::vector<double> &costij)
+// this function resolve argmin( Sigma cost(ij)|v(i+1)-v(i)|+tau/2*Sigma|vi-li|^2) with vi on R
+// costij should be smaller than l on size by one element, and should contains postive elements
+{
+	m_tau=tau;
+	int lengthROF=l.size();
+	m_l=std::vector<double>(l);
+	m_a=std::vector<double>(lengthROF,tau);
+	m_b=std::vector<double>(lengthROF,tau);for (int i=0;i<l.size();i++) m_b[i]*=l[i];
+	
+	m_index_root=m_a.size()-1;
+	m_omegaijPlus=std::deque<double>(costij.begin(),costij.end());m_omegaijPlus.push_back(0);
+	//the last element should be zero w the other elements shold be equal to costij
 
+	m_omegaijMinus.resize(lengthROF);for (int i=0;i<lengthROF;i++) m_omegaijMinus[i]=-m_omegaijPlus[i];
+	//the last element should be zero w the other elements shold be equal to the costij
+	
+	computeROF();
+
+}
 ROF::ROF(const double &tau,const std::vector<double> &l)
 // this function resolve argmin( Sigma |v(i+1)-v(i)|+tau/2*Sigma|vi-li|^2) with vi on R
 {
@@ -11,8 +30,8 @@ ROF::ROF(const double &tau,const std::vector<double> &l)
 	m_b=std::vector<double>(lengthROF,tau);for (int i=0;i<l.size();i++) m_b[i]*=l[i];
 	
 	m_index_root=m_a.size()-1;
-	m_omegaijMinus=std::deque<signed int>(lengthROF-1,-1);m_omegaijMinus.push_back(0);//the last element should be zero w the other elements shold be equal to 1
-	m_omegaijPlus=std::deque<signed int>(lengthROF-1,1);m_omegaijPlus.push_back(0);//the last element should be zero w the other elements shold be equal to 1
+	m_omegaijMinus=std::deque<double>(lengthROF-1,-1);m_omegaijMinus.push_back(0);//the last element should be zero w the other elements shold be equal to 1
+	m_omegaijPlus=std::deque<double>(lengthROF-1,1);m_omegaijPlus.push_back(0);//the last element should be zero w the other elements shold be equal to 1
 	computeROF();
 
 }
@@ -29,7 +48,7 @@ double ROF::computeCostForArgument1DROF(const std::deque<double> &argument)
 	}
 	for (int i=0;i<argument.size()-1;i++)
 	{
-		result+=std::abs(argument[i+1]-argument[i]);
+		result+=std::abs(m_omegaijPlus[i]*(argument[i+1]-argument[i]));
 	}
 	return result;
  }
@@ -73,7 +92,7 @@ double ROF::computeCostForArgument1DROF(const std::deque<double> &argument)
 
 		double costArgument=computeCostForArgument1DROF(argument);
 		
-		std::cout<<"\n cost of the minimum : "<<costArgmin<<" cost of a neighbor argument : "<<costArgument<<"      should be or not : "<<(costArgument-costArgmin>=0)<<std::endl;
+		std::cout<<"\n cost of the minimum : "<<costArgmin<<" cost of a neighbor argument : "<<costArgument<<" and difference :"<<costArgument-costArgmin <<"  should be or not : "<<(costArgument-costArgmin>=0)<<std::endl;
 		succes=(costArgument-costArgmin>=0);
 		if(succes==false)
 			{
@@ -104,8 +123,8 @@ ROF::ROF(const std::vector<double> &a,const std::vector<double> &b)
 	m_b=std::vector<double>(b);//for(int i=0;i<l.size();i++) m_b[i]*=tau;
 	
 	m_index_root=m_a.size();
-	m_omegaijMinus=std::deque<signed int>(m_index_root,-1);m_omegaijMinus.push_back(0);//the last element should be zero w the other elements shold be equal to 1
-	m_omegaijPlus=std::deque<signed int>(m_index_root,1);m_omegaijPlus.push_back(0);//the last element should be zero w the other elements shold be equal to 1
+	m_omegaijMinus=std::deque<double>(m_index_root,-1);m_omegaijMinus.push_back(0);//the last element should be zero w the other elements shold be equal to 1
+	m_omegaijPlus=std::deque<double>(m_index_root,1);m_omegaijPlus.push_back(0);//the last element should be zero w the other elements shold be equal to 1
 	computeROF();
 	
 	// computeROFForwardPass(m_a,m_b,m_lambdaMinVect,m_lambdaPlusVect);
