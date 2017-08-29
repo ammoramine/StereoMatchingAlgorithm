@@ -693,6 +693,7 @@ void MatchingAlgorithm::showImages()
 }
 
 cv::Mat MatchingAlgorithm::getLayer(cv::Mat Matrix3D,int layer_number)
+// get a copy of the external layer of a 3D Matrix
 {
 	// 	m_y_size=m_image1->size().height;
 	// m_x_size=m_image1->size().width;
@@ -737,7 +738,7 @@ cv::Mat MatchingAlgorithm::getRow(const cv::Mat &Matrix4D,int numberRow,bool new
 }
 
 cv::Mat MatchingAlgorithm::getRow3D(const cv::Mat &Matrix3D,int numberRow)
-// get the  row numer numberRow from a 4D matrix
+// get the  row numer numberRow from a 4D matrix, not a copy but a reference to the real row
 {
 	// if (Matrix4D.dims==4)
 	// {
