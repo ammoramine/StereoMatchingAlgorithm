@@ -10,57 +10,10 @@
 #include "MatchingAlgorithm.h"
 #include "toolsForReading.h"
 #include "ROF.h"
+#include "ROF3D.h"
 int main(int argc, char* argv[])
 {
-	// double aArray[] = {1,1,1,1,1,1,1,1,1,1};
-  	// std::vector<double> a (aArray, aArray + sizeof(aArray) / sizeof(double) );
-  	// double bArray[] = {1,1,1,1,1};
-  	// std::vector<double> a (aArray, lArray + sizeof(lArray) / sizeof(double) );
-  	// double ratio=4;
-  	// std::vector<double> b(a);for(int i=0;i<b.size();i++) b[i]*=ratio;
-	// ROF rof=ROF(a,b);
-	double tau=1.0;double l=4.0;int lengthROF=30;
-	ROF rof=ROF(tau,l,lengthROF);
-	// rof.computeROF();
-	rof.getSolution(true);
-	// computeROF();
-
-
-
-	// cv::Vec<int,2> curPixel;
-	// std::vector<cv::Vec<int,2> > neighbors;neighbors.resize(8);
-	// curPixel[0]=1;
-	// curPixel[1]=1;
-	// computeNeighbors(curPixel,neighbors);
-	// double m[3][3] = {{0,1,2}, {3,4,5}, {6,7,8}};
-	// cv::Mat M = cv::Mat(3, 3, CV_64FC1, m);
-
-	// double * Im1=M.ptr<double>(0);
-	// double * I=M.ptr<double>(1);
-	// double * Ip1=M.ptr<double>(2);
-	// // M.at<double>(1,1);
-	// // curPixel[0]=1;curPixel[1]=1;
-	// std::cout<<M<<std::endl;
-	// // std::vector< double > intensityNeighbors;intensityNeighbors.resize(8);
-	// double intensityNeighbors[8];
-	// getIntensityNeighbors(curPixel,intensityNeighbors,Im1,I,Ip1);
-
-
-	// cv::Mat image1=cv::imread("input_pair/rectified_ref_rescaled.tif");//, cv::IMREAD_LOAD_GDAL);
-	// cv::Mat image2=cv::imread("input_pair/rectified_sec_rescaled.tif");//, cv::IMREAD_LOAD_GDAL);
-	// cv::Mat ternaryCensusSignature1;
-	// cv::Mat ternaryCensusSignature2;
-
-	// ternaryCensusSignature(image1,ternaryCensusSignature1,0.5);
-	// ternaryCensusSignature(image2,ternaryCensusSignature2,0.5);
-	// std::vector<cv::Mat> imagesToShow;
-	// imagesToShow.push_back(image1);
-	// imagesToShow.push_back(image2);
-	// imagesToShow.push_back(MatchingAlgorithm::getLayer(ternaryCensusSignature1,2));
-	// imagesToShow.push_back(MatchingAlgorithm::getLayer(ternaryCensusSignature2,2));
-	// imagesToShow.push_back(MatchingAlgorithm::getLayer(ternaryCensusSignature1,3));
-	// imagesToShow.push_back(MatchingAlgorithm::getLayer(ternaryCensusSignature2,4));
-	// showImages(imagesToShow);
+	// testLayer3D()
 
 
 
@@ -68,38 +21,72 @@ int main(int argc, char* argv[])
 
 
 
+// std::cout<<"it's over"<<std::endl;
+	if (1)
+	// if (not(1))
+	{
+	cv::Mat image1;//=cv::imread("input_pair/rectified_ref.tif");//, cv::IMREAD_LOAD_GDAL);
+	cv::Mat image2;//=cv::imread("input_pair/rectified_sec.tif");//, cv::IMREAD_LOAD_GDAL);
+	std::string data_term_option;
+	// read_option(argc,argv,image1,image2,data_term_option);
+	int t_size;signed int offset;int Niter;std::string path_to_disparity;std::string method;
+	read_option(argc,argv,image1,image2,data_term_option,t_size,offset,Niter,path_to_disparity,method);
+	cv::Mat image1Gray;
+	cv::Mat image2Gray;
+	cv::Mat image1GrayDouble;
+	cv::Mat image2GrayDouble;
+	cv::cvtColor(image1, image1Gray, CV_RGB2GRAY);
+	cv::cvtColor(image2, image2Gray, CV_RGB2GRAY);
+	image1Gray.convertTo(image1GrayDouble, CV_64FC1);
+	image2Gray.convertTo(image2GrayDouble, CV_64FC1);
+	// int tsize=40;
+	// signed int offset=-20;
+	// int Niter=400;
+	cv::Mat data_term;
+	// for (int i=0;i<1;i++)
+	// {
+	MatchingAlgorithm theAlgorithm = MatchingAlgorithm(image1GrayDouble,image2GrayDouble,data_term_option, t_size,offset,Niter,path_to_disparity,method);
+}
+		// (theAlgorithm.get_data_term()).copyTo(data_term);
+	// }
+	// ROF3D rof3D=ROF3D(data_term);
+	int sizeCh[3]= {5,5,5};
+	// int sizeCh[3]= {data_term.size[0],data_term.size[1],data_term.size[2]};
+	cv::Mat M(3,sizeCh,CV_64FC1,1.0);
+	// data_term.copyTo(M);
+	// printContentsOf3DCVMat(M,true,"MB");
+	cv::randu(M,1.0,15.5);
+	// printContentsOf3DCVMat(M,true,"M");
+	// data_term=cv::Mat(3,sizeCh,CV_64FC1,1.0);
+	// printContentsOf3DCVMat(data_term,true,"data_term_after");
+	// ROF3D rof3D=ROF3D(M,10);
+	// rof3D.testMinimalityOfSolution(10,0.00001);
+	// rof3D.
 
 
 
-// // std::cout<<"it's over"<<std::endl;
-// 	cv::Mat image1;//=cv::imread("input_pair/rectified_ref.tif");//, cv::IMREAD_LOAD_GDAL);
-// 	cv::Mat image2;//=cv::imread("input_pair/rectified_sec.tif");//, cv::IMREAD_LOAD_GDAL);
-// 	std::string data_term_option;
-// 	// read_option(argc,argv,image1,image2,data_term_option);
-// 	int t_size;signed int offset;int Niter;std::string path_to_disparity;
-// 	read_option(argc,argv,image1,image2,data_term_option,t_size,offset,Niter,path_to_disparity);
-// 	cv::Mat image1Gray;
-// 	cv::Mat image2Gray;
-// 	cv::Mat image1GrayDouble;
-// 	cv::Mat image2GrayDouble;
-// 	cv::cvtColor(image1, image1Gray, CV_RGB2GRAY);
-// 	cv::cvtColor(image2, image2Gray, CV_RGB2GRAY);
-// 	image1Gray.convertTo(image1GrayDouble, CV_64FC1);
-// 	image2Gray.convertTo(image2GrayDouble, CV_64FC1);
-// 	// int tsize=40;
-// 	// signed int offset=-20;
-// 	// int Niter=400;
+	// double lArray[] = {-0.390742,0.296236,499.112,6.51223e-319,499.112,6.51223e-319,499.112,6.51223e-319};
+	double lArray[] = {1000,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1000};
+	// double lArray[]= {500,0,500};
+	// double lArray[] = {}
+	// double lArray[] = {499.112,6.51223e-319,499.112,6.51223e-319};
+	// double lArray[] = {500,0,500,0};
 
-// 	MatchingAlgorithm theAlgorithm = MatchingAlgorithm(image1GrayDouble,image2GrayDouble,data_term_option, t_size,offset,Niter,path_to_disparity);
+	// double lArray[] = {1,1,1,1};
+	// double lArray[] = {1000,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1000};
+  	std::vector<double> l (lArray, lArray + sizeof(lArray) / sizeof(double) );
+  	// double costArray[] = {6.93752,9.53447};
+  	// double costArray[] = {1,1,1};
+  	// double costArray[]={1,1,1,1};
+  	double costArray[] = {0.294118,0.294118,0.294118,0.294118,0,0.294118,0.294118,0.294118,0,0.294118,0,0,0.294118,0.294118,0,0,0.294118,0.294118,0,0.294118};
+  	  	// double costArray[] = {1,1,1,1,1,1,1};
+  	// double costArray[] = {0.294118,0.294118,0.294118,0.294118,0,0.294118,0.294118,0.294118,0,0.294118,0,0,0.294118,0.294118,0,0,0.294118,0.294118,0,0.294118};
+  	std::vector<double> cost (costArray, costArray + sizeof(costArray) / sizeof(double) );
+  	// ROF rof=ROF(1.0,l,cost);
+  	// rof.getSolution(true);
+  	// rof.testMinimialityOfSolution(10000,0.0001);
 
-
-
-
-
-
-
-
-
+// 2.60312 11.8222 5.23411 11.8126 1.52438 6.04725 12.6482 12.0096 3.68703 8.86533 6.33765 11.5027 11.3083 1.88262 9.43539 14.1303 6.69219 1.45258 14.2953 14.3229 5.15786 9.91403 3.66669 1.06507 12.4066 13.1654 13.7281 5.48689 7.29961 9.71131 9.44378 12.1289 1.4285 5.44143 11.1469 15.351 15.1396 6.6972 3.92183 12.3814
 
 
 
