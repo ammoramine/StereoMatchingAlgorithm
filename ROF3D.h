@@ -5,18 +5,33 @@
 #include "MatchingAlgorithm.h"
 #include "someTools.h"
 #include <string>
+#include <opencv/highgui.h>
+#include <opencv2/core/core.hpp>
+#include <stdio.h>
+#include <math.h>
+#include <vector>
+#include <stdlib.h>
+#include <iostream>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <stdexcept>
+#include <time.h>
+#include <fstream>
+#include <math.h>
+#include "census_computation.h"
 class ROF3D
 {
 	public:
-		ROF3D(const cv::Mat & data_term);
+		ROF3D(const cv::Mat & data_term,int m_Niter=100,const std::string &path_to_disparity="disparity.tif");
 		void initf(double delta=1000);
 
 		void launch();
 		void iterate_algorithm();
 		// void computeDual();
 		void computeMinSumTV();
-		cv::Mat getSolution();
+		void computeDisparity();
 
+		cv::Mat getSolution();
+		void testLab();
 
 
 		void proxTVlStar(const cv::Mat &input,cv::Mat &output);
@@ -29,6 +44,7 @@ class ROF3D
 		void proxTVvOnTau(const cv::Mat &input,cv::Mat &output);
 
 		// void step();
+		double computeTotalCost(const cv::Mat argument);
 		double computeCostForArgumentTVl(const cv::Mat &l,const cv::Mat &argument);
 		double computeCostForArgumentTVv(const cv::Mat &l,const cv::Mat &argument);
 		double computeCostForArgumentTVh(const cv::Mat &l,const cv::Mat &argument);
@@ -36,6 +52,7 @@ class ROF3D
 		void testMinimialityOfSolutionTVL(const cv::Mat &input,const cv::Mat &argmin,int numberOfTests,double margin);
 		void testMinimialityOfSolutionTVV(const cv::Mat &input,const cv::Mat &argmin,int numberOfTests,double margin);
 		void testMinimialityOfSolutionTVH(const cv::Mat &input,const cv::Mat &argmin,int numberOfTests,double margin);
+		void testMinimalityOfSolution(int numberOfTests,double margin);
 
 
 	private:
@@ -54,7 +71,7 @@ class ROF3D
 		
 		cv::Mat m_v;// the solution of the 3D ROF problem
 		cv::Mat m_u;// the solution of he ishikawa formulation
-		// cv::Mat
+		cv::Mat m_disparity;
 
 		double m_tau;
 		double m_t_current;
@@ -62,6 +79,8 @@ class ROF3D
 
 		int m_iteration;
 		int m_Niter;
+
+		std::string m_path_to_disparity;
 };
 
 #endif
