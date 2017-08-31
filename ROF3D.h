@@ -53,6 +53,7 @@ class ROF3D
 		void testMinimialityOfSolutionTVV(const cv::Mat &input,const cv::Mat &argmin,int numberOfTests,double margin);
 		void testMinimialityOfSolutionTVH(const cv::Mat &input,const cv::Mat &argmin,int numberOfTests,double margin);
 		void testMinimalityOfSolution(int numberOfTests,double margin);
+		void testContraintOnSolution(const cv::Mat &argminToTest);
 
 
 	private:

@@ -14,6 +14,39 @@ void ROF3D::testLab()
 	throw std::invalid_argument( "testing the algorithm" );
 
 }
+void ROF3D::testContraintOnSolution(const cv::Mat &argminToTest)
+// test if argminToTest verify the following contraint of the solutino 0<u(i,j,k)<1 u(i,j,0)=1 , u(i,j,m_t_size)=0 and u(i,j,k)>u(i,j,k+1)
+{
+	bool succes=true;
+	cv::Mat argminToTesti;
+	cv::Mat argminToTestij;
+
+	for (int i=0;i<m_y_size;i++)
+	{
+		argminToTesti=getRow3D(argminToTest,i);
+		for (int j=0;j<m_x_size;j++)
+		{
+			double * argminToTestij=argminToTesti.ptr<double>(j);
+			if (argminToTestij[0]!=1.0 )
+				{
+					std::cout<<"value of pixel (i,j,k) =  ("<<i<<","<<j<<",0)"<<"equal to :"<<argminToTestij[0]<<std::endl;
+					throw std::invalid_argument( "u(i,j,0)!=1" );
+				}
+			if (argminToTestij[m_t_size-1]!=0.0 )
+				{
+					throw std::invalid_argument( "u(i,j,m_t_size-1)!=0" );
+				}
+			for (int k=1;k<m_t_size-1;k++)
+			{
+				if(argminToTestij[k]<argminToTestij[k+1])
+				{
+					throw std::invalid_argument( "u(i,j,k)<u(i,j,k+1)" );
+				}
+			}
+		}
+	}
+	std::cout<<" result of the test : "<<succes<<std::endl;
+}
 
 ROF3D::ROF3D(const cv::Mat & data_term,int Niter,const std::string &path_to_disparity)
 //this function resolve argmin_{v}( Sigma g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+Sigma |v(i,j+1,k)-v(i,j,k)|+Sigma |v(i+1,j,k)-v(i,j,k)|+m_tau/2*Sigma |v(i,j,k)-m_f(i,j,k)|^2) with v(i,j,k)
@@ -231,18 +264,23 @@ void ROF3D::computeMinSumTV()
 {
 	// m_x1Current.mul(m_f)-TVh
 	m_v=m_f-(1/m_lambda)*(m_x1Current+m_x2Current+m_x3Current);
-
+	// printContentsOf3DCVMat(getLayer3D(m_v,0),false);std::cout<<"over \n";throw std::invalid_argument( "testing the algorithm" );
+	// printContentsOf3DCVMat(m_v,true,"m_v");
 	// m_u=convertTo((m_v < 0.0),CV_64FC1);
 	// cv::Mat doubleV0;
 	cv::Mat m_u_bool=(m_v < 0.0);
     m_u_bool.convertTo(m_u, CV_64FC1);
+    m_u=m_u/255.0;
+    // printContentsOf3DCVMat(getLayer3D(m_u,0),false);
+    // printContentsOf3DCVMat(getLayer3D(m_u,m_t_size-1),false);
+    // testContraintOnSolution(m_u);
+
     // cv::Mat v0 = (divv < 0.0);
 
 	// cv::Mat doubleV0;
     // v0.convertTo(doubleV0, CV_64FC1);
     // printContentsOf3DCVMat(m_f,false);
     // printContentsOf3DCVMat(m_v,false);
-    // printContentsOf3DCVMat(m_u,false);
 
 }
 
@@ -258,7 +296,7 @@ void ROF3D::computeDisparity()
 	// thresholded.copyTo(doubleThresholded);
  //    thresholded.convertTo(doubleThresholded, CV_64FC1);
  //    // printContentsOf3DCVMat(doubleThresholded,true);
-	double zoomFactor=1/(double(m_u.size[2]));
+	double zoomFactor=255.0/(double(m_u.size[2]));
 	// // cv::Mat thresholdedDouble;
  //    // thresholded.convertTo(thresholdedDouble, CV_64FC1);
  //    // int size[4]= {3,v.size[0],v.size[1],v.size[2]};
