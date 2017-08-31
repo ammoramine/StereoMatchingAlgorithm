@@ -13,12 +13,13 @@
 #include <fstream>
 #include <math.h>
 #include "census_computation.h"
+#include "ROF3D.h"
 
 class MatchingAlgorithm
 {
 
 	public:
-		MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2,std::string dataTermOption,int tsize,signed int offset,int Niter,std::string path_to_disparity);
+		MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2,std::string dataTermOption,int tsize,signed int offset,int Niter,std::string path_to_disparity,std::string method);
 		~MatchingAlgorithm();
 		
 		static cv::Mat  projCh(const cv::Mat &v);
@@ -46,6 +47,8 @@ class MatchingAlgorithm
 		void iterate_algorithm();
 		void launch();
 		void disparity_estimation();
+		cv::Mat get_data_term();
+
 		static cv::Mat getLayer(cv::Mat Matrix3D,int layer_number);
 		static cv::Mat getRow(const cv::Mat &Matrix4D,int numberRow,bool newOne=false);
 		static cv::Mat getRow3D(const cv::Mat &Matrix3D,int numberRow);

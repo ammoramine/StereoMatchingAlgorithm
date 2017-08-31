@@ -1,6 +1,6 @@
 #include "MatchingAlgorithm.h"
 
-MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2,std::string dataTermOption,int t_size,signed int offset,int Niter,std::string path_to_disparity)
+MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2,std::string dataTermOption,int t_size,signed int offset,int Niter,std::string path_to_disparity,std::string method)
 // tahe as input two gray images
 {
 	m_image1=new cv::Mat(image1.size(),image1.type());
@@ -30,12 +30,19 @@ MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2
 	m_dataTermOption=dataTermOption;
 	printProperties();
 	data_term_effic();
+	if (method=="direct")
+	{
 	init();
 
 	launch();
 
 
 	disparity_estimation();
+	}
+	else if(method=="accelerated")
+	{
+		ROF3D rof3D=ROF3D(m_g,m_path_to_disparity);
+	}
 
 }
 
@@ -626,7 +633,12 @@ void MatchingAlgorithm::disparity_estimation()
 
 
 
-
+	cv::Mat MatchingAlgorithm::get_data_term()
+	{
+		cv::Mat dataTermCopy;
+		m_g.copyTo(dataTermCopy);
+		return dataTermCopy;
+	}
 
 
 
