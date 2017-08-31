@@ -25,7 +25,7 @@ class ROF
 		double computeLambdaPlus(const double &lastComputedMLambda);// should be called only by computeBiggestIndexAndLambdaPlus
 		
 		void updateMessage();
-		void printInformationsForNode();
+		void printInformationsForNode(bool verbose=false);
         static double clip(const double &x,const double &lambdaMinus,const double &lambdaPlus);
         std::deque<double> getSolution(bool printIt=false);
         double computeCostForArgument1DROF(const std::deque<double> &argument);
