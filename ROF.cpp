@@ -30,6 +30,11 @@ ROF::ROF(const double &tau,const std::vector<double> &l)
 	m_l=std::vector<double>(l);
 	m_a=std::vector<double>(lengthROF,tau);
 	m_b=std::vector<double>(lengthROF,tau);for (int i=0;i<l.size();i++) m_b[i]*=l[i];
+	double sum=0;
+	for (int t=0;t<m_a.size();t++) sum+=std::abs(m_a[t]);
+	for (int t=0;t<m_b.size();t++) sum+=std::abs(m_b[t]);
+	// for (int t=0;t<m_a.size();t++) m_a[t]/=sum;
+	// for (int t=0;t<m_b.size();t++) m_b[t]/=sum;
 	
 	m_index_root=m_a.size()-1;
 	m_omegaijMinus=std::deque<double>(lengthROF-1,-1);m_omegaijMinus.push_back(0);//the last element should be zero w the other elements shold be equal to 1

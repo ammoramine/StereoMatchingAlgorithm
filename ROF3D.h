@@ -44,7 +44,17 @@ class ROF3D
 		void proxTVvOnTau(const cv::Mat &input,cv::Mat &output);
 
 		// void step();
-		double computeTotalCost(const cv::Mat argument);
+		double computeCostPrimal(const cv::Mat argument);
+		double computeCostDual(const cv::Mat &x1,const cv::Mat &x2,const cv::Mat &x3);
+
+		double computeTVHStar(const cv::Mat & argument,const double &precision=0.01);
+		double computeTVVStar(const cv::Mat & argument,const double &precision=0.01);
+		double computeTVLStar(const cv::Mat & argument,const double &precision=0.01);
+
+		static double computeTV1DStar(const cv::Mat & argument,const double & precision=0.01);
+		double computeTV1DStarWeighted(const cv::Mat & argument,const cv::Mat weight,const double & precision=0.01);
+
+
 		double computeCostForArgumentTVl(const cv::Mat &l,const cv::Mat &argument);
 		double computeCostForArgumentTVv(const cv::Mat &l,const cv::Mat &argument);
 		double computeCostForArgumentTVh(const cv::Mat &l,const cv::Mat &argument);
@@ -54,6 +64,7 @@ class ROF3D
 		void testMinimialityOfSolutionTVH(const cv::Mat &input,const cv::Mat &argmin,int numberOfTests,double margin);
 		void testMinimalityOfSolution(int numberOfTests,double margin);
 		void testContraintOnSolution(const cv::Mat &argminToTest);
+		cv::Mat getSolutionOfOriginalProblem();
 
 
 	private:
