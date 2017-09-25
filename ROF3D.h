@@ -44,8 +44,9 @@ class ROF3D
 		void proxTVvOnTau(const cv::Mat &input,cv::Mat &output);
 
 		// void step();
-		double computeCostPrimal(const cv::Mat argument);
+		double computeCostPrimal(const cv::Mat &argument);
 		double computeCostDual(const cv::Mat &x1,const cv::Mat &x2,const cv::Mat &x3);
+		// double computeGapInfBorn(const cv::Mat &x1,const cv::Mat &x2,const cv::Mat &x3,const cv::Mat &primal);
 
 		double computeTVHStar(const cv::Mat & argument,const double &precision=0.01);
 		double computeTVVStar(const cv::Mat & argument,const double &precision=0.01);

@@ -13,13 +13,12 @@
 #include "ROF3D.h"
 int main(int argc, char* argv[])
 {
-	// testLayer3D()
+	// // testLayer3D()
+	// double argumentArray[]={0.5,0.1,-0.5,-0.1,-1.0,1.011};
+	// cv::Mat argument(1,6,CV_64FC1,argumentArray);
+	// std::cout<<ROF3D::computeTV1DStar(argument)<<"\n"<<std::endl;
 
-
-
-
-
-
+	// throw std::invalid_argument( "testing the algorithm" );
 
 // std::cout<<"it's over"<<std::endl;
 	if (1)

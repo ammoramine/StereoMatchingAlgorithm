@@ -139,10 +139,10 @@ void ROF3D::testMinimalityOfSolution(int numberOfTests,double margin)
 			std::cout<<"\n \n for the "<<numberOfTests<<" generated arguments the minimizer succeded to minimize the cost function"<<std::endl;
 		}
 }
-double ROF3D::computeCostPrimal(const cv::Mat argument)
- //argument should de declared and initialized, this function compute the value of the cost function (the function to minimize):
-
- // Sigma |v(i+1,j,k)-v(i,j,k)|+ Sigma |v(i,j+1,k)-v(i,j,k)|+ Sigma |v(i,j,k+1)-v(i,j,k)|*m_g(i,j,k) +Sigme (v(i,j,k)-m_f(i,j,k))
+double ROF3D::computeCostPrimal(const cv::Mat &argument)
+ //"argument" should de declared and initialized, this function compute the value of the cost function (the function to minimize):
+ // "argument" is the primal variable of the primal problem
+ // Sigma |v(i+1,j,k)-v(i,j,k)|+ Sigma |v(i,j+1,k)-v(i,j,k)|+ Sigma |v(i,j,k+1)-v(i,j,k)|*m_g(i,j,k) +m_lambda/2 Sigma (v(i,j,k)-m_f(i,j,k))
 
 {
 	double result=0;
@@ -152,6 +152,7 @@ double ROF3D::computeCostPrimal(const cv::Mat argument)
 	// cv::Mat argumenti;cv::Mat m_gi;
 	// cv::Mat argumentij;cv::Mat m_gij;
 
+	//computing weighted TVL
 	for (int i=0;i<sizeArgumenty;i++)
 	{
 		cv::Mat argumenti=getRow3D(argument,i);
@@ -170,8 +171,9 @@ double ROF3D::computeCostPrimal(const cv::Mat argument)
 			}
 		}
 	}
-	// cv::Mat argumentk;
-	// cv::Mat argumentij;cv::Mat m_gij;
+	
+
+	//computing TVH
 	for (int i=0;i<sizeArgumenty;i++)
 			{
 				cv::Mat argumenti=getRow3D(argument,i);
@@ -190,8 +192,8 @@ double ROF3D::computeCostPrimal(const cv::Mat argument)
 				}
 		}
 	}
-
-	for (int i=0;i<sizeArgumenty;i++)
+	//computing TVV
+	for (int i=0;i<sizeArgumenty-1;i++)
 		{
 			cv::Mat argumenti=getRow3D(argument,i);
 			cv::Mat argumentip1=getRow3D(argument,i+1);
@@ -199,7 +201,7 @@ double ROF3D::computeCostPrimal(const cv::Mat argument)
 			// {
 			// 	result+=0.5*m_tau*pow(argument.at<double>(i,j,k)-l.at<double>(i,j,k),2);
 			// }
-		for (int j=0;j<sizeArgumentx-1;j++)
+		for (int j=0;j<sizeArgumentx;j++)
 			{
 			cv::Mat argumentij=getRow2D(argumenti,j);
 			cv::Mat argumentip1j=getRow2D(argumentip1,j);
@@ -209,21 +211,25 @@ double ROF3D::computeCostPrimal(const cv::Mat argument)
 				}
 			}
 		}
-
-	for (int i=0;i<sizeArgumenty;i++)
-		{
-			cv::Mat argumenti=getRow3D(argument,i);
-			cv::Mat m_fi=getRow3D(m_f,i);
-			for (int j=0;j<sizeArgumentx;j++)
-			{
-				cv::Mat argumentij=getRow2D(argumenti,j);
-				cv::Mat m_fij=getRow2D(m_fi,j);
-				for (int k=0;k<sizeArgumentt;k++)
-				{
-					result+=pow(argumentij.at<double>(k)-m_fij.at<double>(k),2);
-				}
-			}
-		}
+	double resultQuadraticTerm=0;
+	// for (int i=0;i<sizeArgumenty;i++)
+	// 	{
+	// 		cv::Mat argumenti=getRow3D(argument,i);
+	// 		cv::Mat m_fi=getRow3D(m_f,i);
+	// 		for (int j=0;j<sizeArgumentx;j++)
+	// 		{
+	// 			cv::Mat argumentij=getRow2D(argumenti,j);
+	// 			cv::Mat m_fij=getRow2D(m_fi,j);
+	// 			for (int k=0;k<sizeArgumentt;k++)
+	// 			{
+	// 				resultQuadraticTerm+=pow(argumentij.at<double>(k)-m_fij.at<double>(k),2);
+	// 			}
+	// 		}
+	// 	}
+	cv::Mat QuadraticTerm=argument-m_f;
+	resultQuadraticTerm=cv::sum((QuadraticTerm.mul(QuadraticTerm)))[0];
+	resultQuadraticTerm=resultQuadraticTerm*m_lambda*0.5;
+	result+=resultQuadraticTerm;
 
 	return result;
 }
@@ -232,7 +238,7 @@ double ROF3D::computeCostPrimal(const cv::Mat argument)
 double ROF3D::computeCostDual(const cv::Mat &x1,const cv::Mat &x2,const cv::Mat &x3)
 // compute the dual cost should always be smaller than the primal cost
 // the expresion of the dual is the following:
-// -TVHStar(x1)-TVVStar(x2)-TVLStar(x3)+<x1+x2+x3/m_f>-1/2lambda*||x1+x2+x3||^2
+// -TVHStar(x1)-TVVStar(x2)-TVLStar(x3)+<x1+x2+x3/m_f>-1/(2lambda)*||x1+x2+x3||^2
 {
 	double result=0;
 	result-=computeTVHStar(x1);
@@ -242,10 +248,11 @@ double ROF3D::computeCostDual(const cv::Mat &x1,const cv::Mat &x2,const cv::Mat 
 	{
 		cv::Mat sumXi=x1+x2+x3;
 		result+=cv::sum(sumXi.mul(m_f))[0];
-		result-=cv::sum((sumXi.mul(sumXi))/(2*m_lambda))[0];
+		result-=(cv::sum((sumXi.mul(sumXi)))[0])/(2.0*m_lambda);
 	}
 	return result;
 }
+
 
 double ROF3D::computeTVHStar(const cv::Mat & argument,const double &precision)
 //compute the conjugate of the  TVH= Sigma |v(i,j+1,k)-v(i,j,k)|
@@ -263,7 +270,7 @@ double ROF3D::computeTVHStar(const cv::Mat & argument,const double &precision)
 		{
 			argumentipk=getLayer2D(argumenti,k);
 			result=computeTV1DStar(argumentipk,precision);
-			if (result==INFINITY) break;
+			if (result==INFINITY) return result;
 		}
 	}
 	return result;
@@ -285,7 +292,7 @@ double ROF3D::computeTVVStar(const cv::Mat & argument,const double &precision)
 		{
 			argumentpjk=getLayer2D(argumentppk,j);
 			computeTV1DStar(argumentpjk,precision);
-			if (result==INFINITY) break;
+			if (result==INFINITY) return result;
 		}
 	}
 	return result;
@@ -293,7 +300,7 @@ double ROF3D::computeTVVStar(const cv::Mat & argument,const double &precision)
 
 
 double ROF3D::computeTVLStar(const cv::Mat & argument,const double &precision)
-//compute the conjugate of  TVL=Sigma g(i,j,k)*|v(i+1,j,k)-v(i,j,k)|.
+//compute the conjugate of  TVL=Sigma g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|.
 //The argument is an cv::Mat object of dimension 3 and of type double
 // m_g is normaly computed at the initialisation step
 {
@@ -310,7 +317,7 @@ double ROF3D::computeTVLStar(const cv::Mat & argument,const double &precision)
 			argumentij=getRow2D(argumenti,j);
 			gij=getRow2D(gi,j);
 			computeTV1DStarWeighted(argumentij,gij,precision);
-			if (result==INFINITY) break;
+			if (result==INFINITY) return result;
 			// if (infinityOrNot==true) break;
 		}
 	}
@@ -318,7 +325,7 @@ double ROF3D::computeTVLStar(const cv::Mat & argument,const double &precision)
 }
 
 double ROF3D::computeTV1DStar(const cv::Mat & argument,const double & precision)
-//compute the conjugate of the weighted TV1D.
+//compute the conjugate of  TV1D. (with TV1D=Sigma_{1 <=j <= N-1} |u_{j+1}-u_{j}|)
 //The argument is an cv::Mat object of dimension 1 and of type double
 // the result is equal to zero only if |Sigma_{1<=k<=h} argument[k]| <=1 for all possible h and  Sigma_{k} argument[k]=0 (smaller then the term precision taking into account the numerical inmprecision)
 {
@@ -332,7 +339,8 @@ double ROF3D::computeTV1DStar(const cv::Mat & argument,const double & precision)
 		{
 			// infinityOrNot=true;
 			result=INFINITY;
-			break;
+			return result;
+			// break;
 		}
 	}
 	sum+=argument.at<double>(argument.size[1]-1);
@@ -363,7 +371,8 @@ double ROF3D::computeTV1DStarWeighted(const cv::Mat & argument,const cv::Mat wei
 		{
 			// infinityOrNot=true;
 			result=INFINITY;
-			break;
+			return result;
+			// break;
 		}
 	}
 	sum+=argument.at<double>(argument.size[1]-1);
@@ -392,11 +401,11 @@ void ROF3D::launch()
 	{
 		iterate_algorithm();
 		// if(m_iteration%10==0) disparity_estimation();
-		computeMinSumTV();
+		computeMinSumTV();//m_v=m_f-(1/m_lambda)*(m_x1Current+m_x2Current+m_x3Current);
 		computeDisparity();
 		double primalCost=computeCostPrimal(m_v);
 		double dualCost=computeCostDual(m_x1Current,m_x2Current,m_x3Current);
-		std::cout<<" the cost of the dual is :"<<primalCost<<" and the cost of the dual is : "<<dualCost<<std::endl;
+		std::cout<<" the cost of the primal is :"<<primalCost<<" and the cost of the dual is : "<<dualCost<<std::endl;
 		std::cout<<"the dual gap is : "<<primalCost-dualCost;
 	}
 }
@@ -411,10 +420,10 @@ void ROF3D::iterate_algorithm()
 	m_x1Current.copyTo(m_x1Previous);
 	m_x2Current.copyTo(m_x2Previous);
 	proxtauTVhStar(m_x1Bar- m_tau*(m_x1Bar+m_x2Bar+m_x3Current- m_lambda*m_f),m_x1Current);
-	proxtauTVhStar(m_x2Bar- m_tau*(m_x1Bar+m_x2Bar+m_x3Current- m_lambda*m_f),m_x2Current);
+	proxtauTVvStar(m_x2Bar- m_tau*(m_x1Bar+m_x2Bar+m_x3Current- m_lambda*m_f),m_x2Current);
 
 	m_iteration+=1;
-	std::cout<<"iteration number : "<<m_iteration<<" performed "<<std::endl;
+	std::cout<<"\n iteration number : "<<m_iteration<<" performed "<<std::endl;
 
 	// std::cout<<"iteration number : "<<m_iteration<<" performed "<<" and gap equal to "<<m_gap<<std::endl;
 
@@ -493,19 +502,20 @@ void ROF3D::proxTVlStar(const cv::Mat &input,cv::Mat &output)
 }
 void ROF3D::proxtauTVhStar(const cv::Mat &input,cv::Mat &output)
 {
-	proxTVhOnTau(1/m_tau*input,output);
+	proxTVhOnTau((1/m_tau)*input,output);
 	output=input-m_tau*output;
 }
 void ROF3D::proxtauTVvStar(const cv::Mat &input,cv::Mat &output)
 {
-	proxTVvOnTau(1/m_tau*input,output);
+	proxTVvOnTau((1/m_tau)*input,output);
 	output=input-m_tau*output;
 }
 
 
 void ROF3D::proxTVl(const cv::Mat &input,cv::Mat &output)
 
-// this function  computes prox(1/m_tau*TVl(g))(input): it resolves the problem argmin( Sigma m_g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+m_tau/2*Sigma|v(i,j,k)-input(i,j,k)|) with v(i,j,k) on R
+// this function  computes prox(TVl(g))(input): it resolves the problem argmin( Sigma m_g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+m_tau/2*Sigma|v(i,j,k)-input(i,j,k)|) with v(i,j,k) on R, which is the element "output"
+// description: it resolves the problem argmin( Sigma m_g(i,j,k)*|v_{i,j}(k+1)-v_{i,j}(k)|+m_tau/2*Sigma|v_{i,j}(k)-input(i,j,k)|)
 {
 	
 	
