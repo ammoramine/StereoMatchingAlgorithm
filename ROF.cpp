@@ -1,6 +1,6 @@
 #include "ROF.h"
 
-ROF::ROF(const double &tau,const std::vector<double> &l,const std::vector<double> &costij)
+ROF::ROF(const double &tau,const std::vector<double> &l,const std::vector<double> &costij,bool multiThreading)
 // this function resolve argmin( Sigma cost(ij)|v(i+1)-v(i)|+tau/2*Sigma|vi-li|^2) with vi on R
 // costij should be smaller than l on size by one element, and should contains postive elements
 {
@@ -18,10 +18,36 @@ ROF::ROF(const double &tau,const std::vector<double> &l,const std::vector<double
 	m_omegaijMinus[m_omegaijMinus.size()-1]=m_omegaijPlus[m_omegaijMinus.size()-1];
 	// m_omegaijPlus.push_back(0);m_omegaijMinus.push_back(0);
 	//the last element should be zero w the other elements shold be equal to the costij
-	
-	computeROF();
-
+	if (multiThreading==false)
+	{
+		computeROF();
+	}
 }
+
+// ROF::ROF(const double &tau,const std::vector<double> &l,const std::vector<double> &costij,std::deque<double> &theSolution)
+// // this function resolve argmin( Sigma cost(ij)|v(i+1)-v(i)|+tau/2*Sigma|vi-li|^2) with vi on R
+// // costij should be smaller than l on size by one element, and should contains postive elements, it also returns the solution as the last argument
+// {
+// 	m_tau=tau;
+// 	int lengthROF=l.size();
+// 	m_l=std::vector<double>(l);
+// 	m_a=std::vector<double>(lengthROF,tau);
+// 	m_b=std::vector<double>(lengthROF,tau);for (int i=0;i<l.size();i++) m_b[i]*=l[i];
+	
+// 	m_index_root=m_a.size()-1;
+// 	m_omegaijPlus=std::deque<double>(costij.begin(),costij.end());m_omegaijPlus.push_back(0);
+// 	//the last element should be zero w the other elements shold be equal to costij
+
+// 	m_omegaijMinus.resize(lengthROF);for (int i=0;i<lengthROF;i++) m_omegaijMinus[i]=-m_omegaijPlus[i];
+// 	m_omegaijMinus[m_omegaijMinus.size()-1]=m_omegaijPlus[m_omegaijMinus.size()-1];
+// 	// m_omegaijPlus.push_back(0);m_omegaijMinus.push_back(0);
+// 	//the last element should be zero w the other elements shold be equal to the costij
+	
+// 	computeROF();
+// 	theSolution=getSolution(false);
+
+// }
+
 ROF::ROF(const double &tau,const std::vector<double> &l)
 // this function resolve argmin( Sigma |v(i+1)-v(i)|+tau/2*Sigma|vi-li|^2) with vi on R
 {
@@ -30,9 +56,9 @@ ROF::ROF(const double &tau,const std::vector<double> &l)
 	m_l=std::vector<double>(l);
 	m_a=std::vector<double>(lengthROF,tau);
 	m_b=std::vector<double>(lengthROF,tau);for (int i=0;i<l.size();i++) m_b[i]*=l[i];
-	double sum=0;
-	for (int t=0;t<m_a.size();t++) sum+=std::abs(m_a[t]);
-	for (int t=0;t<m_b.size();t++) sum+=std::abs(m_b[t]);
+	// double sum=0;
+	// for (int t=0;t<m_a.size();t++) sum+=std::abs(m_a[t]);
+	// for (int t=0;t<m_b.size();t++) sum+=std::abs(m_b[t]);
 	// for (int t=0;t<m_a.size();t++) m_a[t]/=sum;
 	// for (int t=0;t<m_b.size();t++) m_b[t]/=sum;
 	
@@ -338,6 +364,23 @@ void ROF::computeROF()
 
 	}
 	computeROFBackwardPass();
+	// printInformationsForNode();
+}
+
+void ROF::computeROF(std::deque<double> theSolution)
+{
+	
+	initForwardPass();
+
+	// printInformationsForNode();
+	for (m_index_current_node=1;m_index_current_node<=m_index_root;m_index_current_node++)
+	{
+		iterateForwardPass();
+		// printInformationsForNode();
+
+	}
+	computeROFBackwardPass();
+	theSolution=m_x;
 	// printInformationsForNode();
 }
 

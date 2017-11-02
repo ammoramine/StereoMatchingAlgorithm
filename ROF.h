@@ -11,10 +11,12 @@
 class ROF 
 {
 	public:
-		ROF(const double &tau,const std::vector<double> &l,const std::vector<double> &costij);
+		ROF(const double &tau,const std::vector<double> &l,const std::vector<double> &costij,bool multiThreading=false);
+		// ROF(const double &tau,const std::vector<double> &l,const std::vector<double> &costij,std::deque<double> &theSolution);
 		ROF(const double &tau,const std::vector<double> &l);
 		ROF(const std::vector<double> &a,const std::vector<double> &b);
 		void computeROF();
+		void computeROF(std::deque<double> theSolution);
 		void initForwardPass();
 		void iterateForwardPass();
 		void computeROFBackwardPass();
