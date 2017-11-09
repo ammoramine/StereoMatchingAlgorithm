@@ -1,17 +1,35 @@
 #include "ROF3D.h"
 
+// void ROF3D::testLab()
+// // just to do some tests for debugging
+// {
+// 	int size[3] = { m_y_size,m_x_size,m_t_size};
+// 	cv::Mat input=cv::Mat(3, size, CV_64FC1, 5.0);
+// 	cv::Mat output=cv::Mat(3,size,CV_64FC1, 0.0);
+// 	proxTVl(input,output);
+// 	printContentsOf3DCVMat(output,true,"output");
+// 	// double costArgmin=computeCostForArgumentTVh(m_x3Current,output);
+// 	testMinimialityOfSolutionTVL(input,output,25,0.00001);
+// 	throw std::invalid_argument( "testing the algorithm" );
 
-void ROF3D::testLab()
-// just to do some tests for debugging
+// }
+void ROF3D::computeROFSolution(const double &tau,const std::vector<double> &l,const std::vector<double> &costij,double * output)
 {
-	int size[3] = { m_y_size,m_x_size,m_t_size};
-	cv::Mat input=cv::Mat(3, size, CV_64FC1, 5.0);
-	cv::Mat output=cv::Mat(3,size,CV_64FC1, 0.0);
-	proxTVl(input,output);
-	printContentsOf3DCVMat(output,true,"output");
-	// double costArgmin=computeCostForArgumentTVh(m_x3Current,output);
-	testMinimialityOfSolutionTVL(input,output,25,0.00001);
-	throw std::invalid_argument( "testing the algorithm" );
+	ROF rof=ROF(tau,l,costij);
+	std::deque<double> outputDeque=rof.getSolution(false);
+	for (int k=0;k<outputDeque.size();k++)
+		{
+			*(output+k)=outputDeque[k];
+		}
+}
+void ROF3D::computeROFSolution(const double &tau,const std::vector<double> &l,const std::vector<double> &costij,double * output)
+{
+	ROF rof=ROF(tau,l);
+	std::deque<double> outputDeque=rof.getSolution(false);
+	for (int k=0;k<outputDeque.size();k++)
+		{
+			*(output+k)=outputDeque[k];
+		}
 
 }
 void ROF3D::testContraintOnSolution(const cv::Mat &argminToTest)
@@ -548,15 +566,16 @@ void ROF3D::proxTVl(const cv::Mat &input,cv::Mat &output)
 
 			double * gij=gi.ptr<double>(j);
 			gijVect=std::vector<double>(gij,gij+sizeInputt-1);
+			computeROFSolution(1.0,inputijVect,gijVect,outputij);
 
-			ROF rof=ROF(1.0,inputijVect,gijVect);// this function resolves argmin_{u}( Sigma gij(k)|u(k+1)-u(k)|+1/2*Sigma|u(k)-inputij(k)|^2)
-			//this function resolve argmin_{v(i,j,.)}( Sigma_{k} g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+1/2*Sigma_{k} |v(i,j,k)-l(i,j,k)|^2) with v(i,j,k) on R
-			outputijDeque=rof.getSolution(false);
-			// printContentsOf3DCVMat(getRow2D(inputi,j),true,"fij.txt");
-			for (int k=0;k<sizeInputt;k++)
-			{
-				outputij[k]=outputijDeque[k];
-			}
+			// ROF rof=ROF(1.0,inputijVect,gijVect);// this function resolves argmin_{u}( Sigma gij(k)|u(k+1)-u(k)|+1/2*Sigma|u(k)-inputij(k)|^2)
+			// //this function resolve argmin_{v(i,j,.)}( Sigma_{k} g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+1/2*Sigma_{k} |v(i,j,k)-l(i,j,k)|^2) with v(i,j,k) on R
+			// outputijDeque=rof.getSolution(false);
+			// // printContentsOf3DCVMat(getRow2D(inputi,j),true,"fij.txt");
+			// for (int k=0;k<sizeInputt;k++)
+			// {
+			// 	outputij[k]=outputijDeque[k];
+			// }
 
 			// ROF(m_m_tau,fijVect);
 			// double bArray[] = {1,1,1,1,1};
@@ -564,6 +583,7 @@ void ROF3D::proxTVl(const cv::Mat &input,cv::Mat &output)
 		}
 	}
 }
+
 
 
 void ROF3D::proxTVvOnTau(const cv::Mat &input,cv::Mat &output)
@@ -600,6 +620,7 @@ void ROF3D::proxTVvOnTau(const cv::Mat &input,cv::Mat &output)
 
 			// // double * gij=gi.ptr<double>(j);
 			// // gijVect=std::vector<double>(gij,gij+sizeInputt-1);
+			computeROFSolution(m_tau,inputpjkVect,gijVect,outputij);
 
 			ROF rof=ROF(m_tau,inputpjkVect);// this function resolves argmin_{u}( Sigma |u(k+1)-u(k)|+m_tau/2*Sigma|u(k)-inputpjk(k)|^2)
 			// //this function resolve argmin_{v(i,j,.)}( Sigma_{k} g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+m_tau/2*Sigma_{k} |v(i,j,k)-l(i,j,k)|^2) with v(i,j,k) on R

@@ -18,9 +18,12 @@
 #include <fstream>
 #include <math.h>
 #include "census_computation.h"
+#include <thread>
+
 class ROF3D
 {
 	public:
+		void computeROFSolution(const double &tau,const std::vector<double> &l,const std::vector<double> &costij,double * outputij);
 		ROF3D(const cv::Mat & data_term,int m_Niter=100,const std::string &path_to_disparity="disparity.tif");
 		void initf(double delta=1000);
 
