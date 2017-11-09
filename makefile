@@ -24,15 +24,14 @@ LINK_PARAMS=$(foreach d, $(LINK), -L$d)
 
 exec: $(OBJ)
 	#g++ -o $@ $^ $(LINK_PARAMS) 
-	g++ -o $@ $^  -g  `pkg-config opencv --libs`
+	g++ -o $@ $^  -g  `pkg-config opencv --libs` -lpthread
 # assemblage
 
 # matching_algorithm.o: computeRPCFromCub.cpp
 # 	g++ -o $@ -c $< $(CFFLAGS) $(INC_PARAMS)
 
 %.o: %.cpp
-	# g++ -o hello.o -c hello.cpp 
-	g++ -o $@ -c $< $(CFFLAGS) `pkg-config opencv --cflags`
+	g++ -o $@ -c $< $(CFFLAGS) `pkg-config opencv --cflags` -std=c++11 
 # édition de liens
 	
 clean:
