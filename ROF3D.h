@@ -41,12 +41,18 @@ class ROF3D
 		void proxtauTVhStar(const cv::Mat &input,cv::Mat &output);
 		void proxtauTVvStar(const cv::Mat &input,cv::Mat &output);
 
-
 		void proxTVl(const cv::Mat &input,cv::Mat &output);
 		void proxTVhOnTau(const cv::Mat &input,cv::Mat &output);
 		void proxTVvOnTau(const cv::Mat &input,cv::Mat &output);
 
+		void proxTVLij(const cv::Mat &inputi,cv::Mat &outputi,const cv::Mat &gi,int j);
+		void proxTVvOnTaupjk(const cv::Mat &inputppk, cv::Mat &output,int j,int k);//outputppk won't be used, but rather because the methods getLayer3D() and getLayer2D() return just a copy
+		void proxTVhOnTauipk(const cv::Mat &inputi, cv::Mat &outputi,int k);
+
+
+
 		// void step();
+
 		double computeCostPrimal(const cv::Mat &argument);
 		double computeCostDual(const cv::Mat &x1,const cv::Mat &x2,const cv::Mat &x3);
 		// double computeGapInfBorn(const cv::Mat &x1,const cv::Mat &x2,const cv::Mat &x3,const cv::Mat &primal);

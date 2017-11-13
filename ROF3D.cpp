@@ -13,25 +13,25 @@
 // 	throw std::invalid_argument( "testing the algorithm" );
 
 // }
-void ROF3D::computeROFSolution(const double &tau,const std::vector<double> &l,const std::vector<double> &costij,double * output)
-{
-	ROF rof=ROF(tau,l,costij);
-	std::deque<double> outputDeque=rof.getSolution(false);
-	for (int k=0;k<outputDeque.size();k++)
-		{
-			*(output+k)=outputDeque[k];
-		}
-}
-void ROF3D::computeROFSolution(const double &tau,const std::vector<double> &l,const std::vector<double> &costij,double * output)
-{
-	ROF rof=ROF(tau,l);
-	std::deque<double> outputDeque=rof.getSolution(false);
-	for (int k=0;k<outputDeque.size();k++)
-		{
-			*(output+k)=outputDeque[k];
-		}
+// void ROF3D::computeROFSolution(const double &tau,const std::vector<double> &l,const std::vector<double> &costij,double * output)
+// {
+// 	ROF rof=ROF(tau,l,costij);
+// 	std::deque<double> outputDeque=rof.getSolution(false);
+// 	for (int k=0;k<outputDeque.size();k++)
+// 		{
+// 			*(output+k)=outputDeque[k];
+// 		}
+// }
+// void ROF3D::computeROFSolution(const double &tau,const std::vector<double> &l,const std::vector<double> &costij,double * output)
+// {
+// 	ROF rof=ROF(tau,l);
+// 	std::deque<double> outputDeque=rof.getSolution(false);
+// 	for (int k=0;k<outputDeque.size();k++)
+// 		{
+// 			*(output+k)=outputDeque[k];
+// 		}
 
-}
+// }
 void ROF3D::testContraintOnSolution(const cv::Mat &argminToTest)
 // test if argminToTest verify the following contraint of the solutino 0<u(i,j,k)<1 u(i,j,0)=1 , u(i,j,m_t_size)=0 and u(i,j,k)>u(i,j,k+1)
 {
@@ -559,14 +559,15 @@ void ROF3D::proxTVl(const cv::Mat &input,cv::Mat &output)
 
 		for (int j=0;j<sizeInputx;j++)
 		{
-			double * inputij=inputi.ptr<double>(j);
-			inputijVect=std::vector<double>(inputij,inputij+sizeInputt);
+			proxTVLij(inputi,outputi,gi,j);
+			// double * inputij=inputi.ptr<double>(j);
+			// inputijVect=std::vector<double>(inputij,inputij+sizeInputt);
 
-			double * outputij=outputi.ptr<double>(j);
+			// double * outputij=outputi.ptr<double>(j);
 
-			double * gij=gi.ptr<double>(j);
-			gijVect=std::vector<double>(gij,gij+sizeInputt-1);
-			computeROFSolution(1.0,inputijVect,gijVect,outputij);
+			// double * gij=gi.ptr<double>(j);
+			// gijVect=std::vector<double>(gij,gij+sizeInputt-1);
+			// // computeROFSolution(1.0,inputijVect,gijVect,outputij);
 
 			// ROF rof=ROF(1.0,inputijVect,gijVect);// this function resolves argmin_{u}( Sigma gij(k)|u(k+1)-u(k)|+1/2*Sigma|u(k)-inputij(k)|^2)
 			// //this function resolve argmin_{v(i,j,.)}( Sigma_{k} g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+1/2*Sigma_{k} |v(i,j,k)-l(i,j,k)|^2) with v(i,j,k) on R
@@ -583,6 +584,27 @@ void ROF3D::proxTVl(const cv::Mat &input,cv::Mat &output)
 		}
 	}
 }
+
+void ROF3D::proxTVLij(const cv::Mat &inputi,cv::Mat &outputi,const cv::Mat &gi,int j)
+{
+	const double * inputij=inputi.ptr<double>(j);
+	int sizeInputt=inputi.size[1];
+	std::vector<double> inputijVect=std::vector<double>(inputij,inputij+sizeInputt);
+
+	double * outputij=outputi.ptr<double>(j);
+
+	const double * gij=gi.ptr<double>(j);
+	std::vector<double> gijVect=std::vector<double>(gij,gij+sizeInputt-1);// We remove the last elements of gij because, we won't need it on the ROF computation
+
+	ROF rof=ROF(1.0,inputijVect,gijVect);// this function resolves argmin_{u}( Sigma gij(k)|u(k+1)-u(k)|+1/2*Sigma|u(k)-inputij(k)|^2)
+			//this function resolve argmin_{v(i,j,.)}( Sigma_{k} g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+1/2*Sigma_{k} |v(i,j,k)-l(i,j,k)|^2) with v(i,j,k) on R
+	std::deque<double> outputijDeque=rof.getSolution(false); // printContentsOf3DCVMat(getRow2D(inputi,j),true,"fij.txt");
+	
+	for (int k=0;k<sizeInputt;k++)
+		{
+			outputij[k]=outputijDeque[k];
+		}
+}	
 
 
 
@@ -610,38 +632,62 @@ void ROF3D::proxTVvOnTau(const cv::Mat &input,cv::Mat &output)
 
 		for (int j=0;j<sizeInputx;j++)
 		{
-			inputpjk=getLayer2D(inputppk,j);inputpjk.copyTo(inputpjkVect);//matrix.col(0).copyTo(vec);
-			// outputpjk=getLayer2D(outputppk,i);
+			proxTVvOnTaupjk(inputppk,output,j,k);
+			// inputpjk=getLayer2D(inputppk,j);inputpjk.copyTo(inputpjkVect);//matrix.col(0).copyTo(vec);
+			// // outputpjk=getLayer2D(outputppk,i);
 
-			// double * inputpjk=inputppk.ptr<double>(j);
-			// inputpjkVect=std::vector<double>(inputpjk,inputpjk+sizeInputy);
+			// // double * inputpjk=inputppk.ptr<double>(j);
+			// // inputpjkVect=std::vector<double>(inputpjk,inputpjk+sizeInputy);
 
-			// double * outputpjk=inputppk.ptr<double>(j);
+			// // double * outputpjk=inputppk.ptr<double>(j);
 
-			// // double * gij=gi.ptr<double>(j);
-			// // gijVect=std::vector<double>(gij,gij+sizeInputt-1);
-			computeROFSolution(m_tau,inputpjkVect,gijVect,outputij);
+			// // // double * gij=gi.ptr<double>(j);
+			// // // gijVect=std::vector<double>(gij,gij+sizeInputt-1);
+			// // computeROFSolution(m_tau,inputpjkVect,gijVect,outputij);
 
-			ROF rof=ROF(m_tau,inputpjkVect);// this function resolves argmin_{u}( Sigma |u(k+1)-u(k)|+m_tau/2*Sigma|u(k)-inputpjk(k)|^2)
-			// //this function resolve argmin_{v(i,j,.)}( Sigma_{k} g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+m_tau/2*Sigma_{k} |v(i,j,k)-l(i,j,k)|^2) with v(i,j,k) on R
-			outputpjkDeque=rof.getSolution(false);
-			// (uchar *) adress=output.data+output.size[1]*j+output.size[2]*k;
-			// int limit=output.step[0]* output.step[1]*j+output.step[2]*k
-			for (int i=0;i<sizeInputy;i++)
-			{
-				output.at<double>(cv::Vec<int,3>(i,j,k))=outputpjkDeque[i];
-			}
-			// // printContentsOf3DCVMat(getRow2D(inputi,j),true,"fij.txt");
-			// for (int i=0;k<sizeInputy;k++)
+			// ROF rof=ROF(m_tau,inputpjkVect);// this function resolves argmin_{u}( Sigma |u(k+1)-u(k)|+m_tau/2*Sigma|u(k)-inputpjk(k)|^2)
+			// // //this function resolve argmin_{v(i,j,.)}( Sigma_{k} g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+m_tau/2*Sigma_{k} |v(i,j,k)-l(i,j,k)|^2) with v(i,j,k) on R
+			// outputpjkDeque=rof.getSolution(false);
+			// // (uchar *) adress=output.data+output.size[1]*j+output.size[2]*k;
+			// // int limit=output.step[0]* output.step[1]*j+output.step[2]*k
+			// for (int i=0;i<sizeInputy;i++)
 			// {
-			// 	outputpjk[k]=outputijDeque[k];
+			// 	output.at<double>(cv::Vec<int,3>(i,j,k))=outputpjkDeque[i];
 			// }
+			// // // printContentsOf3DCVMat(getRow2D(inputi,j),true,"fij.txt");
+			// // for (int i=0;k<sizeInputy;k++)
+			// // {
+			// // 	outputpjk[k]=outputijDeque[k];
+			// // }
 
-			// ROF(m_m_tau,fijVect);
-			// double bArray[] = {1,1,1,1,1};
-  	// std::vector<double> a (aArray, lArray + sizeof(lArray) / sizeof(double) );
+			// // ROF(m_m_tau,fijVect);
+			// // double bArray[] = {1,1,1,1,1};
+  	// // std::vector<double> a (aArray, lArray + sizeof(lArray) / sizeof(double) );
 		}
 	}
+}
+
+
+void ROF3D::proxTVvOnTaupjk(const cv::Mat &inputppk, cv::Mat &output,int j,int k)
+
+{
+
+	cv::Mat inputpjk=getLayer2D(inputppk,j);
+	std::vector<double> inputpjkVect;
+	inputpjk.copyTo(inputpjkVect);
+	// outputpjk=getLayer2D(outputppk,j);
+	// double * inputij=inputi.ptr<double>(j);
+	int sizeInputy=inputpjk.size[0];
+	ROF rof=ROF(m_tau,inputpjkVect);// this function resolves argmin_{u}( Sigma gij(k)|u(k+1)-u(k)|+1/2*Sigma|u(k)-inputij(k)|^2)
+			//this function resolve argmin_{v(i,j,.)}( Sigma_{k} g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+1/2*Sigma_{k} |v(i,j,k)-l(i,j,k)|^2) with v(i,j,k) on R
+
+	std::deque<double> outputpjkDeque=rof.getSolution(false); // printContentsOf3DCVMat(getRow2D(inputi,j),true,"fij.txt");
+	
+	for (int i=0;i<sizeInputy;i++)
+		{
+			output.at<double>(cv::Vec<int,3>(i,j,k))=outputpjkDeque[i];
+		}
+	// writing the result on the associated part of the memory
 }
 
 
@@ -675,28 +721,51 @@ void ROF3D::proxTVhOnTau(const cv::Mat &input,cv::Mat &output)
 
 		for (int k=0;k<sizeInputt;k++)
 		{
-			// double * inputipk=inputi.ptr<double>(j);
-			// inputipkVect=std::vector<double>(inputij,inputij+sizeInputt);
-			inputipk=getLayer2D(inputi,k);inputipk.copyTo(inputipkVect);
-			// double * outputij=outputi.ptr<double>(j);
+			proxTVhOnTauipk(inputi,outputi,k);
+		// 	// double * inputipk=inputi.ptr<double>(j);
+		// 	// inputipkVect=std::vector<double>(inputij,inputij+sizeInputt);
+		// 	inputipk=getLayer2D(inputi,k);inputipk.copyTo(inputipkVect);
+		// 	// double * outputij=outputi.ptr<double>(j);
 
-			// double * gij=gi.ptr<double>(j);
-			// gipkVect=std::vector<double>(gij,gij+sizeInputt-1);
+		// 	// double * gij=gi.ptr<double>(j);
+		// 	// gipkVect=std::vector<double>(gij,gij+sizeInputt-1);
 
-			ROF rof=ROF(m_tau,inputipkVect);// this function resolves argmin_{u}( Sigma gij(k)|u(k+1)-u(k)|+m_tau/2*Sigma|u(k)-inputij(k)|^2)
-			//this function resolve argmin_{v(i,j,.)}( Sigma_{k} g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+m_tau/2*Sigma_{k} |v(i,j,k)-l(i,j,k)|^2) with v(i,j,k) on R
-			outputipkDeque=rof.getSolution(false);
-			// printContentsOf3DCVMat(getRow2D(inputi,j),true,"fij.txt");
-			// for (int k=0;k<sizeInputt;k++)
-			// {
-			// 	outputij[k]=outputipkDeque[k];
-			// }
-			for (int j=0;j<sizeInputx;j++)
-			{
-				output.at<double>(cv::Vec<int,3>(i,j,k))=outputipkDeque[j];
-			}
+		// 	ROF rof=ROF(m_tau,inputipkVect);// this function resolves argmin_{u}( Sigma gij(k)|u(k+1)-u(k)|+m_tau/2*Sigma|u(k)-inputij(k)|^2)
+		// 	//this function resolve argmin_{v(i,j,.)}( Sigma_{k} g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+m_tau/2*Sigma_{k} |v(i,j,k)-l(i,j,k)|^2) with v(i,j,k) on R
+		// 	outputipkDeque=rof.getSolution(false);
+		// 	// printContentsOf3DCVMat(getRow2D(inputi,j),true,"fij.txt");
+		// 	// for (int k=0;k<sizeInputt;k++)
+		// 	// {
+		// 	// 	outputij[k]=outputipkDeque[k];
+		// 	// }
+		// 	for (int j=0;j<sizeInputx;j++)
+		// 	{
+		// 		output.at<double>(cv::Vec<int,3>(i,j,k))=outputipkDeque[j];
+		// 	}
 		}
 	}
+}
+
+
+
+void ROF3D::proxTVhOnTauipk(const cv::Mat &inputi, cv::Mat &outputi,int k)
+{
+	cv::Mat inputipk=getLayer2D(inputi,k);
+	std::vector<double> inputipkVect;
+	inputipk.copyTo(inputipkVect);
+
+	int sizeInputx=outputi.size[0];
+	ROF rof=ROF(m_tau,inputipkVect);// this function resolves argmin_{u}( Sigma gij(k)|u(k+1)-u(k)|+1/2*Sigma|u(k)-inputij(k)|^2)
+	
+	//this function resolve argmin_{v(i,j,.)}( Sigma_{k} g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+1/2*Sigma_{k} |v(i,j,k)-l(i,j,k)|^2) with v(i,j,k) on R
+
+	std::deque<double> outputipkDeque=rof.getSolution(false); // printContentsOf3DCVMat(getRow2D(inputi,j),true,"fij.txt");
+	
+	for (int j=0;j<sizeInputx;j++)
+		{
+			outputi.at<double>(cv::Vec<int,2>(j,k))=outputipkDeque[j];
+		}
+		// writing the result on the associated part of the memory
 }
 
 
