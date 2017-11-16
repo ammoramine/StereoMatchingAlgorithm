@@ -1,37 +1,19 @@
 #include "ROF3D.h"
 
-// void ROF3D::testLab()
-// // just to do some tests for debugging
-// {
-// 	int size[3] = { m_y_size,m_x_size,m_t_size};
-// 	cv::Mat input=cv::Mat(3, size, CV_64FC1, 5.0);
-// 	cv::Mat output=cv::Mat(3,size,CV_64FC1, 0.0);
-// 	proxTVl(input,output);
-// 	printContentsOf3DCVMat(output,true,"output");
-// 	// double costArgmin=computeCostForArgumentTVh(m_x3Current,output);
-// 	testMinimialityOfSolutionTVL(input,output,25,0.00001);
-// 	throw std::invalid_argument( "testing the algorithm" );
 
-// }
-// void ROF3D::computeROFSolution(const double &tau,const std::vector<double> &l,const std::vector<double> &costij,double * output)
-// {
-// 	ROF rof=ROF(tau,l,costij);
-// 	std::deque<double> outputDeque=rof.getSolution(false);
-// 	for (int k=0;k<outputDeque.size();k++)
-// 		{
-// 			*(output+k)=outputDeque[k];
-// 		}
-// }
-// void ROF3D::computeROFSolution(const double &tau,const std::vector<double> &l,const std::vector<double> &costij,double * output)
-// {
-// 	ROF rof=ROF(tau,l);
-// 	std::deque<double> outputDeque=rof.getSolution(false);
-// 	for (int k=0;k<outputDeque.size();k++)
-// 		{
-// 			*(output+k)=outputDeque[k];
-// 		}
+void ROF3D::testLab()
+// just to do some tests for debugging
+{
+	int size[3] = { m_y_size,m_x_size,m_t_size};
+	cv::Mat input=cv::Mat(3, size, CV_64FC1, 5.0);
+	cv::Mat output=cv::Mat(3,size,CV_64FC1, 0.0);
+	proxTVl(input,output);
+	printContentsOf3DCVMat(output,true,"output");
+	// double costArgmin=computeCostForArgumentTVh(m_x3Current,output);
+	testMinimialityOfSolutionTVL(input,output,25,0.00001);
+	throw std::invalid_argument( "testing the algorithm" );
 
-// }
+}
 void ROF3D::testContraintOnSolution(const cv::Mat &argminToTest)
 // test if argminToTest verify the following contraint of the solutino 0<u(i,j,k)<1 u(i,j,0)=1 , u(i,j,m_t_size)=0 and u(i,j,k)>u(i,j,k+1)
 {
