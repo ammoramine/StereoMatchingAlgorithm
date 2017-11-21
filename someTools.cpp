@@ -22,7 +22,7 @@ cv::Mat getLayer(cv::Mat Matrix3D,int layer_number)
 
 
 
-cv::Mat getLayer2D(const cv::Mat &matrix2D,int layer_number)
+cv::Mat getLayer2DOld(const cv::Mat &matrix2D,int layer_number)
 // layer_number should be below Matrix2D.size[1]
 {
 	// int sizeMatrix2D[2] = { matrix2D.size[0], matrix2D.size[1]};
@@ -57,15 +57,24 @@ cv::Mat getLayer2D(const cv::Mat &matrix2D,int layer_number)
 // addr(Mi0,...,iM.dims−1)=M.data+M.step[0]∗i0+M.step[1]∗i1+...+M.step[M.dims−1]∗iM.dims−1
 }
 
+cv::Mat getLayer2D(const cv::Mat &matrix2D,int layer_number)
+// layer_number should be below Matrix2D.size[1]
+{
+	int sizeLayer[1] = { matrix2D.size[0]};
+	cv::Mat layer1D=cv::Mat(1, sizeLayer, CV_64FC1, 0.0);
+	matrix2D.col(layer_number).copyTo(layer1D);
+	return layer1D;
+}
+
 void testLayer2D()
 {
 	double m1[3][3] = { {10,1,2}, {3,4,5}, {6,7,8} };
 	int size1[]={3,3};
 	// // int sizeCh[3]= {50,50,50};
-	cv::Mat M1(2,size1,CV_64FC1,m1);
+	cv::Mat matrix2D(2,size1,CV_64FC1,m1);
 
-	cv::Mat layer1=getLayer2D(M1,1);
-	printContentsOf3DCVMat(M1,false,"M1");
+	cv::Mat layer1=getLayer2D(matrix2D,0);
+	printContentsOf3DCVMat(matrix2D,false,"matrix2D");
 	printContentsOf3DCVMat(layer1,false,"layer1");
 	// cv::randu(layer1,-1.0,0.0);
 	// printContentsOf3DCVMat(M1,true,"M1After");
@@ -189,7 +198,7 @@ cv::Mat getRow2D(const cv::Mat &Matrix2D,int numberRow)
 	return extractedMatrix;
 }
 
-void printContentsOf3DCVMat(const cv::Mat matrix,bool writeOnFile,std::string filename)
+void printContentsOf3DCVMat(const cv::Mat &matrix,bool writeOnFile,std::string filename)
 {
 	if (writeOnFile==false)
 	{
@@ -240,5 +249,18 @@ void printContentsOf3DCVMat(const cv::Mat matrix,bool writeOnFile,std::string fi
 		cv::FileStorage file(filename, cv::FileStorage::WRITE);
 
 		file <<"the matrix"<< matrix;
+	}
+}
+
+void castCVMatTovector_double(const cv::Mat &matrix,std::vector<double> &vector)
+{
+	// obtain iterator at initial position
+	vector.resize(matrix.size[0]);
+	cv::MatConstIterator_<double> itMat;
+	std::vector<double>::iterator itVec=vector.begin();
+	// obtain end position
+	cv::MatConstIterator_<double> itMatend=matrix.end<double>();
+	for ( itMat=matrix.begin<double>(); itMat!= itMatend; ++itMat) {
+		(*itVec)=(*itMat);itVec+=1;
 	}
 }

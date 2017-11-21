@@ -1,5 +1,6 @@
 #include "ROF3D.h"
 
+int nbProcessor=10;
 
 void ROF3D::testLab()
 // just to do some tests for debugging
@@ -532,9 +533,7 @@ void ROF3D::proxTVl(const cv::Mat &input,cv::Mat &output)
 	// cv::Mat output;
 	cv::Mat outputi;
 	std::deque<double> outputijDeque;
-
-	// std::vector<std::thread> threads;
-	// ThreadPool threadPool(32);
+	// ThreadPool threadPool(nbProcessor);
 	for (int i=0;i<sizeInputy;i++)
 	{
 		inputi=getRow3D(input,i);
@@ -543,40 +542,16 @@ void ROF3D::proxTVl(const cv::Mat &input,cv::Mat &output)
 		std::vector<std::thread> threads;
 		for (int j=0;j<sizeInputx;j++)
 		{
+			// threadPool.enqueue(&ROF3D::proxTVLij,*this,inputi,outputi,gi,j);
 			// proxTVLij(inputi,outputi,gi,j);
-			// ROF3D* a=this;
-			// threadPool.enqueue(&ROF3D::proxTVLij,*this,inputi,std::ref(outputi),gi,j);
+
 			threads.push_back(std::thread(&ROF3D::proxTVLij,*this,inputi,std::ref(outputi),gi,j));
-			// std::thread t1(&ROF3D::proxTVLij,*this,inputi,std::ref(outputi),gi,j);
-			// std::thread t1(&ROF3D::testContraintOnSolution,*this);
-			// double * inputij=inputi.ptr<double>(j);
-			// inputijVect=std::vector<double>(inputij,inputij+sizeInputt);
-
-			// double * outputij=outputi.ptr<double>(j);
-
-			// double * gij=gi.ptr<double>(j);
-			// gijVect=std::vector<double>(gij,gij+sizeInputt-1);
-			// // computeROFSolution(1.0,inputijVect,gijVect,outputij);
-
-			// ROF rof=ROF(1.0,inputijVect,gijVect);// this function resolves argmin_{u}( Sigma gij(k)|u(k+1)-u(k)|+1/2*Sigma|u(k)-inputij(k)|^2)
-			// //this function resolve argmin_{v(i,j,.)}( Sigma_{k} g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+1/2*Sigma_{k} |v(i,j,k)-l(i,j,k)|^2) with v(i,j,k) on R
-			// outputijDeque=rof.getSolution(false);
-			// // printContentsOf3DCVMat(getRow2D(inputi,j),true,"fij.txt");
-			// for (int k=0;k<sizeInputt;k++)
-			// {
-			// 	outputij[k]=outputijDeque[k];
-			// }
-
-			// ROF(m_m_tau,fijVect);
-			// double bArray[] = {1,1,1,1,1};
-  	// std::vector<double> a (aArray, lArray + sizeof(lArray) / sizeof(double) );
 		}
-	// }
-	for (int i=0;i<threads.size();i++)
-	{
-		threads[i].join();
+		for (int i=0;i<threads.size();i++)
+		{
+			threads[i].join();
+		}
 	}
-}
 }
 
 void ROF3D::proxTVLij(const cv::Mat &inputi,cv::Mat &outputi,const cv::Mat &gi,int j)
@@ -613,74 +588,42 @@ void ROF3D::proxTVvOnTau(const cv::Mat &input,cv::Mat &output)
 	int sizeInputx=input.size[1];
 	int sizeInputt=input.size[2];
 	cv::Mat inputppk;
-	std::vector<double> inputpjkVect;
+	// std::vector<double> inputpjkVect;
 	cv::Mat inputpjk;
 
 	cv::Mat outputppk;
 	std::deque<double> outputpjkDeque;
-	// ThreadPool threadPool(32);
-
-	// std::vector<std::thread> threads;
+	// ThreadPool threadPool(nbProcessor);
 	for (int k=0;k<sizeInputt;k++)
 	{
 		inputppk=getLayer3D(input,k);
 		outputppk=getLayer3D(output,k);
 		std::vector<std::thread> threads;
-
 		for (int j=0;j<sizeInputx;j++)
 		{
 			// proxTVvOnTaupjk(inputppk,output,j,k);
+			// threadPool.enqueue(&ROF3D::proxTVvOnTaupjk,*this,inputppk,output,j,k);
 			threads.push_back(std::thread(&ROF3D::proxTVvOnTaupjk,*this,inputppk,std::ref(output),j,k));
-			// threadPool.enqueue(&ROF3D::proxTVvOnTaupjk,*this,inputppk,std::ref(output),j,k);
-
-			// inputpjk=getLayer2D(inputppk,j);inputpjk.copyTo(inputpjkVect);//matrix.col(0).copyTo(vec);
-			// // outputpjk=getLayer2D(outputppk,i);
-
-			// // double * inputpjk=inputppk.ptr<double>(j);
-			// // inputpjkVect=std::vector<double>(inputpjk,inputpjk+sizeInputy);
-
-			// // double * outputpjk=inputppk.ptr<double>(j);
-
-			// // // double * gij=gi.ptr<double>(j);
-			// // // gijVect=std::vector<double>(gij,gij+sizeInputt-1);
-			// // computeROFSolution(m_tau,inputpjkVect,gijVect,outputij);
-
-			// ROF rof=ROF(m_tau,inputpjkVect);// this function resolves argmin_{u}( Sigma |u(k+1)-u(k)|+m_tau/2*Sigma|u(k)-inputpjk(k)|^2)
-			// // //this function resolve argmin_{v(i,j,.)}( Sigma_{k} g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+m_tau/2*Sigma_{k} |v(i,j,k)-l(i,j,k)|^2) with v(i,j,k) on R
-			// outputpjkDeque=rof.getSolution(false);
-			// // (uchar *) adress=output.data+output.size[1]*j+output.size[2]*k;
-			// // int limit=output.step[0]* output.step[1]*j+output.step[2]*k
-			// for (int i=0;i<sizeInputy;i++)
-			// {
-			// 	output.at<double>(cv::Vec<int,3>(i,j,k))=outputpjkDeque[i];
-			// }
-			// // // printContentsOf3DCVMat(getRow2D(inputi,j),true,"fij.txt");
-			// // for (int i=0;k<sizeInputy;k++)
-			// // {
-			// // 	outputpjk[k]=outputijDeque[k];
-			// // }
-
-			// // ROF(m_m_tau,fijVect);
-			// // double bArray[] = {1,1,1,1,1};
-  	// // std::vector<double> a (aArray, lArray + sizeof(lArray) / sizeof(double) );
 		}
-	// }
-	// std::cout<<threads.size()<<std::endl;
-	for (int i=0;i<threads.size();i++)
+		for (int i=0;i<threads.size();i++)
 	{
 		threads[i].join();
 	}
-}
+	}
 }
 
 
 void ROF3D::proxTVvOnTaupjk(const cv::Mat &inputppk, cv::Mat &output,int j,int k)
-
+//linked to the method "proxTVvOnTau", this function resolves the problem argmin( Sigma |v(i+1)-v(i)|+m_tau/2*Sigma|v(i)-input(i,j,k)|) with v(i) on R and fixed j and k
+// arguments :
+// -inputppk is the elements input(.,.,k) for k fixed 
+// output is the solution of the problem
 {
 
 	cv::Mat inputpjk=getLayer2D(inputppk,j);
 	std::vector<double> inputpjkVect;
-	inputpjk.copyTo(inputpjkVect);
+	// inputpjk.copyTo(inputpjkVect);
+	castCVMatTovector_double(inputpjk,inputpjkVect);
 	// outputpjk=getLayer2D(outputppk,j);
 	// double * inputij=inputi.ptr<double>(j);
 	int sizeInputy=inputpjk.size[0];
@@ -709,7 +652,7 @@ void ROF3D::proxTVhOnTau(const cv::Mat &input,cv::Mat &output)
 	int sizeInputx=input.size[1];
 	int sizeInputt=input.size[2];
 	cv::Mat inputi;
-	std::vector<double> inputipkVect;
+	// std::vector<double> inputipkVect;
 	cv::Mat inputipk;
 	// cv::Mat gi;
 	// std::vector<double> gipkVect;
@@ -719,47 +662,23 @@ void ROF3D::proxTVhOnTau(const cv::Mat &input,cv::Mat &output)
 	// cv::Mat output;
 	cv::Mat outputi;
 	std::deque<double> outputipkDeque;
-	// ThreadPool threadPool(32);
-	// std::vector<std::thread> threads;
+	ThreadPool threadPool(nbProcessor);
 	for (int i=0;i<sizeInputy;i++)
 	{
 		inputi=getRow3D(input,i);
 		outputi=getRow3D(output,i);
 		std::vector<std::thread> threads;
-
 		for (int k=0;k<sizeInputt;k++)
 		{
+			// threadPool.enqueue(&ROF3D::proxTVhOnTauipk,*this,inputi,outputi,k);
 			// proxTVhOnTauipk(inputi,outputi,k);
 			threads.push_back(std::thread(&ROF3D::proxTVhOnTauipk,*this,inputi,std::ref(outputi),k));
-			// threadPool.enqueue(&ROF3D::proxTVhOnTauipk,*this,inputi,std::ref(outputi),k);
-
-		// 	// double * inputipk=inputi.ptr<double>(j);
-		// 	// inputipkVect=std::vector<double>(inputij,inputij+sizeInputt);
-		// 	inputipk=getLayer2D(inputi,k);inputipk.copyTo(inputipkVect);
-		// 	// double * outputij=outputi.ptr<double>(j);
-
-		// 	// double * gij=gi.ptr<double>(j);
-		// 	// gipkVect=std::vector<double>(gij,gij+sizeInputt-1);
-
-		// 	ROF rof=ROF(m_tau,inputipkVect);// this function resolves argmin_{u}( Sigma gij(k)|u(k+1)-u(k)|+m_tau/2*Sigma|u(k)-inputij(k)|^2)
-		// 	//this function resolve argmin_{v(i,j,.)}( Sigma_{k} g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+m_tau/2*Sigma_{k} |v(i,j,k)-l(i,j,k)|^2) with v(i,j,k) on R
-		// 	outputipkDeque=rof.getSolution(false);
-		// 	// printContentsOf3DCVMat(getRow2D(inputi,j),true,"fij.txt");
-		// 	// for (int k=0;k<sizeInputt;k++)
-		// 	// {
-		// 	// 	outputij[k]=outputipkDeque[k];
-		// 	// }
-		// 	for (int j=0;j<sizeInputx;j++)
-		// 	{
-		// 		output.at<double>(cv::Vec<int,3>(i,j,k))=outputipkDeque[j];
-		// 	}
 		}
-	// }
-	for (int i=0;i<threads.size();i++)
-	{
-		threads[i].join();
+		for (int i=0;i<threads.size();i++)
+		{
+			threads[i].join();
+		}
 	}
-}
 }
 
 

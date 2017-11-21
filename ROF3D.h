@@ -19,6 +19,7 @@
 #include <math.h>
 #include "census_computation.h"
 #include <thread>
+#include "threadpool.h"
 
 class ROF3D
 {

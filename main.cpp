@@ -11,6 +11,7 @@
 #include "toolsForReading.h"
 #include "ROF.h"
 #include "ROF3D.h"
+#include "someTools.h"
 int main(int argc, char* argv[])
 {
 	// // testLayer3D()
@@ -46,15 +47,29 @@ int main(int argc, char* argv[])
 	// {
 	MatchingAlgorithm theAlgorithm = MatchingAlgorithm(image1GrayDouble,image2GrayDouble,data_term_option, t_size,offset,Niter,path_to_disparity,method);
 }
+if (0)
+{//here is place from some dirty tests
+	testLayer2D();
+}
+
 		// (theAlgorithm.get_data_term()).copyTo(data_term);
 	// }
 	// ROF3D rof3D=ROF3D(data_term);
-	int sizeCh[3]= {5,5,5};
-	// int sizeCh[3]= {data_term.size[0],data_term.size[1],data_term.size[2]};
-	cv::Mat M(3,sizeCh,CV_64FC1,1.0);
+// if(0)
+// {	
+// 	int sizeCh[1]= {20};
+// 	// int sizeCh[3]= {data_term.size[0],data_term.size[1],data_term.size[2]};
+// 	cv::Mat M(1,sizeCh,CV_64FC1,1.0);
+// 	cv::randu(M,1.0,15.5);
+// 	std::vector<double> aVector;//(sizeCh[0],0.0);
+// 	castCVMatTovector_double(M,aVector);
+// 	printContentsOf3DCVMat(M,true,"M");	
+// 	for (int i=0;i<aVector.size();i++) std::cout<<aVector[i]<<std::endl;
+// 	// std::cout<<aVector<<std::endl;
+// }
 	// data_term.copyTo(M);
 	// printContentsOf3DCVMat(M,true,"MB");
-	cv::randu(M,1.0,15.5);
+	// cv::randu(M,1.0,15.5);
 	// printContentsOf3DCVMat(M,true,"M");
 	// data_term=cv::Mat(3,sizeCh,CV_64FC1,1.0);
 	// printContentsOf3DCVMat(data_term,true,"data_term_after");
@@ -65,7 +80,7 @@ int main(int argc, char* argv[])
 
 
 	// double lArray[] = {-0.390742,0.296236,499.112,6.51223e-319,499.112,6.51223e-319,499.112,6.51223e-319};
-	double lArray[] = {1000,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1000};
+	// double lArray[] = {1000,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1000};
 	// double lArray[]= {500,0,500};
 	// double lArray[] = {}
 	// double lArray[] = {499.112,6.51223e-319,499.112,6.51223e-319};
@@ -73,14 +88,14 @@ int main(int argc, char* argv[])
 
 	// double lArray[] = {1,1,1,1};
 	// double lArray[] = {1000,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1000};
-  	std::vector<double> l (lArray, lArray + sizeof(lArray) / sizeof(double) );
+  	// std::vector<double> l (lArray, lArray + sizeof(lArray) / sizeof(double) );
   	// double costArray[] = {6.93752,9.53447};
   	// double costArray[] = {1,1,1};
   	// double costArray[]={1,1,1,1};
-  	double costArray[] = {0.294118,0.294118,0.294118,0.294118,0,0.294118,0.294118,0.294118,0,0.294118,0,0,0.294118,0.294118,0,0,0.294118,0.294118,0,0.294118};
+  	// double costArray[] = {0.294118,0.294118,0.294118,0.294118,0,0.294118,0.294118,0.294118,0,0.294118,0,0,0.294118,0.294118,0,0,0.294118,0.294118,0,0.294118};
   	  	// double costArray[] = {1,1,1,1,1,1,1};
   	// double costArray[] = {0.294118,0.294118,0.294118,0.294118,0,0.294118,0.294118,0.294118,0,0.294118,0,0,0.294118,0.294118,0,0,0.294118,0.294118,0,0.294118};
-  	std::vector<double> cost (costArray, costArray + sizeof(costArray) / sizeof(double) );
+  	// std::vector<double> cost (costArray, costArray + sizeof(costArray) / sizeof(double) );
   	// ROF rof=ROF(1.0,l,cost);
   	// rof.getSolution(true);
   	// rof.testMinimialityOfSolution(10000,0.0001);
