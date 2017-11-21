@@ -1,6 +1,6 @@
 #include "ROF3D.h"
 
-int nbProcessor=10;
+// int 32=32;
 
 void ROF3D::testLab()
 // just to do some tests for debugging
@@ -533,24 +533,24 @@ void ROF3D::proxTVl(const cv::Mat &input,cv::Mat &output)
 	// cv::Mat output;
 	cv::Mat outputi;
 	std::deque<double> outputijDeque;
-	// ThreadPool threadPool(nbProcessor);
+	ThreadPool threadPool(32);
 	for (int i=0;i<sizeInputy;i++)
 	{
 		inputi=getRow3D(input,i);
 		outputi=getRow3D(output,i);
 		gi=getRow3D(m_g,i);
-		std::vector<std::thread> threads;
+		// std::vector<std::thread> threads;
 		for (int j=0;j<sizeInputx;j++)
 		{
-			// threadPool.enqueue(&ROF3D::proxTVLij,*this,inputi,outputi,gi,j);
+			threadPool.enqueue(&ROF3D::proxTVLij,*this,inputi,outputi,gi,j);
 			// proxTVLij(inputi,outputi,gi,j);
 
-			threads.push_back(std::thread(&ROF3D::proxTVLij,*this,inputi,std::ref(outputi),gi,j));
+			// threads.push_back(std::thread(&ROF3D::proxTVLij,*this,inputi,std::ref(outputi),gi,j));
 		}
-		for (int i=0;i<threads.size();i++)
-		{
-			threads[i].join();
-		}
+		// for (int i=0;i<threads.size();i++)
+		// {
+		// 	threads[i].join();
+		// }
 	}
 }
 
@@ -593,22 +593,22 @@ void ROF3D::proxTVvOnTau(const cv::Mat &input,cv::Mat &output)
 
 	cv::Mat outputppk;
 	std::deque<double> outputpjkDeque;
-	// ThreadPool threadPool(nbProcessor);
+	ThreadPool threadPool(32);
 	for (int k=0;k<sizeInputt;k++)
 	{
 		inputppk=getLayer3D(input,k);
 		outputppk=getLayer3D(output,k);
-		std::vector<std::thread> threads;
+		// std::vector<std::thread> threads;
 		for (int j=0;j<sizeInputx;j++)
 		{
 			// proxTVvOnTaupjk(inputppk,output,j,k);
-			// threadPool.enqueue(&ROF3D::proxTVvOnTaupjk,*this,inputppk,output,j,k);
-			threads.push_back(std::thread(&ROF3D::proxTVvOnTaupjk,*this,inputppk,std::ref(output),j,k));
+			threadPool.enqueue(&ROF3D::proxTVvOnTaupjk,*this,inputppk,output,j,k);
+			// threads.push_back(std::thread(&ROF3D::proxTVvOnTaupjk,*this,inputppk,std::ref(output),j,k));
 		}
-		for (int i=0;i<threads.size();i++)
-	{
-		threads[i].join();
-	}
+	// 	for (int i=0;i<threads.size();i++)
+	// {
+	// 	threads[i].join();
+	// }
 	}
 }
 
@@ -662,22 +662,22 @@ void ROF3D::proxTVhOnTau(const cv::Mat &input,cv::Mat &output)
 	// cv::Mat output;
 	cv::Mat outputi;
 	std::deque<double> outputipkDeque;
-	ThreadPool threadPool(nbProcessor);
+	ThreadPool threadPool(32);
 	for (int i=0;i<sizeInputy;i++)
 	{
 		inputi=getRow3D(input,i);
 		outputi=getRow3D(output,i);
-		std::vector<std::thread> threads;
+		// std::vector<std::thread> threads;
 		for (int k=0;k<sizeInputt;k++)
 		{
-			// threadPool.enqueue(&ROF3D::proxTVhOnTauipk,*this,inputi,outputi,k);
+			threadPool.enqueue(&ROF3D::proxTVhOnTauipk,*this,inputi,outputi,k);
 			// proxTVhOnTauipk(inputi,outputi,k);
-			threads.push_back(std::thread(&ROF3D::proxTVhOnTauipk,*this,inputi,std::ref(outputi),k));
+			// threads.push_back(std::thread(&ROF3D::proxTVhOnTauipk,*this,inputi,std::ref(outputi),k));
 		}
-		for (int i=0;i<threads.size();i++)
-		{
-			threads[i].join();
-		}
+		// for (int i=0;i<threads.size();i++)
+		// {
+		// 	threads[i].join();
+		// }
 	}
 }
 
