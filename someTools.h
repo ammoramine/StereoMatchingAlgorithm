@@ -1,22 +1,26 @@
 #ifndef SOMETOOLS_H_INCLUDED
 #define SOMETOOLS_H_INCLUDED
 #include <opencv/highgui.h>
-#include <opencv2/core/core.hpp>
+#include <opencv/cv.h>
+// #include <opencv2/core/core.hpp>
 #include <stdio.h>
 #include <math.h>
 #include <vector>
 #include <stdlib.h>
 #include <iostream>
-#include <opencv2/imgproc/imgproc.hpp>
+// #include <opencv2/imgproc/imgproc.hpp>
 #include <stdexcept>
 #include <time.h>
 #include <fstream>
 #include <math.h>
-
+// #include </home/amine/opencv_install/opencv/modules/core/include/opencv2/core/types.hpp>
 
 cv::Mat getLayer(const cv::Mat Matrix3D,int layer_number);
-cv::Mat getLayer3D(const cv::Mat &Matrix3D,int layer_number);
-cv::Mat getLayer2D(const cv::Mat &Matrix2D,int layer_number);
+void getLayer3D(const cv::Mat &matrix3D,int layer_number,cv::Mat &layer);
+void getLayer2D(const cv::Mat &matrix2D,int layer_number,cv::Mat &layer1D);
+void getLayer3DBeta(const cv::Mat &matrix3D,int layer_number,cv::Mat &layer1);
+void cast3DMatrixTo2DMatrix(const cv::Mat &matrix3D, cv::Mat &matrix2D);
+
 cv::Mat getLayer2DOld(const cv::Mat &matrix2D,int layer_number);
 
 cv::Mat getRow4D(const cv::Mat &Matrix4D,int numberRow,bool newOne=false);
@@ -26,6 +30,7 @@ void printContentsOf3DCVMat(const cv::Mat &matrix,bool writeOnFile=true,std::str
 void castCVMatTovector_double(const cv::Mat &matrix,std::vector<double> &vector);
 void testLayer3D();
 void testLayer2D();
+void testLayer2DBis();
 // void castCVMatTovector(const cv::Mat &matrix,std::vector<typeMatrix> &vector);
 
 // template<typename typeForCasting>

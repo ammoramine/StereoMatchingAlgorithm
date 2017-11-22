@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <opencv/highgui.h>
-#include <opencv2/core/core.hpp>
-#include <opencv2/gpu/gpu.hpp>
-#include <opencv2/ocl/ocl.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
+// #include <opencv2/core/core.hpp>
+// #include <opencv2/gpu/gpu.hpp>
+// #include <opencv2/ocl/ocl.hpp>
+// #include <opencv2/imgproc/imgproc.hpp>
 #include <iostream>
 #include <vector>
 #include "MatchingAlgorithm.h"
@@ -22,7 +22,8 @@ int main(int argc, char* argv[])
 	// throw std::invalid_argument( "testing the algorithm" );
 
 // std::cout<<"it's over"<<std::endl;
-	if (1)
+	bool dirtyTest=false;
+	if (!dirtyTest)
 	// if (not(1))
 	{
 	cv::Mat image1;//=cv::imread("input_pair/rectified_ref.tif");//, cv::IMREAD_LOAD_GDAL);
@@ -47,9 +48,9 @@ int main(int argc, char* argv[])
 	// {
 	MatchingAlgorithm theAlgorithm = MatchingAlgorithm(image1GrayDouble,image2GrayDouble,data_term_option, t_size,offset,Niter,path_to_disparity,method);
 }
-if (0)
+else
 {//here is place from some dirty tests
-	testLayer2D();
+	testLayer3D();
 }
 
 		// (theAlgorithm.get_data_term()).copyTo(data_term);

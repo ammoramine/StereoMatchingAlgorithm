@@ -57,13 +57,14 @@ cv::Mat getLayer2DOld(const cv::Mat &matrix2D,int layer_number)
 // addr(Mi0,...,iM.dims−1)=M.data+M.step[0]∗i0+M.step[1]∗i1+...+M.step[M.dims−1]∗iM.dims−1
 }
 
-cv::Mat getLayer2D(const cv::Mat &matrix2D,int layer_number)
+void getLayer2D(const cv::Mat &matrix2D,int layer_number,cv::Mat &layer1D)
 // layer_number should be below Matrix2D.size[1]
 {
-	int sizeLayer[1] = { matrix2D.size[0]};
-	cv::Mat layer1D=cv::Mat(1, sizeLayer, CV_64FC1, 0.0);
-	matrix2D.col(layer_number).copyTo(layer1D);
-	return layer1D;
+	// int sizeLayer[1] = { matrix2D.size[0]};
+	// layer1D=cv::Mat(1, sizeLayer, CV_64FC1, 0.0);
+	layer1D=matrix2D.col(layer_number);
+	// matrix2D.col(layer_number).copyTo(layer1D);
+	// return layer1D;
 }
 
 void testLayer2D()
@@ -72,8 +73,10 @@ void testLayer2D()
 	int size1[]={3,3};
 	// // int sizeCh[3]= {50,50,50};
 	cv::Mat matrix2D(2,size1,CV_64FC1,m1);
-
-	cv::Mat layer1=getLayer2D(matrix2D,0);
+	// cv::randu(matrix2D,0,1.0);
+	cv::Mat layer1;
+	getLayer2D(matrix2D,0,layer1);
+	// layer1.at<double>(0)=3.4;
 	printContentsOf3DCVMat(matrix2D,false,"matrix2D");
 	printContentsOf3DCVMat(layer1,false,"layer1");
 	// cv::randu(layer1,-1.0,0.0);
@@ -81,12 +84,30 @@ void testLayer2D()
 	// printContentsOf3DCVMat(layer1,true,"layer1After");
 }
 
+void testLayer2DBis()
+{
+	double m1[3][3] = { {10,1,2}, {3,4,5}, {6,7,8} };
+	int size1[]={3,3};
+	// // int sizeCh[3]= {50,50,50};
+	cv::Mat matrix2D(2,size1,CV_64FC1,m1);
+	cv::Range arrayOfRanges[]={cv::Range(1,3),cv::Range(0,2)};
+	cv::Mat layer1=matrix2D(arrayOfRanges);//.copyTo(layer1);
+	// cv::randu(matrix2D,0,1.0);
+	// cv::Mat layer1;
+	// getLayer2D(matrix2D,0,layer1);
+	// layer1.at<double>(0)=3.4;
+	printContentsOf3DCVMat(matrix2D,false,"matrix2D");
+	printContentsOf3DCVMat(layer1,false,"layer1");
+	// cv::randu(layer1,-1.0,0.0);
+	// printContentsOf3DCVMat(M1,true,"M1After");
+	// printContentsOf3DCVMat(layer1,true,"layer1After");
+}
 
-cv::Mat getLayer3D(const cv::Mat &matrix3D,int layer_number)
-// returns a reference on the 2D matrix matrix3D(.,.,layer_number)
+void getLayer3D(const cv::Mat &matrix3D,int layer_number,cv::Mat &layer)
+// returns a copy and not a reference, would be better if it was possible to return a reference
 {
 	int sizeLayer[2] = { matrix3D.size[0],matrix3D.size[1]};
-	cv::Mat layer=cv::Mat(2, sizeLayer, CV_64FC1, 0.0);
+	layer=cv::Mat(2, sizeLayer, CV_64FC1, 0.0);
 
 	cv::Mat matrix3Di;cv::Mat layeri;
 	// MatConstIterator<double> it,it_end,// = M.end<double>();
@@ -104,42 +125,34 @@ cv::Mat getLayer3D(const cv::Mat &matrix3D,int layer_number)
 		// }
 		// printContentsOf3DCVMat(layeri,false);
 		// layeri.data=matrix3Di.col(layer_number).data;
-		getLayer2D(matrix3Di,layer_number).copyTo(layeri);
+		cv::Mat tempLayeri;
+		// getLayer2D(matrix3Di,layer_number,layeri);
+		getLayer2D(matrix3Di,layer_number,tempLayeri);
+		tempLayeri.copyTo(layeri);
+		// .copyTo(layeri);
 		// printContentsOf3DCVMat(layeri,false);
 		// printContentsOf3DCVMat(layer,false);
 	}
-	return layer;
+	// return layer;
 
+}
+
+void getLayer3DBeta(const cv::Mat &matrix3D,int layer_number,cv::Mat &layer1)
+// returns a reference on the 2D matrix matrix3D(.,.,layer_number)
+{
+
+	cv::Range arrayOfRanges[]={cv::Range(0,matrix3D.size[0]),cv::Range(0,matrix3D.size[1]),cv::Range(layer_number,layer_number+1)};
+	// layer1=matrix3D(arrayOfRanges);// there is a problem when we take consider a header to the data, but when we consider the copy the problem is resolved ... (specially when we use the at method), why ? ... 
+	// cv::Mat layer1Temp;matrix3D(arrayOfRanges).copyTo(layer1Temp);
+	cv::Mat layer1Temp=cv::Mat(matrix3D,arrayOfRanges);//layer1Temp.copyTo(layer1);
+	// int sizeLayer[2] = { layer1Temp.size[0],layer1Temp.size[1]};
+	// size_t stepLayer[2] = { layer1Temp.step[0],layer1Temp.step[1]};
+	// layer1=cv::Mat(2,sizeLayer,layer1Temp.type(),layer1Temp.data,stepLayer);
+	cast3DMatrixTo2DMatrix(layer1Temp,layer1);
 	// int sizeLayer[2] = { matrix3D.size[0],matrix3D.size[1]};
-	// cv::Mat layer=cv::Mat(2, sizeLayer, CV_64FC1, 0.0);
+	// layer1=layer1Temp.reshape(0,2,sizeLayer);
+	// layer1=layer1Temp.reshape(matrix3D.size[0],matrix3D.size[1]);
 
-	// uchar * matrix3Ddata=matrix3D.data;
-	// // // // uchar layerdata[sizeof(matrix2Ddata)];
-	// // // // layer.data;
-
-	
-	// int limit=matrix3D.step[0]*matrix3D.size[0]+ matrix3D.step[1]*matrix3D.size[1]+matrix3D.step[2]*layer_number;
-	
-	// int stepi= matrix3D.step[0];
-	// int stepj= matrix3D.step[1];
-
-	// int stepLayer=0;
-	// // // memcpy(layer.data+0,matrix3Ddata,sizeof(double));
-
-	// for(int i=matrix3D.step[2]*layer_number;i < limit;i+=stepi)
-	// {
-	// 	for(int j=matrix3D.step[2]*layer_number+i*matrix3D.step[0];j < limit;j+=stepj)
-	// 	{
-	// 		*(layer.data+stepLayer)=*(matrix3Ddata+k);
-	// 	// layerdata
-	// 	// layer.data=matrix3Ddata+k;
-	// 	// stepLayer++;
-	// 	// memcpy(layer.data+stepLayer,matrix3Ddata+k,sizeof(double));
-	// 	// memcpy(layer.data+stepLayer*matrix3D.step[1],matrix3Ddata+k,sizeof(double));
-
-	// 	stepLayer++;
-	// }
-	// return cv::Mat(2,sizeLayer,CV_64FC1,layer.data);
 }
 
 void testLayer3D()
@@ -149,9 +162,13 @@ void testLayer3D()
 	int size[]={3,3,3};
 	// // int sizeCh[3]= {50,50,50};
 	cv::Mat M(3,size,CV_64FC1,m);
-	cv::Mat layer=getLayer3D(M,0);
+	cv::Mat layer;
+	getLayer3DBeta(M,0,layer);
+	// cv::Mat layerCopy;layer.copyTo(layerCopy);
 	printContentsOf3DCVMat(M,false,"M.txt");
-	printContentsOf3DCVMat(layer,false,"layer.txt");
+	// std::cout<<layerCopy.at<double>(0,0,2)<<std::endl;
+	printContentsOf3DCVMat(layer,false,"layer.txt");	
+	// printContentsOf3DCVMat(layerCopy,false,"layerCopy.txt");
 	// cv::randu(layer,-1.0,0.0);
 	// printContentsOf3DCVMat(M,true,"MAfter.txt");
 	// printContentsOf3DCVMat(layer,true,"layerAfter.txt");
@@ -262,5 +279,28 @@ void castCVMatTovector_double(const cv::Mat &matrix,std::vector<double> &vector)
 	cv::MatConstIterator_<double> itMatend=matrix.end<double>();
 	for ( itMat=matrix.begin<double>(); itMat!= itMatend; ++itMat) {
 		(*itVec)=(*itMat);itVec+=1;
+	}
+}
+void cast3DMatrixTo2DMatrix(const cv::Mat &matrix3D, cv::Mat &matrix2D)
+{
+	// We assume here that the 3D matrix have a size 1 on the third dimension
+	// cv::MatConstIterator_<double> itMat;
+	// cv::MatIterator_<double> itMat;
+	// obtain end position
+	
+	int sizeLayer[2] = { matrix3D.size[0],matrix3D.size[1]};
+	matrix2D=cv::Mat(2, sizeLayer, CV_64FC1, 0.0);
+
+	cv::MatConstIterator_<double> itMat3D=matrix3D.begin<double>();
+	cv::MatConstIterator_<double>  itMat3DEnd=matrix3D.end<double>();
+
+	cv::MatIterator_<double> itMat2D=matrix2D.begin<double>();
+	cv::MatIterator_<double> itMat2DEnd=matrix2D.end<double>();
+
+	
+
+	while ( itMat3D!= itMat3DEnd and itMat2D!= itMat2DEnd) {
+		(*itMat2D)=(*itMat3D);
+		itMat2D++;itMat3D++;
 	}
 }

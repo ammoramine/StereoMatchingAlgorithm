@@ -269,7 +269,7 @@ double ROF3D::computeTVHStar(const cv::Mat & argument,const double &precision)
 		argumenti=getRow3D(argument,i);
 		for (int k=0;k<size[2];k++)
 		{
-			argumentipk=getLayer2D(argumenti,k);
+			getLayer2D(argumenti,k,argumentipk);
 			result=computeTV1DStar(argumentipk,precision);
 			if (result==INFINITY) return result;
 		}
@@ -288,10 +288,10 @@ double ROF3D::computeTVVStar(const cv::Mat & argument,const double &precision)
 	cv::Mat argumentpjk;
 	for (int k=0;k<size[2];k++)
 	{
-		argumentppk=getLayer3D(argument,k);
+		getLayer3D(argument,k,argumentppk);
 		for (int j=0;j<size[1];j++)
 		{
-			argumentpjk=getLayer2D(argumentppk,j);
+			getLayer2D(argumentppk,j,argumentpjk);
 			computeTV1DStar(argumentpjk,precision);
 			if (result==INFINITY) return result;
 		}
@@ -596,8 +596,8 @@ void ROF3D::proxTVvOnTau(const cv::Mat &input,cv::Mat &output)
 	ThreadPool threadPool(32);
 	for (int k=0;k<sizeInputt;k++)
 	{
-		inputppk=getLayer3D(input,k);
-		outputppk=getLayer3D(output,k);
+		getLayer3D(input,k,inputppk);
+		getLayer3D(output,k,outputppk);
 		// std::vector<std::thread> threads;
 		for (int j=0;j<sizeInputx;j++)
 		{
@@ -620,7 +620,8 @@ void ROF3D::proxTVvOnTaupjk(const cv::Mat &inputppk, cv::Mat &output,int j,int k
 // output is the solution of the problem
 {
 
-	cv::Mat inputpjk=getLayer2D(inputppk,j);
+	cv::Mat inputpjk;
+	getLayer2D(inputppk,j,inputpjk);
 	std::vector<double> inputpjkVect;
 	// inputpjk.copyTo(inputpjkVect);
 	castCVMatTovector_double(inputpjk,inputpjkVect);
@@ -685,9 +686,12 @@ void ROF3D::proxTVhOnTau(const cv::Mat &input,cv::Mat &output)
 
 void ROF3D::proxTVhOnTauipk(const cv::Mat &inputi, cv::Mat &outputi,int k)
 {
-	cv::Mat inputipk=getLayer2D(inputi,k);
+	cv::Mat inputipk;
+	getLayer2D(inputi,k,inputipk);
 	std::vector<double> inputipkVect;
-	inputipk.copyTo(inputipkVect);
+	// inputipk.copyTo(inputipkVect);
+	castCVMatTovector_double(inputipk,inputipkVect);
+
 
 	int sizeInputx=outputi.size[0];
 	ROF rof=ROF(m_tau,inputipkVect);// this function resolves argmin_{u}( Sigma gij(k)|u(k+1)-u(k)|+1/2*Sigma|u(k)-inputij(k)|^2)
