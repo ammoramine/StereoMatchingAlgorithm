@@ -1,6 +1,6 @@
 #include "ROF3D.h"
 
-// int 32=32;
+// int m_nbMaxThreads=m_nbMaxThreads;
 
 void ROF3D::testLab()
 // just to do some tests for debugging
@@ -57,7 +57,7 @@ void ROF3D::testContraintOnSolution(const cv::Mat &argminToTest)
 	std::cout<<" result of the test : "<<succes<<std::endl;
 }
 
-ROF3D::ROF3D(const cv::Mat & data_term,int Niter,const std::string &path_to_disparity,double precision) : m_precision(precision)
+ROF3D::ROF3D(const cv::Mat & data_term,int Niter,const std::string &path_to_disparity,size_t nbMaxThreads,double precision) : m_nbMaxThreads(nbMaxThreads),m_precision(precision)
 //this function resolve argmin_{v}( Sigma g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+Sigma |v(i,j+1,k)-v(i,j,k)|+Sigma |v(i+1,j,k)-v(i,j,k)|+m_tau/2*Sigma |v(i,j,k)-m_f(i,j,k)|^2) with v(i,j,k)
 // on R
 {
@@ -539,7 +539,7 @@ void ROF3D::proxTVl(const cv::Mat &input,cv::Mat &output)
 	// cv::Mat output;
 	cv::Mat outputi;
 	std::deque<double> outputijDeque;
-	ThreadPool threadPool(32);
+	ThreadPool threadPool(m_nbMaxThreads);
 	for (int i=0;i<sizeInputy;i++)
 	{
 		getRow3D(input,i,inputi);
@@ -599,7 +599,7 @@ void ROF3D::proxTVvOnTau(const cv::Mat &input,cv::Mat &output)
 
 	cv::Mat outputppk;
 	std::deque<double> outputpjkDeque;
-	ThreadPool threadPool(32);
+	ThreadPool threadPool(m_nbMaxThreads);
 	for (int k=0;k<sizeInputt;k++)
 	{
 		getLayer3D(input,k,inputppk);
@@ -669,7 +669,7 @@ void ROF3D::proxTVhOnTau(const cv::Mat &input,cv::Mat &output)
 	// cv::Mat output;
 	cv::Mat outputi;
 	std::deque<double> outputipkDeque;
-	ThreadPool threadPool(32);
+	ThreadPool threadPool(m_nbMaxThreads);
 	for (int i=0;i<sizeInputy;i++)
 	{
 		getRow3D(input,i,inputi);
