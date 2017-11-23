@@ -42,8 +42,8 @@ MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2
 	else if(method=="accelerated")
 	{
 		ROF3D rof3D=ROF3D(m_g,m_Niter,m_path_to_disparity);
-		std::cout<<"\n local test"<<std::endl;
-		rof3D.testMinimalityOfSolution(10,0.0001);
+		// std::cout<<"\n local test"<<std::endl;
+		// rof3D.testMinimalityOfSolution(10,0.0001);
 		// std::cout<<"\n second test with farther arguments"<<std::endl;
 		// rof3D.testMinimalityOfSolution(100,0.1);
 		// std::cout<<"\n third test with farther arguments"<<std::endl;

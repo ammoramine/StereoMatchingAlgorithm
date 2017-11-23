@@ -5,10 +5,11 @@ cv::Mat getLayer(cv::Mat Matrix3D,int layer_number)
 {
 	int size[2] = { (Matrix3D.size()).height, (Matrix3D.size()).width};
 	cv::Mat layer(2, size, CV_64FC1, 0.0);
+	cv::Mat matrix3Di;cv::Mat layeri;
 	for (int i=0;i<size[0];i++)
 				{
-					cv::Mat matrix3Di=getRow3D(Matrix3D,i);
-					cv::Mat layeri=getRow2D(layer,i);
+					getRow3D(Matrix3D,i,matrix3Di);
+					getRow2D(layer,i,layeri);
 				for (int j=0;j<size[1];j++)
 					{
 					// for (int k=0;k<m_t_size,k++)
@@ -113,8 +114,8 @@ void getLayer3D(const cv::Mat &matrix3D,int layer_number,cv::Mat &layer)
 	// MatConstIterator<double> it,it_end,// = M.end<double>();
 	for (int i=0;i<matrix3D.size[0];i++)
 	{
-		matrix3Di=getRow3D(matrix3D,i);
-		layeri=getRow2D(layer,i);
+		getRow3D(matrix3D,i,matrix3Di);
+		getRow2D(layer,i,layeri);
 		// double* layeri=layer.ptr<double>(i);
 		// uchar * 
 		// uchar* positionMatrix3D=matrix3D.data+matrix3Di.step[1]*layer_number;
@@ -189,7 +190,7 @@ cv::Mat getRow4D(const cv::Mat &Matrix4D,int numberRow,bool newOne)
 	return extractedMatrix;
 }
 
-cv::Mat getRow3D(const cv::Mat &Matrix3D,int numberRow)
+ void getRow3D(const cv::Mat &Matrix3D,int numberRow,cv::Mat &extractedMatrix)
 // get the  row numer numberRow from a 4D matrix, not a copy but a reference to the real row
 {
 
@@ -198,12 +199,11 @@ cv::Mat getRow3D(const cv::Mat &Matrix3D,int numberRow)
 		{
 			throw std::invalid_argument( "received false row" );
 		}
-	cv::Mat extractedMatrix(2,dims, CV_64FC1, Matrix3D.data + Matrix3D.step[0] * numberRow);
-	return extractedMatrix;
+	extractedMatrix=cv::Mat(2,dims, CV_64FC1, Matrix3D.data + Matrix3D.step[0] * numberRow);
 }
 
 
-cv::Mat getRow2D(const cv::Mat &Matrix2D,int numberRow)
+void getRow2D(const cv::Mat &Matrix2D,int numberRow,cv::Mat &extractedMatrix)
 // get the  row numer numberRow from a 4D matrix
 {
 	int dims[] = { Matrix2D.size[1]};
@@ -211,8 +211,8 @@ cv::Mat getRow2D(const cv::Mat &Matrix2D,int numberRow)
 		{
 			throw std::invalid_argument( "received false row" );
 		}
-	cv::Mat extractedMatrix(1,dims, CV_64FC1, Matrix2D.data + Matrix2D.step[0] * numberRow);
-	return extractedMatrix;
+	extractedMatrix=cv::Mat(1,dims, CV_64FC1, Matrix2D.data + Matrix2D.step[0] * numberRow);
+	// return extractedMatrix;
 }
 
 void printContentsOf3DCVMat(const cv::Mat &matrix,bool writeOnFile,std::string filename)
@@ -222,12 +222,13 @@ void printContentsOf3DCVMat(const cv::Mat &matrix,bool writeOnFile,std::string f
 		std::cout<<"matrix of name : "<<filename<<" \n "<<std::endl;
  	if(matrix.dims==3)
  	{
+ 		cv::Mat matrixi;cv::Mat matrixij;
 	for (int i=0;i<matrix.size[0];i++)
 		{
-			cv::Mat matrixi=getRow3D(matrix,i);
+			getRow3D(matrix,i,matrixi);
 			for (int j=0;j<matrix.size[1];j++)
 				{
-					cv::Mat matrixij=getRow2D(matrixi,j);
+					getRow2D(matrixi,j,matrixij);
 					for (int k=0;k<matrix.size[2];k++)
 						{
 							std::cout<<"value of pixel"<<i <<" and "<<j<<" and "<<k<<" : "<< matrixij.at<double>(k)<<"  "<<std::endl;
@@ -237,9 +238,10 @@ void printContentsOf3DCVMat(const cv::Mat &matrix,bool writeOnFile,std::string f
 	}
 	if(matrix.dims==2)
  	{
+ 		cv::Mat matrixi;
 	for (int i=0;i<matrix.size[0];i++)
 		{
-			cv::Mat matrixi=getRow2D(matrix,i);
+			getRow2D(matrix,i,matrixi);
 			for (int j=0;j<matrix.size[1];j++)
 				{
 

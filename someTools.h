@@ -24,8 +24,8 @@ void cast3DMatrixTo2DMatrix(const cv::Mat &matrix3D, cv::Mat &matrix2D);
 cv::Mat getLayer2DOld(const cv::Mat &matrix2D,int layer_number);
 
 cv::Mat getRow4D(const cv::Mat &Matrix4D,int numberRow,bool newOne=false);
-cv::Mat getRow3D(const cv::Mat &Matrix3D,int numberRow);
-cv::Mat getRow2D(const cv::Mat &Matrix2D,int numberRow);
+void getRow3D(const cv::Mat &Matrix3D,int numberRow,cv::Mat &extractedMatrix);
+void getRow2D(const cv::Mat &Matrix2D,int numberRow,cv::Mat &extractedMatrix);
 void printContentsOf3DCVMat(const cv::Mat &matrix,bool writeOnFile=true,std::string filename="FileStorage.txt");
 void castCVMatTovector_double(const cv::Mat &matrix,std::vector<double> &vector);
 void testLayer3D();

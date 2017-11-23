@@ -11,8 +11,8 @@ void ROF3D::testLab()
 	proxTVl(input,output);
 	printContentsOf3DCVMat(output,true,"output");
 	// double costArgmin=computeCostForArgumentTVh(m_x3Current,output);
-	testMinimialityOfSolutionTVL(input,output,25,0.00001);
-	throw std::invalid_argument( "testing the algorithm" );
+	// testMinimialityOfSolutionTVL(input,output,25,0.00001);
+	// throw std::invalid_argument( "testing the algorithm" );
 
 }
 void ROF3D::testContraintOnSolution(const cv::Mat &argminToTest)
@@ -25,7 +25,7 @@ void ROF3D::testContraintOnSolution(const cv::Mat &argminToTest)
 	std::cout<<"pixels for which the contraints are not verified"<<std::endl;
 	for (int i=0;i<m_y_size;i++)
 	{
-		argminToTesti=getRow3D(argminToTest,i);
+		getRow3D(argminToTest,i,argminToTesti);
 		for (int j=0;j<m_x_size;j++)
 		{
 			double * argminToTestij=argminToTesti.ptr<double>(j);
@@ -97,7 +97,7 @@ ROF3D::ROF3D(const cv::Mat & data_term,int Niter,const std::string &path_to_disp
 	launch();
 	computeMinSumTV();
 	computeDisparity();
-	testContraintOnSolution(m_u);
+	// testContraintOnSolution(m_u);
 
 	// proxTVhOnTau(m_f,output);
 	// testMinimialityOfSolutionTVH(m_f,output,25,0.0001);
@@ -150,18 +150,22 @@ double ROF3D::computeCostPrimal(const cv::Mat &argument)
  	int sizeArgumenty=argument.size[0];
 	int sizeArgumentx=argument.size[1];
 	int sizeArgumentt=argument.size[2];
-	// cv::Mat argumenti;cv::Mat m_gi;
-	// cv::Mat argumentij;cv::Mat m_gij;
+	cv::Mat argumenti;cv::Mat m_gi;
+	cv::Mat argumentip1;
+	cv::Mat argumentij;
+	cv::Mat m_gij;
+	cv::Mat argumentijp1;
+	cv::Mat argumentip1j;
 
 	//computing weighted TVL
 	for (int i=0;i<sizeArgumenty;i++)
 	{
-		cv::Mat argumenti=getRow3D(argument,i);
-		cv::Mat m_gi=getRow3D(m_g,i);
+		getRow3D(argument,i,argumenti);
+		getRow3D(m_g,i,m_gi);
 		for (int j=0;j<sizeArgumentx;j++)
 		{
-			cv::Mat argumentij=getRow2D(argumenti,j);
-			cv::Mat m_gij=getRow2D(m_gi,j);
+			getRow2D(argumenti,j,argumentij);
+			getRow2D(m_gi,j,m_gij);
 			// for (int k=0;k<sizeArgumentt;k++)
 			// {
 			// 	result+=0.5*pow(argument.at<double>(i,j,k)-l.at<double>(i,j,k),2);
@@ -177,11 +181,11 @@ double ROF3D::computeCostPrimal(const cv::Mat &argument)
 	//computing TVH
 	for (int i=0;i<sizeArgumenty;i++)
 			{
-				cv::Mat argumenti=getRow3D(argument,i);
+				getRow3D(argument,i,argumenti);
 			for (int j=0;j<sizeArgumentx-1;j++)
 				{
-				cv::Mat argumentij=getRow2D(argumenti,j);
-				cv::Mat argumentijp1=getRow2D(argumenti,j+1);
+				getRow2D(argumenti,j,argumentij);
+				getRow2D(argumenti,j+1,argumentijp1);
 				for (int k=0;k<sizeArgumentt;k++)
 				{
 			// for (int i=0;i<sizeArgumenty;i++)
@@ -196,16 +200,16 @@ double ROF3D::computeCostPrimal(const cv::Mat &argument)
 	//computing TVV
 	for (int i=0;i<sizeArgumenty-1;i++)
 		{
-			cv::Mat argumenti=getRow3D(argument,i);
-			cv::Mat argumentip1=getRow3D(argument,i+1);
+			getRow3D(argument,i,argumenti);
+			getRow3D(argument,i+1,argumentip1);
 			// for (int j=0;j<sizeArgumentx;j++)
 			// {
 			// 	result+=0.5*m_tau*pow(argument.at<double>(i,j,k)-l.at<double>(i,j,k),2);
 			// }
 		for (int j=0;j<sizeArgumentx;j++)
 			{
-			cv::Mat argumentij=getRow2D(argumenti,j);
-			cv::Mat argumentip1j=getRow2D(argumentip1,j);
+			getRow2D(argumenti,j,argumentij);
+			getRow2D(argumentip1,j,argumentip1j);
 			for (int k=0;k<sizeArgumentt;k++)
 				{
 				result+=std::abs(argumentip1j.at<double>(k)-argumentij.at<double>(k));
@@ -266,7 +270,8 @@ double ROF3D::computeTVHStar(const cv::Mat & argument,const double &precision)
 	cv::Mat argumentipk;
 	for (int i=0;i<size[0];i++)
 	{
-		argumenti=getRow3D(argument,i);
+		getRow3D(argument,i,argumenti);
+		// printContentsOf3DCVMat(argumenti,true,"argumentForDUAL");
 		for (int k=0;k<size[2];k++)
 		{
 			getLayer2D(argumenti,k,argumentipk);
@@ -311,12 +316,12 @@ double ROF3D::computeTVLStar(const cv::Mat & argument,const double &precision)
 	cv::Mat argumentij;cv::Mat gij;
 	for (int i=0;i<size[0];i++)
 	{
-		argumenti=getRow3D(argument,i);
-		gi=getRow3D(m_g,i);
+		getRow3D(argument,i,argumenti);
+		getRow3D(m_g,i,gi);
 		for (int j=0;j<size[1];j++)
 		{
-			argumentij=getRow2D(argumenti,j);
-			gij=getRow2D(gi,j);
+			getRow2D(argumenti,j,argumentij);
+			getRow2D(gi,j,gij);
 			computeTV1DStarWeighted(argumentij,gij,precision);
 			if (result==INFINITY) return result;
 			// if (infinityOrNot==true) break;
@@ -333,7 +338,8 @@ double ROF3D::computeTV1DStar(const cv::Mat & argument,const double & precision)
 	// infinityOrNot=false;
 	double result=0;
 	double sum=0;
-	for (int h=0;h<argument.size[1]-1;h++)
+	// printContentsOf3DCVMat(argument,true,"argumentForDUAL");
+	for (int h=0;h<argument.size[0]-1;h++)
 	{
 		sum+=argument.at<double>(h);
 		if (std::abs(sum)>1)
@@ -344,7 +350,7 @@ double ROF3D::computeTV1DStar(const cv::Mat & argument,const double & precision)
 			// break;
 		}
 	}
-	sum+=argument.at<double>(argument.size[1]-1);
+	sum+=argument.at<double>(argument.size[0]-1);
 	if (std::abs(sum)>precision)
 	{
 		// infinityOrNot=true;
@@ -365,7 +371,7 @@ double ROF3D::computeTV1DStarWeighted(const cv::Mat & argument,const cv::Mat wei
 	// infinityOrNot=false;
 	double result=0;
 	double sum=0;
-	for (int h=0;h<argument.size[1]-1;h++)
+	for (int h=0;h<argument.size[0]-1;h++)
 	{
 		sum+=argument.at<double>(h);
 		if (std::abs(sum)>weight.at<double>(h))
@@ -376,7 +382,7 @@ double ROF3D::computeTV1DStarWeighted(const cv::Mat & argument,const cv::Mat wei
 			// break;
 		}
 	}
-	sum+=argument.at<double>(argument.size[1]-1);
+	sum+=argument.at<double>(argument.size[0]-1);
 	if (std::abs(sum)>precision)
 	{
 		// infinityOrNot=true;
@@ -536,9 +542,9 @@ void ROF3D::proxTVl(const cv::Mat &input,cv::Mat &output)
 	ThreadPool threadPool(32);
 	for (int i=0;i<sizeInputy;i++)
 	{
-		inputi=getRow3D(input,i);
-		outputi=getRow3D(output,i);
-		gi=getRow3D(m_g,i);
+		getRow3D(input,i,inputi);
+		getRow3D(output,i,outputi);
+		getRow3D(m_g,i,gi);
 		// std::vector<std::thread> threads;
 		for (int j=0;j<sizeInputx;j++)
 		{
@@ -666,8 +672,8 @@ void ROF3D::proxTVhOnTau(const cv::Mat &input,cv::Mat &output)
 	ThreadPool threadPool(32);
 	for (int i=0;i<sizeInputy;i++)
 	{
-		inputi=getRow3D(input,i);
-		outputi=getRow3D(output,i);
+		getRow3D(input,i,inputi);
+		getRow3D(output,i,outputi);
 		// std::vector<std::thread> threads;
 		for (int k=0;k<sizeInputt;k++)
 		{
