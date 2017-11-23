@@ -25,7 +25,7 @@ class ROF3D
 {
 	public:
 		// void computeROFSolution(const double &tau,const std::vector<double> &l,const std::vector<double> &costij,double * outputij);
-		ROF3D(const cv::Mat & data_term,int m_Niter=100,const std::string &path_to_disparity="disparity.tif");
+		ROF3D(const cv::Mat & data_term,int m_Niter=100,const std::string &path_to_disparity="disparity.tif",double precision=0.0000001);
 		void initf(double delta=1000);
 
 		void launch();
@@ -58,12 +58,12 @@ class ROF3D
 		double computeCostDual(const cv::Mat &x1,const cv::Mat &x2,const cv::Mat &x3);
 		// double computeGapInfBorn(const cv::Mat &x1,const cv::Mat &x2,const cv::Mat &x3,const cv::Mat &primal);
 
-		double computeTVHStar(const cv::Mat & argument,const double &precision=0.01);
-		double computeTVVStar(const cv::Mat & argument,const double &precision=0.01);
-		double computeTVLStar(const cv::Mat & argument,const double &precision=0.01);
+		double computeTVHStar(const cv::Mat & argument);
+		double computeTVVStar(const cv::Mat & argument);
+		double computeTVLStar(const cv::Mat & argument);
 
-		static double computeTV1DStar(const cv::Mat & argument,const double & precision=0.01);
-		double computeTV1DStarWeighted(const cv::Mat & argument,const cv::Mat weight,const double & precision=0.01);
+		double computeTV1DStar(const cv::Mat & argument);
+		double computeTV1DStarWeighted(const cv::Mat & argument,const cv::Mat weight);
 
 
 		double computeCostForArgumentTVl(const cv::Mat &l,const cv::Mat &argument);
@@ -99,6 +99,7 @@ class ROF3D
 		double m_tau;
 		double m_t_current;
 		double m_lambda;
+		double m_precision;// this parameter take into account the numerical inaccuracy for the computation of the conjuguate de la variation totale
 
 		int m_iteration;
 		int m_Niter;

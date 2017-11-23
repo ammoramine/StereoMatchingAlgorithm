@@ -57,17 +57,17 @@ void ROF3D::testContraintOnSolution(const cv::Mat &argminToTest)
 	std::cout<<" result of the test : "<<succes<<std::endl;
 }
 
-ROF3D::ROF3D(const cv::Mat & data_term,int Niter,const std::string &path_to_disparity)
+ROF3D::ROF3D(const cv::Mat & data_term,int Niter,const std::string &path_to_disparity,double precision) : m_precision(precision)
 //this function resolve argmin_{v}( Sigma g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+Sigma |v(i,j+1,k)-v(i,j,k)|+Sigma |v(i+1,j,k)-v(i,j,k)|+m_tau/2*Sigma |v(i,j,k)-m_f(i,j,k)|^2) with v(i,j,k)
 // on R
 {
+	
 	data_term.copyTo(m_g);
 	m_y_size=m_g.size[0];
 	m_x_size=m_g.size[1];
 	m_t_size=m_g.size[2]+1;// the cost must have a size smaller than 1 dimension for the last extension
 	m_tau=0.5;
 	m_lambda=1;
-
 	initf();
 	int size[3] = { m_y_size,m_x_size,m_t_size};
 	m_x1Current=cv::Mat(3, size, CV_64FC1, 0.0);m_x1Previous=cv::Mat(3, size, CV_64FC1, 0.0);m_x1Bar=cv::Mat(3, size, CV_64FC1, 0.0);
@@ -259,7 +259,7 @@ double ROF3D::computeCostDual(const cv::Mat &x1,const cv::Mat &x2,const cv::Mat 
 }
 
 
-double ROF3D::computeTVHStar(const cv::Mat & argument,const double &precision)
+double ROF3D::computeTVHStar(const cv::Mat & argument)
 //compute the conjugate of the  TVH= Sigma |v(i,j+1,k)-v(i,j,k)|
 //The argument is an cv::Mat object of dimension 3 and of type double
 // the output is equal to infinity or 0
@@ -275,7 +275,7 @@ double ROF3D::computeTVHStar(const cv::Mat & argument,const double &precision)
 		for (int k=0;k<size[2];k++)
 		{
 			getLayer2D(argumenti,k,argumentipk);
-			result=computeTV1DStar(argumentipk,precision);
+			result=computeTV1DStar(argumentipk);
 			if (result==INFINITY) return result;
 		}
 	}
@@ -283,7 +283,7 @@ double ROF3D::computeTVHStar(const cv::Mat & argument,const double &precision)
 }
 
 
-double ROF3D::computeTVVStar(const cv::Mat & argument,const double &precision)
+double ROF3D::computeTVVStar(const cv::Mat & argument)
 //compute the conjugate of t TVV=Sigma |v(i+1,j,k)-v(i,j,k)|.
 //The argument is an cv::Mat object of dimension 3 and of type double
 {
@@ -297,7 +297,7 @@ double ROF3D::computeTVVStar(const cv::Mat & argument,const double &precision)
 		for (int j=0;j<size[1];j++)
 		{
 			getLayer2D(argumentppk,j,argumentpjk);
-			computeTV1DStar(argumentpjk,precision);
+			computeTV1DStar(argumentpjk);
 			if (result==INFINITY) return result;
 		}
 	}
@@ -305,7 +305,7 @@ double ROF3D::computeTVVStar(const cv::Mat & argument,const double &precision)
 }
 
 
-double ROF3D::computeTVLStar(const cv::Mat & argument,const double &precision)
+double ROF3D::computeTVLStar(const cv::Mat & argument)
 //compute the conjugate of  TVL=Sigma g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|.
 //The argument is an cv::Mat object of dimension 3 and of type double
 // m_g is normaly computed at the initialisation step
@@ -322,7 +322,7 @@ double ROF3D::computeTVLStar(const cv::Mat & argument,const double &precision)
 		{
 			getRow2D(argumenti,j,argumentij);
 			getRow2D(gi,j,gij);
-			computeTV1DStarWeighted(argumentij,gij,precision);
+			computeTV1DStarWeighted(argumentij,gij);
 			if (result==INFINITY) return result;
 			// if (infinityOrNot==true) break;
 		}
@@ -330,10 +330,10 @@ double ROF3D::computeTVLStar(const cv::Mat & argument,const double &precision)
 	return result;
 }
 
-double ROF3D::computeTV1DStar(const cv::Mat & argument,const double & precision)
+double ROF3D::computeTV1DStar(const cv::Mat & argument)
 //compute the conjugate of  TV1D. (with TV1D=Sigma_{1 <=j <= N-1} |u_{j+1}-u_{j}|)
 //The argument is an cv::Mat object of dimension 1 and of type double
-// the result is equal to zero only if |Sigma_{1<=k<=h} argument[k]| <=1 for all possible h and  Sigma_{k} argument[k]=0 (smaller then the term precision taking into account the numerical inmprecision)
+// the result is equal to zero only if |Sigma_{1<=k<=h} argument[k]| <=1 for all possible h and  Sigma_{k} argument[k]=0 (smaller then the term m_precision taking into account the numerical inmm_precision)
 {
 	// infinityOrNot=false;
 	double result=0;
@@ -342,7 +342,7 @@ double ROF3D::computeTV1DStar(const cv::Mat & argument,const double & precision)
 	for (int h=0;h<argument.size[0]-1;h++)
 	{
 		sum+=argument.at<double>(h);
-		if (std::abs(sum)>1)
+		if (std::abs(sum)>1+m_precision)
 		{
 			// infinityOrNot=true;
 			result=INFINITY;
@@ -351,7 +351,7 @@ double ROF3D::computeTV1DStar(const cv::Mat & argument,const double & precision)
 		}
 	}
 	sum+=argument.at<double>(argument.size[0]-1);
-	if (std::abs(sum)>precision)
+	if (std::abs(sum)>m_precision)
 	{
 		// infinityOrNot=true;
 		result=INFINITY;
@@ -359,13 +359,13 @@ double ROF3D::computeTV1DStar(const cv::Mat & argument,const double & precision)
 	return result;
 }
 
-double ROF3D::computeTV1DStarWeighted(const cv::Mat & argument,const cv::Mat weight,const double & precision)
+double ROF3D::computeTV1DStarWeighted(const cv::Mat & argument,const cv::Mat weight)
 //compute the conjugate of the weighted TV1D.
 //The weighted TV1D is equal to: Sigma_{i} |argument_{i+1}-argument_{i}|*weight_{i}
 // the cv::Mat object weight is smaller by 1 than the object argument and all its terms are positive
 // argument and  weighted are cv::Mat object of dimension 1 and of type double
 
-// the result is equal to zero only if |Sigma_{1<=k<=h} argument[k]| <=weight[k] for all possible h and  Sigma_{k} argument[k]=0 (smaller then the term precision taking into account the numerical inmprecision)
+// the result is equal to zero only if |Sigma_{1<=k<=h} argument[k]| <=weight[k] for all possible h and  Sigma_{k} argument[k]=0 (smaller then the term m_precision taking into account the numerical inmm_precision)
 
 {
 	// infinityOrNot=false;
@@ -374,7 +374,7 @@ double ROF3D::computeTV1DStarWeighted(const cv::Mat & argument,const cv::Mat wei
 	for (int h=0;h<argument.size[0]-1;h++)
 	{
 		sum+=argument.at<double>(h);
-		if (std::abs(sum)>weight.at<double>(h))
+		if (std::abs(sum)>weight.at<double>(h)+m_precision)
 		{
 			// infinityOrNot=true;
 			result=INFINITY;
@@ -383,7 +383,7 @@ double ROF3D::computeTV1DStarWeighted(const cv::Mat & argument,const cv::Mat wei
 		}
 	}
 	sum+=argument.at<double>(argument.size[0]-1);
-	if (std::abs(sum)>precision)
+	if (std::abs(sum)>m_precision)
 	{
 		// infinityOrNot=true;
 		result=INFINITY;
