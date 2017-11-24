@@ -19,7 +19,7 @@ class MatchingAlgorithm
 {
 
 	public:
-		MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2,std::string dataTermOption,int tsize,signed int offset,int Niter,std::string path_to_disparity,std::string method);
+		MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2,std::string dataTermOption,int tsize,signed int offset,int Niter,std::string path_to_disparity,int nbmaxThreadPoolThreading,std::string method);
 		~MatchingAlgorithm();
 		
 		static cv::Mat  projCh(const cv::Mat &v);

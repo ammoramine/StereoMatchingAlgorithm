@@ -24,7 +24,7 @@ extern const char * global_table_of_data_term[];
 
 std::string compare_on_list(char * option,const char* listOfElements[],int sizeOflistOfElements,char * messageToPrint);
 int get_dataterm_index(std::string name);
-void read_option(int argc, char* argv[],cv::Mat &image1,cv::Mat &image2,std::string  &data_term_option,int &tsize,signed int &offset,int &Niter,std::string &path_to_disparity,std::string &method);
+void read_option(int argc, char* argv[],cv::Mat &image1,cv::Mat &image2,std::string  &data_term_option,int &tsize,signed int &offset,int &Niter,std::string &path_to_disparity,int &nbmaxThreadPoolThreading,std::string &method);
 
 
 #endif

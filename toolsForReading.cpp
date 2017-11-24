@@ -23,7 +23,7 @@ std::string compare_on_list(char * option,const char* listOfElements[],int sizeO
 }
 
 
-void read_option(int argc, char* argv[],cv::Mat &image1,cv::Mat &image2,std::string  &data_term_option,int &tsize,signed int &offset,int &Niter,std::string &path_to_disparity,std::string &method)
+void read_option(int argc, char* argv[],cv::Mat &image1,cv::Mat &image2,std::string  &data_term_option,int &tsize,signed int &offset,int &Niter,std::string &path_to_disparity,int &nbmaxThreadPoolThreading,std::string &method)
 {
 	int c;
 	while (1)
@@ -43,7 +43,8 @@ void read_option(int argc, char* argv[],cv::Mat &image1,cv::Mat &image2,std::str
           {"tsize",  required_argument, 0, 'e'},
           {"offset",  required_argument, 0, 'f'},
           {"path_to_disparity",  required_argument, 0, 'g'},
-          {"method",required_argument,0,'h'},
+          {"threadsMax",required_argument,0,'h'},
+          {"method",required_argument,0,'i'},
           {0, 0, 0, 0}
         };
       /* getopt_long stores the option index here. */
@@ -103,7 +104,11 @@ void read_option(int argc, char* argv[],cv::Mat &image1,cv::Mat &image2,std::str
           path_to_disparity=std::string(optarg);
           break;
         case 'h':
-          printf ("methode used`%s'\n", optarg);
+          printf ("maximal number of threads used in pool threading used`%s'\n", optarg);
+          nbmaxThreadPoolThreading=atoi(optarg);
+          break;
+        case 'i':
+          printf ("method used`%s'\n", optarg);
           method=std::string(optarg);
           break;
         // case 'c':
