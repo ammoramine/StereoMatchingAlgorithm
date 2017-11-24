@@ -546,19 +546,24 @@ void ROF3D::proxTVl(const cv::Mat &input,cv::Mat &output)
 		getRow3D(output,i,outputi);
 		getRow3D(m_g,i,gi);
 		// std::vector<std::thread> threads;
-		for (int j=0;j<sizeInputx;j++)
-		{
-			threadPool.enqueue(&ROF3D::proxTVLij,*this,inputi,outputi,gi,j);
-			// proxTVLij(inputi,outputi,gi,j);
+		// for (int j=0;j<sizeInputx;j++)
+		// {
+		// 	threadPool.enqueue(&ROF3D::proxTVLij,*this,inputi,outputi,gi,j);
+		// 	// proxTVLij(inputi,outputi,gi,j);
 
-			// threads.push_back(std::thread(&ROF3D::proxTVLij,*this,inputi,std::ref(outputi),gi,j));
-		}
+		// 	// threads.push_back(std::thread(&ROF3D::proxTVLij,*this,inputi,std::ref(outputi),gi,j));
+		// }
+		threadPool.enqueue(&ROF3D::proxTVLijExtern,*this,inputi,outputi,gi);
 		// for (int i=0;i<threads.size();i++)
 		// {
 		// 	threads[i].join();
 		// }
 	}
 }
+
+
+
+
 
 void ROF3D::proxTVLij(const cv::Mat &inputi,cv::Mat &outputi,const cv::Mat &gi,int j)
 {
@@ -581,7 +586,15 @@ void ROF3D::proxTVLij(const cv::Mat &inputi,cv::Mat &outputi,const cv::Mat &gi,i
 		}
 }	
 
-
+void ROF3D::proxTVLijExtern(const cv::Mat &inputi,cv::Mat &outputi,const cv::Mat &gi)
+// looping of the previous function: "proxTVLij" ,it is still parralelizable
+{
+	int sizeInputx=inputi.size[0];
+	for (int j=0;j<sizeInputx;j++)
+		{
+			proxTVLij(inputi,outputi,gi,j);
+		}
+}
 
 void ROF3D::proxTVvOnTau(const cv::Mat &input,cv::Mat &output)
 
@@ -605,18 +618,20 @@ void ROF3D::proxTVvOnTau(const cv::Mat &input,cv::Mat &output)
 		getLayer3D(input,k,inputppk);
 		getLayer3D(output,k,outputppk);
 		// std::vector<std::thread> threads;
-		for (int j=0;j<sizeInputx;j++)
-		{
-			// proxTVvOnTaupjk(inputppk,output,j,k);
-			threadPool.enqueue(&ROF3D::proxTVvOnTaupjk,*this,inputppk,output,j,k);
-			// threads.push_back(std::thread(&ROF3D::proxTVvOnTaupjk,*this,inputppk,std::ref(output),j,k));
-		}
+		// for (int j=0;j<sizeInputx;j++)
+		// {
+		// 	// proxTVvOnTaupjk(inputppk,output,j,k);
+		// 	threadPool.enqueue(&ROF3D::proxTVvOnTaupjk,*this,inputppk,output,j,k);
+		// 	// threads.push_back(std::thread(&ROF3D::proxTVvOnTaupjk,*this,inputppk,std::ref(output),j,k));
+		// }
+		threadPool.enqueue(&ROF3D::proxTVvOnTaupjkExtern,*this,inputppk,output,k);
 	// 	for (int i=0;i<threads.size();i++)
 	// {
 	// 	threads[i].join();
 	// }
 	}
 }
+
 
 
 void ROF3D::proxTVvOnTaupjk(const cv::Mat &inputppk, cv::Mat &output,int j,int k)
@@ -646,7 +661,14 @@ void ROF3D::proxTVvOnTaupjk(const cv::Mat &inputppk, cv::Mat &output,int j,int k
 	// writing the result on the associated part of the memory
 }
 
-
+void ROF3D::proxTVvOnTaupjkExtern(const cv::Mat &inputppk, cv::Mat &output,int k)
+{
+	int sizeInputx=inputppk.size[1];
+	for (int j=0;j<sizeInputx;j++)
+		{
+			proxTVvOnTaupjk(inputppk,output,j,k);
+		}
+}
 
 void ROF3D::proxTVhOnTau(const cv::Mat &input,cv::Mat &output)
 
@@ -675,12 +697,13 @@ void ROF3D::proxTVhOnTau(const cv::Mat &input,cv::Mat &output)
 		getRow3D(input,i,inputi);
 		getRow3D(output,i,outputi);
 		// std::vector<std::thread> threads;
-		for (int k=0;k<sizeInputt;k++)
-		{
-			threadPool.enqueue(&ROF3D::proxTVhOnTauipk,*this,inputi,outputi,k);
-			// proxTVhOnTauipk(inputi,outputi,k);
-			// threads.push_back(std::thread(&ROF3D::proxTVhOnTauipk,*this,inputi,std::ref(outputi),k));
-		}
+		// for (int k=0;k<sizeInputt;k++)
+		// {
+		// 	threadPool.enqueue(&ROF3D::proxTVhOnTauipk,*this,inputi,outputi,k);
+		// 	// proxTVhOnTauipk(inputi,outputi,k);
+		// 	// threads.push_back(std::thread(&ROF3D::proxTVhOnTauipk,*this,inputi,std::ref(outputi),k));
+		// }
+		threadPool.enqueue(&ROF3D::proxTVhOnTauipkExtern,*this,inputi,outputi);
 		// for (int i=0;i<threads.size();i++)
 		// {
 		// 	threads[i].join();
@@ -713,30 +736,15 @@ void ROF3D::proxTVhOnTauipk(const cv::Mat &inputi, cv::Mat &outputi,int k)
 		// writing the result on the associated part of the memory
 }
 
-// void ROF3D::proxTVhOnTauipk(const cv::Mat &inputi, cv::Mat &outputi,int k)
-// {
-// 	cv::Mat inputipk;
-// 	std::vector<double> inputipkVect;
-// 	int sizeInputx=inputi.size[0];
-// 	int sizeInputt=inputi.size[1];
-// 	for (int k=0;k<sizeInputt;k++)
-// 		{
-// 		 inputipk=getLayer2D(inputi,k);
-// 	     inputipk.copyTo(inputipkVect);
+void ROF3D::proxTVhOnTauipkExtern(const cv::Mat &inputi, cv::Mat &outputi)
+{
+	int sizeInputt=inputi.size[1];
+	for (int k=0;k<sizeInputt;k++)
+		{
+			proxTVhOnTauipk(inputi,outputi,k);
+		}
+}
 
-// 	     ROF rof=ROF(m_tau,inputipkVect);// this function resolves argmin_{u}( Sigma gij(k)|u(k+1)-u(k)|+1/2*Sigma|u(k)-inputij(k)|^2)
-	
-// 	//this function resolve argmin_{v(i,j,.)}( Sigma_{k} g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+1/2*Sigma_{k} |v(i,j,k)-l(i,j,k)|^2) with v(i,j,k) on R
-
-// 	     std::deque<double> outputipkDeque=rof.getSolution(false); // printContentsOf3DCVMat(getRow2D(inputi,j),true,"fij.txt");
-	
-// 	     for (int j=0;j<sizeInputx;j++)
-// 			{
-// 				outputi.at<double>(cv::Vec<int,2>(j,k))=outputipkDeque[j];
-// 			}
-// 		// writing the result on the associated part of the memory
-// 		}
-// }
 
 void ROF3D::testMinimialityOfSolutionTVL(const cv::Mat &input,const cv::Mat &argmin,int numberOfTests,double margin)
 // test if proxTVl could computes prox(1/m_tau*TVl(g))(input): it resolves the problem argmin( Sigma m_g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+m_tau/2*Sigma|v(i,j,k)-input(i,j,k)|) with v(i,j,k) on R

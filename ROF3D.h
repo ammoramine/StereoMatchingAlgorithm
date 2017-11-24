@@ -46,10 +46,16 @@ class ROF3D
 		void proxTVhOnTau(const cv::Mat &input,cv::Mat &output);
 		void proxTVvOnTau(const cv::Mat &input,cv::Mat &output);
 
+
+// parallelisable block for the computation of the proximal operators
+		
 		void proxTVLij(const cv::Mat &inputi,cv::Mat &outputi,const cv::Mat &gi,int j);
 		void proxTVvOnTaupjk(const cv::Mat &inputppk, cv::Mat &output,int j,int k);//outputppk won't be used, but rather because the methods getLayer3D() and getLayer2D() return just a copy
 		void proxTVhOnTauipk(const cv::Mat &inputi, cv::Mat &outputi,int k);
 
+		void proxTVLijExtern(const cv::Mat &inputi,cv::Mat &outputi,const cv::Mat &gi);
+		void proxTVvOnTaupjkExtern(const cv::Mat &inputppk, cv::Mat &output,int k);
+		void proxTVhOnTauipkExtern(const cv::Mat &inputi, cv::Mat &outputi);
 
 
 		// void step();
