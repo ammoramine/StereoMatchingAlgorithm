@@ -16,9 +16,15 @@ class Worker;
   // the actual thread pool
 class ThreadPool {
 public:
-    ThreadPool(size_t);
+    ThreadPool(size_t nb_threads);
     template<class F,typename ...Args> void enqueue(F&& f,Args&& ...args);
     ~ThreadPool();
+    void addCompletedTask();
+    void drainCounter();
+    int getNumberTasks();
+    void temporaryWait();
+    void drainCounterAndSetLimitTasks(int limitTasks);
+
 private:
     friend class Worker;
  
@@ -30,7 +36,11 @@ private:
     // synchronization
     std::mutex queue_mutex;
     std::condition_variable condition;
+    std::condition_variable conditionNbTasks;
     bool stop;
+    bool m_waitFlag;
+    int m_counterCompletedTask;
+    int m_limitCompletedTask;
 };
 
 // add new work item to the pool

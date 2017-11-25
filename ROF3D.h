@@ -26,6 +26,7 @@ class ROF3D
 	public:
 		// void computeROFSolution(const double &tau,const std::vector<double> &l,const std::vector<double> &costij,double * outputij);
 		ROF3D(const cv::Mat & data_term,int m_Niter=100,const std::string &path_to_disparity="disparity.tif",size_t nbMaxThreads=32,double precision=0.0000001);
+		~ROF3D();
 		void initf(double delta=1000);
 
 		void launch();
@@ -108,7 +109,7 @@ class ROF3D
 		double m_precision;// this parameter take into account the numerical inaccuracy for the computation of the conjuguate de la variation totale
 
 		size_t m_nbMaxThreads;
-
+		ThreadPool *m_threadpool=NULL;
 		int m_iteration;
 		int m_Niter;
 

@@ -80,7 +80,7 @@ ROF3D::ROF3D(const cv::Mat & data_term,int Niter,const std::string &path_to_disp
 	m_Niter=Niter;
 	m_iteration=0;
 	m_path_to_disparity=path_to_disparity;
-
+	// m_threadpool=new ThreadPool(32);
 	// cv::Mat input(3, size, CV_64FC1, 5.0);
 	// cv::Mat output=cv::Mat(3,size,CV_64FC1, 0.0);
 	// proxTVhOnTau(input,output);
@@ -110,6 +110,10 @@ ROF3D::ROF3D(const cv::Mat & data_term,int Niter,const std::string &path_to_disp
 	
 }
 
+ROF3D::~ROF3D()
+{
+	// delete m_threadpool;
+}
 
 void ROF3D::testMinimalityOfSolution(int numberOfTests,double margin)
 // test if ROF3D could computes the solution of the problem argmin(Sigma |v(i+1,j,k)-v(i,j,k)|+ Sigma |v(i,j+1,k)-v(i,j,k)|+ Sigma |v(i,j,k+1)-v(i,j,k)|*m_g(i,j,k) +Sigma (v(i,j,k)-m_f(i,j,k)))
@@ -540,6 +544,7 @@ void ROF3D::proxTVl(const cv::Mat &input,cv::Mat &output)
 	cv::Mat outputi;
 	std::deque<double> outputijDeque;
 	ThreadPool threadPool(m_nbMaxThreads);
+	threadPool.drainCounterAndSetLimitTasks(1);
 	for (int i=0;i<sizeInputy;i++)
 	{
 		getRow3D(input,i,inputi);
@@ -559,6 +564,8 @@ void ROF3D::proxTVl(const cv::Mat &input,cv::Mat &output)
 		// 	threads[i].join();
 		// }
 	}
+	threadPool.temporaryWait();
+	// threadPool.~ThreadPool();
 }
 
 
@@ -613,6 +620,7 @@ void ROF3D::proxTVvOnTau(const cv::Mat &input,cv::Mat &output)
 	cv::Mat outputppk;
 	std::deque<double> outputpjkDeque;
 	ThreadPool threadPool(m_nbMaxThreads);
+	threadPool.drainCounterAndSetLimitTasks(1);
 	for (int k=0;k<sizeInputt;k++)
 	{
 		getLayer3D(input,k,inputppk);
@@ -630,6 +638,7 @@ void ROF3D::proxTVvOnTau(const cv::Mat &input,cv::Mat &output)
 	// 	threads[i].join();
 	// }
 	}
+	threadPool.temporaryWait();
 }
 
 
@@ -692,6 +701,7 @@ void ROF3D::proxTVhOnTau(const cv::Mat &input,cv::Mat &output)
 	cv::Mat outputi;
 	std::deque<double> outputipkDeque;
 	ThreadPool threadPool(m_nbMaxThreads);
+	threadPool.drainCounterAndSetLimitTasks(1);
 	for (int i=0;i<sizeInputy;i++)
 	{
 		getRow3D(input,i,inputi);
@@ -709,6 +719,7 @@ void ROF3D::proxTVhOnTau(const cv::Mat &input,cv::Mat &output)
 		// 	threads[i].join();
 		// }
 	}
+	threadPool.temporaryWait();
 }
 
 
