@@ -20,6 +20,7 @@
 #include "census_computation.h"
 #include <thread>
 #include "threadpool.h"
+#include <math.h>
 
 class ROF3D
 {
@@ -57,7 +58,9 @@ class ROF3D
 		void proxTVvOnTaupjkExtern(const cv::Mat &inputppk, cv::Mat &output,int k);
 		void proxTVhOnTauipkExtern(const cv::Mat &inputi, cv::Mat &outputi);
 
-
+		void proxTVLijExternMultiple(const cv::Mat &input,cv::Mat &output,int beginIncluded,int endExcluded);
+		void proxTVvOnTaupjkExternMultiple(const cv::Mat &input,cv::Mat &output,int beginIncluded,int endExcluded);
+		void proxTVhOnTauipkExternMultiple(const cv::Mat &input,cv::Mat &output,int beginIncluded,int endExcluded);
 		// void step();
 
 		double computeCostPrimal(const cv::Mat &argument);
