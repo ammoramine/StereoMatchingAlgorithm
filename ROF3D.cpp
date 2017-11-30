@@ -493,7 +493,7 @@ void ROF3D::computeDisparity()
 		}
 	}
 
-    imwrite(m_path_to_disparity,m_disparity);
+    cv::imwrite(m_path_to_disparity,m_disparity);
 }
 
 cv::Mat ROF3D::getSolution()

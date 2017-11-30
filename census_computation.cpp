@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <opencv/highgui.h>
-#include <opencv2/core/core.hpp>
-#include <opencv2/gpu/gpu.hpp>
-#include <opencv2/ocl/ocl.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
+// #include <opencv2/core/core.hpp>
+// #include <opencv2/gpu/gpu.hpp>
+// #include <opencv2/ocl/ocl.hpp>
+// #include <opencv2/imgproc/imgproc.hpp>
 #include <iostream>
 #include <vector>
 #include "census_computation.h"

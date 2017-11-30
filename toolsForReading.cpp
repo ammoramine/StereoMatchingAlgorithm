@@ -72,12 +72,14 @@ void read_option(int argc, char* argv[],cv::Mat &image1,cv::Mat &image2,std::str
           break;
         case 'a':
           printf ("path to image 1 (image on the right) `%s'\n", optarg);
-          image1=cv::imread(optarg);
+          readAndConvertImageToGray(optarg,image1);
+          // image1=cv::imread(optarg,cv::IMREAD_LOAD_GDAL);
           break;
 
         case 'b':
           printf ("path to image 2 (image on the left )`%s'\n", optarg);
-          image2=cv::imread(optarg);
+          readAndConvertImageToGray(optarg,image2);
+          // image2=cv::imread(optarg,cv::IMREAD_LOAD_GDAL);
           break;
         case 'c':
         {
@@ -140,3 +142,29 @@ void read_option(int argc, char* argv[],cv::Mat &image1,cv::Mat &image2,std::str
     }
 
 }
+void readAndConvertImageToGray(const std::string &pathToImage,cv::Mat &output)
+{
+
+  cv::Mat outputTemp=cv::imread(pathToImage,cv::IMREAD_LOAD_GDAL);
+  int nbChannels=outputTemp.channels();
+  // printContentsOf3DCVMat(output,true,"output");
+  // cv::Mat outputGrayDouble;
+  if (nbChannels==3)
+  {
+    cv::Mat outputGray;
+    cv::cvtColor(outputTemp, outputGray, CV_RGB2GRAY);
+    outputGray.convertTo(output, CV_64FC1);
+  }
+  else if (nbChannels==1)
+  {
+    outputTemp.convertTo(output, CV_64FC1);
+  }
+  else
+  {
+    throw std::invalid_argument( "this kind of image is not managed in the code ..." );
+
+  }
+  // cv::imread(optarg,cv::IMREAD_LOAD_GDAL);
+
+}
+

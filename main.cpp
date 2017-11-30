@@ -32,21 +32,7 @@ int main(int argc, char* argv[])
 	// read_option(argc,argv,image1,image2,data_term_option);
 	int t_size;signed int offset;int Niter;std::string path_to_disparity;int nbmaxThreadPoolThreading;std::string method;
 	read_option(argc,argv,image1,image2,data_term_option,t_size,offset,Niter,path_to_disparity,nbmaxThreadPoolThreading,method);
-	cv::Mat image1Gray;
-	cv::Mat image2Gray;
-	cv::Mat image1GrayDouble;
-	cv::Mat image2GrayDouble;
-	cv::cvtColor(image1, image1Gray, CV_RGB2GRAY);
-	cv::cvtColor(image2, image2Gray, CV_RGB2GRAY);
-	image1Gray.convertTo(image1GrayDouble, CV_64FC1);
-	image2Gray.convertTo(image2GrayDouble, CV_64FC1);
-	// int tsize=40;
-	// signed int offset=-20;
-	// int Niter=400;
-	cv::Mat data_term;
-	// for (int i=0;i<1;i++)
-	// {
-	MatchingAlgorithm theAlgorithm = MatchingAlgorithm(image1GrayDouble,image2GrayDouble,data_term_option, t_size,offset,Niter,path_to_disparity,nbmaxThreadPoolThreading,method);
+	MatchingAlgorithm theAlgorithm = MatchingAlgorithm(image1,image2,data_term_option, t_size,offset,Niter,path_to_disparity,nbmaxThreadPoolThreading,method);
 }
 else
 {//here is place from some dirty tests
