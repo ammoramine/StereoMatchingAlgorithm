@@ -22,12 +22,16 @@
 #include "threadpool.h"
 #include <math.h>
 #include <opencv2/opencv.hpp>
-
+// #include "iio.h"
+extern "C"
+{
+#include "iio.h"
+}
 class ROF3D
 {
 	public:
 		// void computeROFSolution(const double &tau,const std::vector<double> &l,const std::vector<double> &costij,double * outputij);
-		ROF3D(const cv::Mat & data_term,int m_Niter=100,const std::string &path_to_disparity="disparity.tif",size_t nbMaxThreads=32,double precision=0.0000001);
+		ROF3D(const cv::Mat & data_term,int m_Niter,const std::string &path_to_disparity,size_t nbMaxThreads,double offset,double precision=0.0000001);
 		void initf(double delta=1000);
 
 		void launch();
@@ -110,6 +114,7 @@ class ROF3D
 		double m_t_current;
 		double m_lambda;
 		double m_precision;// this parameter take into account the numerical inaccuracy for the computation of the conjuguate de la variation totale
+		double m_offset;
 
 		size_t m_nbMaxThreads;
 

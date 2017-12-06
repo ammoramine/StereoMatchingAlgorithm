@@ -23,7 +23,7 @@ std::string compare_on_list(char * option,const char* listOfElements[],int sizeO
 }
 
 
-void read_option(int argc, char* argv[],cv::Mat &image1,cv::Mat &image2,std::string  &data_term_option,int &tsize,signed int &offset,int &Niter,std::string &path_to_disparity,int &nbmaxThreadPoolThreading,std::string &method)
+void read_option(int argc, char* argv[],cv::Mat &image1,cv::Mat &image2,std::string  &data_term_option,int &tsize,double &offset,int &Niter,std::string &path_to_disparity,int &nbmaxThreadPoolThreading,std::string &method)
 {
 	int c;
 	while (1)
@@ -99,7 +99,7 @@ void read_option(int argc, char* argv[],cv::Mat &image1,cv::Mat &image2,std::str
           break;
         case 'f':
           printf ("offset is the smallest algebrical value of the disparity`%s'\n", optarg);
-          offset=atoi(optarg);
+          offset=atof(optarg);
           break;
         case 'g':
           printf ("prefix of the name of the disparity image`%s'\n", optarg);

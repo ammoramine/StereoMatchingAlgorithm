@@ -1,6 +1,6 @@
 #include "MatchingAlgorithm.h"
 
-MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2,std::string dataTermOption,int t_size,signed int offset,int Niter,std::string path_to_disparity,int nbmaxThreadPoolThreading,std::string method)
+MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2,std::string dataTermOption,int t_size,double offset,int Niter,std::string path_to_disparity,int nbmaxThreadPoolThreading,std::string method)
 // tahe as input two gray images
 {
 	m_image1=new cv::Mat(image1.size(),image1.type());
@@ -41,7 +41,7 @@ MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2
 	}
 	else if(method=="accelerated")
 	{
-		ROF3D rof3D=ROF3D(m_g,m_Niter,m_path_to_disparity,nbmaxThreadPoolThreading);
+		ROF3D rof3D=ROF3D(m_g,m_Niter,m_path_to_disparity,nbmaxThreadPoolThreading,m_offset);
 		// std::cout<<"\n local test"<<std::endl;
 		// rof3D.testMinimalityOfSolution(10,0.0001);
 		// std::cout<<"\n second test with farther arguments"<<std::endl;
@@ -121,12 +121,12 @@ if (m_dataTermOption=="absdiff")
 			for (int j=0;j<m_x_size;j++)
 			{
 				double * m_gij=m_gi.ptr<double>(j);
-				int maxk=std::min(j-m_offset,m_t_size-1);
-				int mink=std::max(j-m_offset-m_x_size,0);
+				int maxk=std::min(j-int(floor(m_offset)),m_t_size-1);
+				int mink=std::max(j-int(floor(m_offset))-m_x_size,0);
 				for(int k=mink;k<=maxk;k++)
 				{
 			// for (int km
-					m_gij[k]=m_mu*abs(m_image1iPtr[j]-m_image2iPtr[j-k-m_offset]);
+					m_gij[k]=m_mu*abs(m_image1iPtr[j]-m_image2iPtr[j-k-int(floor(m_offset))]);
 				}
 				// delete m_gij;
 			}
@@ -685,7 +685,7 @@ void MatchingAlgorithm::printProperties()
 {
 	// printf("images of type: ")
 	printf ("size_of_images: width (y variable) : %i height (x variable) : %i \n", m_x_size, m_y_size);
-	printf("value of mu : %4.2f, tau %4.2f, sigma %4.2f, s %4.2f, Niter %i, m_factor %4.2f, t_size %i and offset %i",m_mu,m_tau,m_sigma,m_s,m_Niter,m_factor,m_t_size,m_offset);
+	printf("value of mu : %4.2f, tau %4.2f, sigma %4.2f, s %4.2f, Niter %i, m_factor %4.2f, t_size %i and offset %4.2f",m_mu,m_tau,m_sigma,m_s,m_Niter,m_factor,m_t_size,m_offset);
 	// m_mu = 75.0/255.0;
 	// m_tau = 1.0/sqrt(12.0) ;
 	// m_sigma = 1.0/sqrt(12.0) ;

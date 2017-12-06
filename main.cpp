@@ -12,6 +12,12 @@
 #include "ROF.h"
 #include "ROF3D.h"
 #include "someTools.h"
+#include <fstream>
+// #define IIO_DISABLE_LIBJPEG
+extern "C"
+{
+#include "iio.h"
+}
 int main(int argc, char* argv[])
 {
 	// // testLayer3D()
@@ -30,13 +36,58 @@ int main(int argc, char* argv[])
 	cv::Mat image2;//=cv::imread("input_pair/rectified_sec.tif");//, cv::IMREAD_LOAD_GDAL);
 	std::string data_term_option;
 	// read_option(argc,argv,image1,image2,data_term_option);
-	int t_size;signed int offset;int Niter;std::string path_to_disparity;int nbmaxThreadPoolThreading;std::string method;
+	int t_size;double offset;int Niter;std::string path_to_disparity;int nbmaxThreadPoolThreading;std::string method;
 	read_option(argc,argv,image1,image2,data_term_option,t_size,offset,Niter,path_to_disparity,nbmaxThreadPoolThreading,method);
 	MatchingAlgorithm theAlgorithm = MatchingAlgorithm(image1,image2,data_term_option, t_size,offset,Niter,path_to_disparity,nbmaxThreadPoolThreading,method);
 }
 else
 {//here is place from some dirty tests
-	testLayer3D();
+	// int w, h, pixeldim;
+	// float *x = iio_read_image_float_vec("-", &w, &h, &pixeldim);
+	// fprintf(stderr, "got a %dx%d image with %d channels\n", w, h, pixeldim);
+	// iio_save_image_float_vec("-", x, w, h, pixeldim);
+	// free(x);
+
+// return 0;
+	// testLayer3D();
+  // cv::Mat mgmFile=cv::imread("mgm_disp_neg.tif");
+  cv::Mat outputTemp=cv::imread("mgm_disp_neg.tif",cv::IMREAD_LOAD_GDAL);
+  printContentsOf3DCVMat(outputTemp,true,"image1Content");
+	// typedef mpl::vector<rgb8_image_t,  rgb16_image_t, gray8_image_t, gray16_image_t> img_types;
+	// typedef gil::any_image<img_types> my_any_image_t;
+	// my_any_image_t dyn_img;
+	// boost::gil::tiff_read_image("mgm_disp_neg.tif", dyn_img);
+  iio_write_image_float("image1.tif",(float*)outputTemp.data,outputTemp.size[1],outputTemp.size[0]);
+  
+  cv::Mat m_disparity=cv::Mat(outputTemp.size[0],outputTemp.size[1],CV_32FC1,10.0);
+  printContentsOf3DCVMat(m_disparity,true,"image2Content");
+  iio_write_image_float("image2.tif",(float*)m_disparity.data,m_disparity.size[1],m_disparity.size[0]);
+
+
+  // int a=outputTemp.channels();
+  // std::string b=outputTemp.depth();
+  // std:cout<<outputTemp.depth()<<std::endl;
+  // float r[100];
+  // printContentsOf3DCVMat(outputTemp,true,"mgm_disp_neg");
+  // boost::gil::gray32f_view_t dst=boost::gil::interleaved_view(outputTemp.size[0],outputTemp.size[1],(boost::gil::gray32f_pixel_t*)r,outputTemp.size[0]);
+  // boost::gil::write_view("mgm_disp_neg_rewritten.tif",(any_image_view<boost::gil::gray32f_view_t>)dst);
+  // std::string path=std::string("mgm_disp_neg_rewritten.tif");
+  // boost::gil::tiff_write_view<boost::gil::gray32f_view_t>("mgm_disp_neg_rewritten.tif",dst);
+  // cv::FileStorage fs("mgm_disp_neg_rewritten.tif", cv::FileStorage::WRITE );
+  // fs << "Mat" << outputTemp;
+  // cv::Mat outputTempNew;
+  // outputTemp.convertTo(outputTempNew, CV_16FC1);
+  // printContentsOf3DCVMat(outputTempNew,true,"mgm_disp_neg_after_conversion");
+  // cv::imwrite("mgm_disp_neg_rewritten.tif",outputTempNew);
+  // char * dispartityData=new char[463*370];//=disparity.ptr<char> 
+  // ifstream myFile ("mgm_disp_neg.tif", ios::in | ios::binary);
+  // myFile.read (dispartityData,1000000000000);
+  // // cv::Mat mgmFile=
+  // cv::Mat disparity=cv::Mat(463,370,CV_32S,dispartityData);
+  // printContentsOf3DCVMat(disparity,true,"producedFile");
+  // fstream myFile( "mgm_disp_census.tif", ios::in | ios::out | ios::binary );
+  // cv::imwrite("rewritten.tif",mgmFile);
+  // printContentsOf3DCVMat(mgmFile,true,"mgmFile");
 }
 
 		// (theAlgorithm.get_data_term()).copyTo(data_term);

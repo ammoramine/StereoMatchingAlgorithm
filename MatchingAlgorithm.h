@@ -19,7 +19,7 @@ class MatchingAlgorithm
 {
 
 	public:
-		MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2,std::string dataTermOption,int tsize,signed int offset,int Niter,std::string path_to_disparity,int nbmaxThreadPoolThreading,std::string method);
+		MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2,std::string dataTermOption,int tsize,double offset,int Niter,std::string path_to_disparity,int nbmaxThreadPoolThreading,std::string method);
 		~MatchingAlgorithm();
 		
 		static cv::Mat  projCh(const cv::Mat &v);
@@ -72,11 +72,11 @@ class MatchingAlgorithm
 		double m_tau;
 		double m_sigma;
 
-		int m_offset;
 		int m_iteration;
 		double m_gap;
 		double m_gapInit;
 		double m_factor;
+		double m_offset;
 
 		int m_Niter;
 		int m_t_size;

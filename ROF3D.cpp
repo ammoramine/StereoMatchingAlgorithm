@@ -57,7 +57,7 @@ void ROF3D::testContraintOnSolution(const cv::Mat &argminToTest)
 	std::cout<<" result of the test : "<<succes<<std::endl;
 }
 
-ROF3D::ROF3D(const cv::Mat & data_term,int Niter,const std::string &path_to_disparity,size_t nbMaxThreads,double precision) : m_nbMaxThreads(nbMaxThreads),m_precision(precision)
+ROF3D::ROF3D(const cv::Mat & data_term,int Niter,const std::string &path_to_disparity,size_t nbMaxThreads,double offset,double precision) : m_nbMaxThreads(nbMaxThreads),m_offset(offset),m_precision(precision)
 //this function resolve argmin_{v}( Sigma g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+Sigma |v(i,j+1,k)-v(i,j,k)|+Sigma |v(i+1,j,k)-v(i,j,k)|+m_tau/2*Sigma |v(i,j,k)-m_f(i,j,k)|^2) with v(i,j,k)
 // on R
 {
@@ -462,8 +462,9 @@ void ROF3D::computeMinSumTV()
 
 void ROF3D::computeDisparity()
 {
-	m_disparity=cv::Mat(m_u.size[0],m_u.size[1],CV_64FC1,0.0);
-
+	//TODO: resolve the problems between using float or double
+	m_disparity=cv::Mat(m_u.size[0],m_u.size[1],CV_32FC1,(float)m_offset);
+	cv::Mat m_ui;
 	// cv::Mat thresholded = (m_u > 0.5);
 	// int z=thresholded.size[2];
 
@@ -471,29 +472,36 @@ void ROF3D::computeDisparity()
 	// cv::Mat doubleThresholded=cv::Mat(3, size, CV_64FC1, 0.0);
 	// thresholded.copyTo(doubleThresholded);
  //    thresholded.convertTo(doubleThresholded, CV_64FC1);
- //    // printContentsOf3DCVMat(doubleThresholded,true);
-	double zoomFactor=255.0/(double(m_u.size[2]));
+    // printContentsOf3DCVMat(m_disparity,true,"disparity11");
+	// double zoomFactor=255.0/(double(m_u.size[2]));
 	// // cv::Mat thresholdedDouble;
  //    // thresholded.convertTo(thresholdedDouble, CV_64FC1);
  //    // int size[4]= {3,v.size[0],v.size[1],v.size[2]};
 	// 	// cv::Mat delta(4,size,CV_64FC1,0.0);
-	for (int i = 0; i < m_u.size[0]; i++)
-	{
-		cv::Mat m_ui = MatchingAlgorithm::getRow3D(m_u,i);
-		double * disparityi = m_disparity.ptr<double>(i);
-		for (int j = 0; j < m_u.size[1]; j++)
-		{
-			double * m_uij = m_ui.ptr<double>(j);
-			disparityi[j]=0;
-			for (int k=0;k< m_u.size[2];k++)
-			{
-				disparityi[j]+=m_uij[k];
-			}
-			disparityi[j]*=zoomFactor;
-		}
-	}
 
-    cv::imwrite(m_path_to_disparity,m_disparity);
+
+       for (int i = 0; i < m_u.size[0]; i++)
+       {
+               // cv::Mat m_ui = MatchingAlgorithm::getRow3D(m_u,i);
+               getRow3D(m_u,i,m_ui);
+               float * disparityi = m_disparity.ptr<float>(i);
+               for (int j = 0; j < m_u.size[1]; j++)
+               {
+                       double * m_uij = m_ui.ptr<double>(j);
+                       // disparityi[j]=0;
+                       for (int k=0;k< m_u.size[2];k++)
+                       {
+                               disparityi[j]+=m_uij[k];
+                       }
+                       // disparityi[j]*=zoomFactor;
+               }
+       }
+       // cv::Mat disparityCopy=cv::Mat(m_u.size[0],m_u.size[1],CV_32FC1,-10.0);
+       // cv::Mat disparityCopy=m_disparity;
+       printContentsOf3DCVMat(m_disparity,true,"disparity11");
+	// printContentsOf3DCVMat(disparityCopy,true,"image3Content");
+    iio_write_image_float(strdup(m_path_to_disparity.c_str()),(float*)(m_disparity.clone()).data,m_disparity.size[1],m_disparity.size[0]);
+    // cv::imwrite(m_path_to_disparity,m_disparity);
 }
 
 cv::Mat ROF3D::getSolution()
