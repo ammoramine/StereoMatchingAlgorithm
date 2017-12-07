@@ -1,6 +1,6 @@
 #include "MatchingAlgorithm.h"
 
-MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2,std::string dataTermOption,int t_size,double offset,int Niter,std::string path_to_disparity,int nbmaxThreadPoolThreading,std::string method)
+MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2,std::string dataTermOption,int t_size,double offset,int Niter,const std::string &path_to_disparity,const std::string &path_to_initial_disparity,int nbmaxThreadPoolThreading,std::string method)
 // tahe as input two gray images
 {
 	m_image1=new cv::Mat(image1.size(),image1.type());
@@ -10,6 +10,7 @@ MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2
 	m_y_size=m_image1->size().height;
 	m_x_size=m_image1->size().width;
 	m_path_to_disparity=path_to_disparity;
+	m_path_to_initial_disparity=path_to_initial_disparity;
 	// m_disparity=cv::Mat(m_y_size,m_x_size,CV_64FC1,0.0);
 	
 	m_mu = 75.0/255.0;
@@ -41,7 +42,7 @@ MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2
 	}
 	else if(method=="accelerated")
 	{
-		ROF3D rof3D=ROF3D(m_g,m_Niter,m_path_to_disparity,nbmaxThreadPoolThreading,m_offset);
+		ROF3D rof3D=ROF3D(m_g,m_Niter,m_path_to_disparity,m_path_to_initial_disparity,nbmaxThreadPoolThreading,m_offset);
 		// std::cout<<"\n local test"<<std::endl;
 		// rof3D.testMinimalityOfSolution(10,0.0001);
 		// std::cout<<"\n second test with farther arguments"<<std::endl;

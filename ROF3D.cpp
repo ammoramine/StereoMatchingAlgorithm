@@ -57,7 +57,7 @@ void ROF3D::testContraintOnSolution(const cv::Mat &argminToTest)
 	std::cout<<" result of the test : "<<succes<<std::endl;
 }
 
-ROF3D::ROF3D(const cv::Mat & data_term,int Niter,const std::string &path_to_disparity,size_t nbMaxThreads,double offset,double precision) : m_nbMaxThreads(nbMaxThreads),m_offset(offset),m_precision(precision)
+ROF3D::ROF3D(const cv::Mat & data_term,int Niter,const std::string &path_to_disparity,const std::string &path_to_initial_disparity,size_t nbMaxThreads,double offset,double precision) : m_nbMaxThreads(nbMaxThreads),m_offset(offset),m_precision(precision)
 //this function resolve argmin_{v}( Sigma g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+Sigma |v(i,j+1,k)-v(i,j,k)|+Sigma |v(i+1,j,k)-v(i,j,k)|+m_tau/2*Sigma |v(i,j,k)-m_f(i,j,k)|^2) with v(i,j,k)
 // on R
 {
@@ -68,7 +68,7 @@ ROF3D::ROF3D(const cv::Mat & data_term,int Niter,const std::string &path_to_disp
 	m_t_size=m_g.size[2]+1;// the cost must have a size smaller than 1 dimension for the last extension
 	m_tau=0.5;
 	m_lambda=1;
-	initf();
+	// initf();
 	int size[3] = { m_y_size,m_x_size,m_t_size};
 	m_x1Current=cv::Mat(3, size, CV_64FC1, 0.0);m_x1Previous=cv::Mat(3, size, CV_64FC1, 0.0);m_x1Bar=cv::Mat(3, size, CV_64FC1, 0.0);
 	m_x2Current=cv::Mat(3, size, CV_64FC1, 0.0);m_x2Previous=cv::Mat(3, size, CV_64FC1, 0.0);m_x2Bar=cv::Mat(3, size, CV_64FC1, 0.0);
@@ -80,7 +80,9 @@ ROF3D::ROF3D(const cv::Mat & data_term,int Niter,const std::string &path_to_disp
 	m_Niter=Niter;
 	m_iteration=0;
 	m_path_to_disparity=path_to_disparity;
+	m_path_to_initial_disparity=path_to_initial_disparity;
 
+	initf();
 	// cv::Mat input(3, size, CV_64FC1, 5.0);
 	// cv::Mat output=cv::Mat(3,size,CV_64FC1, 0.0);
 	// proxTVhOnTau(input,output);
@@ -932,18 +934,18 @@ cv::Mat ROF3D::getSolutionOfOriginalProblem()
 
 void ROF3D::initf(double delta)
 {
-	int size[3] = { m_y_size,m_x_size,m_t_size};
-	m_f=cv::Mat(3, size, CV_64FC1, 0.0);
-	cv::Mat fi;cv::Mat fij;
-	for (int i = 0; i < m_y_size; i++)
-	{	
-		fi=MatchingAlgorithm::getRow3D(m_f,i);
-  		for (int j = 0; j < m_x_size; j++)
-    	{	
-    		fij=MatchingAlgorithm::getRow2D(fi,j);
-    		// double a=pow(10,3);
-			fij.at<double>(0)=delta;
-			fij.at<double>(m_t_size-1)=-delta;
+		int size[3] = { m_y_size,m_x_size,m_t_size};
+		m_f=cv::Mat(3, size, CV_64FC1, 0.0);
+		cv::Mat fi;cv::Mat fij;
+		for (int i = 0; i < m_y_size; i++)
+		{	
+			fi=MatchingAlgorithm::getRow3D(m_f,i);
+  			for (int j = 0; j < m_x_size; j++)
+    		{	
+    			fij=MatchingAlgorithm::getRow2D(fi,j);
+    			// double a=pow(10,3);
+				fij.at<double>(0)=delta;
+				fij.at<double>(m_t_size-1)=-delta;
+				}
 		}
-	}
 }

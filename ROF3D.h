@@ -31,7 +31,7 @@ class ROF3D
 {
 	public:
 		// void computeROFSolution(const double &tau,const std::vector<double> &l,const std::vector<double> &costij,double * outputij);
-		ROF3D(const cv::Mat & data_term,int m_Niter,const std::string &path_to_disparity,size_t nbMaxThreads,double offset,double precision=0.0000001);
+		ROF3D(const cv::Mat & data_term,int m_Niter,const std::string &path_to_disparity,const std::string &path_to_initial_disparity,size_t nbMaxThreads,double offset,double precision=0.0000001);
 		void initf(double delta=1000);
 
 		void launch();
@@ -122,6 +122,7 @@ class ROF3D
 		int m_Niter;
 
 		std::string m_path_to_disparity;
+		std::string m_path_to_initial_disparity;
 };
 
 #endif
