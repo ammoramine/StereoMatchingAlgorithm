@@ -47,7 +47,7 @@ void getIntensityNeighbors(const cv::Vec<int,2> &curPixel,double intensityNeighb
 // }
 void ternaryCensusSignature(const cv::Mat &image,cv::Mat &ternaryCensusSignature,double epsilon)
 {
-	int size[]={image.size[0],image.size[0],8}; //8 corresponds to the dmimension of the beighborhood-1, here it's the square around the pixel
+	int size[]={image.size[0],image.size[1],8}; //8 corresponds to the dmimension of the beighborhood-1, here it's the square around the pixel
 	cv::Vec<int,2> curPixel;
 	std::vector<cv::Vec<int,2> > neighbors;neighbors.resize(8);
 
@@ -127,6 +127,9 @@ void data_term_census(const cv::Mat &image1,const cv::Mat &image2,cv::Mat &g,dou
 	cv::Mat ternaryCensusSignature2ij;	
 	ternaryCensusSignature(image1,ternaryCensusSignature1,epsilon);
 	ternaryCensusSignature(image2,ternaryCensusSignature2,epsilon);
+
+	printContentsOf3DCVMat(ternaryCensusSignature1,true,"ternaryCensusSignature1");
+	printContentsOf3DCVMat(ternaryCensusSignature2,true,"ternaryCensusSignature2");
 
 		for (int i=1;i<size[0]-1;i++)
 		{

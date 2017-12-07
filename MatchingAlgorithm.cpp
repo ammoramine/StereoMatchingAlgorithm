@@ -136,8 +136,12 @@ if (m_dataTermOption=="absdiff")
 	}
 else if (m_dataTermOption=="census")
 	{
-		data_term_census(*m_image1,*m_image2,m_g);
+		Census census=Census(*m_image1,*m_image2,m_g); //normally g is preallocated
+		printContentsOf3DCVMat(m_g,true,"m_g");
 		m_g=m_mu*m_g;
+		// data_term_census(*m_image1,*m_image2,m_g);
+		// printContentsOf3DCVMat(m_g,true,"m_g_original");
+		// m_g=m_mu*m_g;
 	}
 else 
 {

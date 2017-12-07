@@ -14,6 +14,7 @@
 #include <math.h>
 #include "census_computation.h"
 #include "ROF3D.h"
+#include "census.h"
 
 class MatchingAlgorithm
 {

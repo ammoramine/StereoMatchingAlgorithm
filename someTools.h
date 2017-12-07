@@ -31,21 +31,9 @@ void castCVMatTovector_double(const cv::Mat &matrix,std::vector<double> &vector)
 void testLayer3D();
 void testLayer2D();
 void testLayer2DBis();
-// void castCVMatTovector(const cv::Mat &matrix,std::vector<typeMatrix> &vector);
 
-// template<typename typeForCasting>
-// void castCVMatTovector(const cv::Mat &matrix,std::vector<typeForCasting> &vector)
-// {
-// 	// obtain iterator at initial position
-// 	vector.resize(matrix.size[0]);
-// 	cv::MatConstIterator_<typeForCasting> itMat=matrix.begin<typeForCasting>();
-// 	std::vector<typeForCasting>::iterator itVec=vector.begin();
-// 	// obtain end position
-// 	cv::MatConstIterator_<typeForCasting> itMatend=matrix.end<typeForCasting>();
-// 	for ( ; itMat!= itMatend; ++itMat) {
-// 		(*itVec)=(*itMat);itVec+=1;
-// 	}
-// }
+
+
 
 
 #endif
