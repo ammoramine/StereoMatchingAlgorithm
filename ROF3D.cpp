@@ -57,7 +57,7 @@ void ROF3D::testContraintOnSolution(const cv::Mat &argminToTest)
 	std::cout<<" result of the test : "<<succes<<std::endl;
 }
 
-ROF3D::ROF3D(const cv::Mat & data_term,int Niter,const std::string &path_to_disparity,const std::string &path_to_initial_disparity,size_t nbMaxThreads,double offset,double precision) : m_nbMaxThreads(nbMaxThreads),m_offset(offset),m_precision(precision)
+ROF3D::ROF3D(const cv::Mat & data_term,int Niter,const std::string &path_to_disparity,const std::string &path_to_initial_disparity,size_t nbMaxThreads,double offset,double ratioGap,double precision) : m_nbMaxThreads(nbMaxThreads),m_offset(offset),m_precision(precision)
 //this function resolve argmin_{v}( Sigma g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+Sigma |v(i,j+1,k)-v(i,j,k)|+Sigma |v(i+1,j,k)-v(i,j,k)|+m_tau/2*Sigma |v(i,j,k)-m_f(i,j,k)|^2) with v(i,j,k)
 // on R
 {
@@ -81,6 +81,7 @@ ROF3D::ROF3D(const cv::Mat & data_term,int Niter,const std::string &path_to_disp
 	m_iteration=0;
 	m_path_to_disparity=path_to_disparity;
 	m_path_to_initial_disparity=path_to_initial_disparity;
+	m_ratioGap=ratioGap;
 
 	initf();
 	// cv::Mat input(3, size, CV_64FC1, 5.0);
@@ -405,8 +406,9 @@ double ROF3D::computeTV1DStarWeighted(const cv::Mat & argument,const cv::Mat wei
 void ROF3D::launch()
 //after the methodes init has been launched
 {
-	std::cout<<"solving ROF3D problem "<<std::endl;
-	while( m_iteration < m_Niter)// and ( m_gap >= m_factor*m_gapInit ) )
+	std::cout<<"\n\n\n solving ROF3D problem with a ratioGap limit: "<<m_ratioGap<<" and limit number of iterations"<< m_Niter <<"\n\n\n"<<std::endl;
+	m_CurrentRatioGap=2.0;// m_ratioGap should always be lower than 1.0
+	while( m_iteration < m_Niter and m_CurrentRatioGap>=m_ratioGap)// and ( m_gap >= m_factor*m_gapInit ) )
 	{
 		iterate_algorithm();
 		// if(m_iteration%10==0) disparity_estimation();
@@ -414,8 +416,16 @@ void ROF3D::launch()
 		computeDisparity();
 		double primalCost=computeCostPrimal(m_v);
 		double dualCost=computeCostDual(m_x1Current,m_x2Current,m_x3Current);
+		if (m_iteration==1)
+		{
+			m_intialDualPrimalGap=primalCost-dualCost;
+		}
+		double currentDualPrimalGap=primalCost-dualCost;
+		m_CurrentRatioGap=currentDualPrimalGap/m_intialDualPrimalGap;
+		// std::cout<<"\n"<<std::endl;
 		std::cout<<" the cost of the primal is :"<<primalCost<<" and the cost of the dual is : "<<dualCost<<std::endl;
-		std::cout<<"the dual gap is : "<<primalCost-dualCost;
+		std::cout<<"the actual dual gap is : "<<currentDualPrimalGap<<" and the actual ratio is : "<<m_CurrentRatioGap <<std::endl;
+		// std::cout<<"\n"<<std::endl;
 	}
 }
 

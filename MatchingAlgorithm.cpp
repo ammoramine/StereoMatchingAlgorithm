@@ -1,6 +1,6 @@
 #include "MatchingAlgorithm.h"
 
-MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2,std::string dataTermOption,int t_size,double offset,int Niter,const std::string &path_to_disparity,const std::string &path_to_initial_disparity,int nbmaxThreadPoolThreading,std::string method)
+MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2,std::string dataTermOption,int t_size,double offset,double ratioGap,int Niter,const std::string &path_to_disparity,const std::string &path_to_initial_disparity,int nbmaxThreadPoolThreading,std::string method)
 // tahe as input two gray images
 {
 	m_image1=new cv::Mat(image1.size(),image1.type());
@@ -23,6 +23,7 @@ MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2
 	m_factor=0.05;
 	m_t_size = t_size ; //need to impose that m_t_size is smaller than m_x_size
 	m_offset=offset;
+	m_ratioGap=ratioGap;
 	// m_offset=int(-double(m_t_size)/2.0);
 	// m_disorderedImages= new std::vector<cv::Mat>;
 	// m_g.resize(m_t_size);
@@ -48,7 +49,7 @@ MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2
 		// printContentsOf3DCVMat(image2,true,"image2");
 		// cv::Mat m_glayer;getLayer3D(m_g,int(floor(m_g.size[2]/2)),m_glayer);
 		// printContentsOf3DCVMat(m_glayer,true,"m_glayerHalf");
-		ROF3D rof3D=ROF3D(m_g,m_Niter,m_path_to_disparity,m_path_to_initial_disparity,nbmaxThreadPoolThreading,m_offset);
+		ROF3D rof3D=ROF3D(m_g,m_Niter,m_path_to_disparity,m_path_to_initial_disparity,nbmaxThreadPoolThreading,m_offset,m_ratioGap);
 		// std::cout<<"\n local test"<<std::endl;
 		// rof3D.testMinimalityOfSolution(10,0.0001);
 		// std::cout<<"\n second test with farther arguments"<<std::endl;
