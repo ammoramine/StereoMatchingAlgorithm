@@ -77,12 +77,18 @@ void read_option(int argc, char* argv[],cv::Mat &image1,cv::Mat &image2,std::str
           printf ("path to image 1 (image on the right) `%s'\n", optarg);
           readAndConvertImageToGray(optarg,image1);
           // image1=cv::imread(optarg,cv::IMREAD_LOAD_GDAL);
+          // image1.convertTo(image1,CV_32FC1);
+          // iio_write_image_float("image1_gray.tif",(float*)image1.clone().data,image1.clone().size[1],image1.clone().size[0]);
+
           break;
 
         case 'b':
           printf ("path to image 2 (image on the left )`%s'\n", optarg);
           readAndConvertImageToGray(optarg,image2);
           // image2=cv::imread(optarg,cv::IMREAD_LOAD_GDAL);
+          // image2.convertTo(image2,CV_32FC1);
+          // iio_write_image_float("image2_gray.tif",(float*)image2.data,image2.size[1],image2.size[0]);
+          
           break;
         case 'c':
         {
@@ -180,6 +186,7 @@ void readAndConvertImageToGray(const std::string &pathToImage,cv::Mat &output)
     throw std::invalid_argument( "this kind of image is not managed in the code ..." );
 
   }
+  // printContentsOf3DCVMat(output,true,"output32");
   // cv::imread(optarg,cv::IMREAD_LOAD_GDAL);
 
 }

@@ -42,6 +42,12 @@ MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2
 	}
 	else if(method=="accelerated")
 	{
+		// cv::Mat image1Converted;cv::Mat image2Converted;
+		// image1.convertTo(image1Converted,CV_32FC1);image2.convertTo(image2Converted,CV_32FC1);
+		// printContentsOf3DCVMat(image1,true,"image1");
+		// printContentsOf3DCVMat(image2,true,"image2");
+		// cv::Mat m_glayer;getLayer3D(m_g,int(floor(m_g.size[2]/2)),m_glayer);
+		// printContentsOf3DCVMat(m_glayer,true,"m_glayerHalf");
 		ROF3D rof3D=ROF3D(m_g,m_Niter,m_path_to_disparity,m_path_to_initial_disparity,nbmaxThreadPoolThreading,m_offset);
 		// std::cout<<"\n local test"<<std::endl;
 		// rof3D.testMinimalityOfSolution(10,0.0001);
@@ -60,38 +66,38 @@ MatchingAlgorithm::~MatchingAlgorithm()
 }
 
 
-void MatchingAlgorithm::data_term() //(Im1,Im2,Nt,mu)
-{
+// void MatchingAlgorithm::data_term() //(Im1,Im2,Nt,mu)
+// {
 
-// calcul le cost volume mais dans ce cas le déplacement n'est permis que dans un seul sens, il faut corriger ca !
+// // calcul le cost volume mais dans ce cas le déplacement n'est permis que dans un seul sens, il faut corriger ca !
 
-// calcule le cost-volume g(i,j,k) = mu * sum_{R,G,B} abs(Im1(i,j) - Im2(i,j-k))
-// %Im1 : image de gauche
-// %Im2 : image de droite (deplacement de camera de gauche vers la droite)
+// // calcule le cost-volume g(i,j,k) = mu * sum_{R,G,B} abs(Im1(i,j) - Im2(i,j-k))
+// // %Im1 : image de gauche
+// // %Im2 : image de droite (deplacement de camera de gauche vers la droite)
 
 
-	int size[3] = { m_y_size, m_x_size, m_t_size };
-	m_g=cv::Mat(3, size, CV_64FC1, 500.0);
+// 	int size[3] = { m_y_size, m_x_size, m_t_size };
+// 	m_g=cv::Mat(3, size, CV_64FC1, 500.0);
 
-		for (int i=0;i<m_y_size;i++)
-		{
-			// const uchar* data_in_1_line_i= m_image1->ptr<uchar>(i);
-			// const uchar* data_in_2_line_i= m_image2->ptr<uchar>(i);
-			// uchar* data_out_line_i= m_g[k].ptr<uchar>(i);
-			// std::cout<<"data 1 : "<<(*data_in_1_line_i) <<std::endl;
-			// std::cout<<"data 2 : "<<(*data_in_2_line_i) <<std::endl;
-			for (int k=0;k<m_t_size;k++)
-				{
-					for (int j=k;j<m_x_size;j++)
-						{
+// 		for (int i=0;i<m_y_size;i++)
+// 		{
+// 			// const uchar* data_in_1_line_i= m_image1->ptr<uchar>(i);
+// 			// const uchar* data_in_2_line_i= m_image2->ptr<uchar>(i);
+// 			// uchar* data_out_line_i= m_g[k].ptr<uchar>(i);
+// 			// std::cout<<"data 1 : "<<(*data_in_1_line_i) <<std::endl;
+// 			// std::cout<<"data 2 : "<<(*data_in_2_line_i) <<std::endl;
+// 			for (int k=0;k<m_t_size;k++)
+// 				{
+// 					for (int j=k;j<m_x_size;j++)
+// 						{
 
-					// data_out_line_i[j]=m_mu*abs(data_in_1_line_i[j]-data_in_2_line_i[j-k]);
-							m_g.at<double>(i,j,k)=m_mu*abs(m_image1->at<double>(i,j)-m_image2->at<double>(i,j-k));
-						}
-				}
-		}
+// 					// data_out_line_i[j]=m_mu*abs(data_in_1_line_i[j]-data_in_2_line_i[j-k]);
+// 							m_g.at<double>(i,j,k)=m_mu*abs(m_image1->at<double>(i,j)-m_image2->at<double>(i,j-k));
+// 						}
+// 				}
+// 		}
 	
-}
+// }
 
 
 void MatchingAlgorithm::data_term_effic() //(Im1,Im2,Nt,mu)
@@ -106,7 +112,7 @@ void MatchingAlgorithm::data_term_effic() //(Im1,Im2,Nt,mu)
 //m_t_size should be smaller than m_x_size and m_y_size
 
 int size[3] = { m_y_size, m_x_size, m_t_size };
-m_g=cv::Mat(3, size, CV_64FC1, 500.0);
+m_g=cv::Mat(3, size, CV_64FC1, 50000000.0);
 // printContentsOf3DCVMat(*m_image1,false);
 // cv::waitKey(100);
 // printContentsOf3DCVMat(*m_image2,false);return;
@@ -138,7 +144,8 @@ if (m_dataTermOption=="absdiff")
 else if (m_dataTermOption=="census")
 	{
 		Census census=Census(*m_image1,*m_image2,m_g); //normally g is preallocated
-		printContentsOf3DCVMat(m_g,true,"m_g");
+		// cv::Mat m_glayer;getLayer3D(m_g,int(floor(m_g.size[2]/2)),m_glayer);
+		// printContentsOf3DCVMat(m_glayer,true,"m_glayer");
 		m_g=m_mu*m_g;
 		// data_term_census(*m_image1,*m_image2,m_g);
 		// printContentsOf3DCVMat(m_g,true,"m_g_original");

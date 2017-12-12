@@ -2,6 +2,8 @@
 
 Census::Census(const cv::Mat &image1,const cv::Mat &image2,cv::Mat &data_term) : m_image1(image1),m_image2(image2) //normally g is preallocated
 {
+	// printContentsOf3DCVMat(image1,true,"image1");
+	// printContentsOf3DCVMat(image2,true,"image2");
 	m_dataterm=data_term;
 	computeDataTerm();
 	data_term=m_dataterm;

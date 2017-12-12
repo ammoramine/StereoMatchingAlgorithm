@@ -449,6 +449,9 @@ void ROF3D::computeMinSumTV()
 	cv::Mat m_u_bool=(m_v > 0.0);
     m_u_bool.convertTo(m_u, CV_64FC1);
     m_u=m_u/255.0;
+	// printContentsOf3DCVMat(m_v,true,"m_v");
+	// printContentsOf3DCVMat(m_u_bool,true,"m_u_bool");
+	// printContentsOf3DCVMat(m_u,true,"m_u");
     // printContentsOf3DCVMat(getLayer3D(m_u,0),false);
     // printContentsOf3DCVMat(getLayer3D(m_u,m_t_size-1),false);
     // testContraintOnSolution(m_u);
@@ -465,7 +468,7 @@ void ROF3D::computeMinSumTV()
 void ROF3D::computeDisparity()
 {
 	//TODO: resolve the problems between using float or double
-	m_disparity=cv::Mat(m_u.size[0],m_u.size[1],CV_32FC1,(float)m_offset);
+	m_disparity=cv::Mat(m_u.size[0],m_u.size[1],CV_64FC1,m_offset);
 	cv::Mat m_ui;
 	// cv::Mat thresholded = (m_u > 0.5);
 	// int z=thresholded.size[2];
@@ -474,7 +477,7 @@ void ROF3D::computeDisparity()
 	// cv::Mat doubleThresholded=cv::Mat(3, size, CV_64FC1, 0.0);
 	// thresholded.copyTo(doubleThresholded);
  //    thresholded.convertTo(doubleThresholded, CV_64FC1);
-    // printContentsOf3DCVMat(m_disparity,true,"disparity11");
+    // printContentsOf3DCVMat(m_u,true,"m_u");
 	// double zoomFactor=255.0/(double(m_u.size[2]));
 	// // cv::Mat thresholdedDouble;
  //    // thresholded.convertTo(thresholdedDouble, CV_64FC1);
@@ -486,7 +489,7 @@ void ROF3D::computeDisparity()
        {
                // cv::Mat m_ui = MatchingAlgorithm::getRow3D(m_u,i);
                getRow3D(m_u,i,m_ui);
-               float * disparityi = m_disparity.ptr<float>(i);
+               double * disparityi = m_disparity.ptr<double>(i);
                for (int j = 0; j < m_u.size[1]; j++)
                {
                        double * m_uij = m_ui.ptr<double>(j);
@@ -500,9 +503,13 @@ void ROF3D::computeDisparity()
        }
        // cv::Mat disparityCopy=cv::Mat(m_u.size[0],m_u.size[1],CV_32FC1,-10.0);
        // cv::Mat disparityCopy=m_disparity;
-       printContentsOf3DCVMat(m_disparity,true,"disparity11");
-	// printContentsOf3DCVMat(disparityCopy,true,"image3Content");
-    iio_write_image_float(strdup(m_path_to_disparity.c_str()),(float*)(m_disparity.clone()).data,m_disparity.size[1],m_disparity.size[0]);
+       // printContentsOf3DCVMat(m_disparity,true,"disparity");
+       cv::Mat disparityCopy=m_disparity.clone();
+       	// printContentsOf3DCVMat(disparityCopy,true,"disparityCopy");
+       disparityCopy.convertTo(disparityCopy,CV_32FC1);
+	// printContentsOf3DCVMat(disparityCopy,true,"disparityCopy");
+	// bool continuity=disparityCopy.isContinuous();s
+    iio_write_image_float(strdup(m_path_to_disparity.c_str()),(float *)disparityCopy.data,disparityCopy.size[1],disparityCopy.size[0]);
     // cv::imwrite(m_path_to_disparity,m_disparity);
 }
 

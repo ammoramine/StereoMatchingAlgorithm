@@ -15,6 +15,10 @@
 #include <getopt.h>
 #include <unistd.h>
 #include "someTools.h"
+extern "C"
+{
+#include "iio.h"
+}
 using namespace std;
 static int verbose_flag;
 
