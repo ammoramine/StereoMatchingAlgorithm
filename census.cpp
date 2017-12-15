@@ -29,27 +29,32 @@ double Census::hammingDistance(const cv::Mat &ternarySignature1,const cv::Mat &t
 void Census::computeCensusSignature(const cv::Mat &image, cv::Mat &ternaryCensusSignature)
 {
 	int size[3]={image.size[0],image.size[1],25}; //8 corresponds to the dmimension of the beighborhood-1, here it's the square around the pixel
-	ternaryCensusSignature=cv::Mat(3,size,CV_64FC1,5.0);
+	ternaryCensusSignature=cv::Mat(3,size,CV_64FC1,0.0);
 	cv::Mat ternaryCensusSignaturei;
 	cv::Mat ternaryCensusSignatureij;
 	cv::Mat intensityNeighbors;
 	cv::Mat imagei;
 
+	// int sizePaddedImage={size[0]+2,size[1]+2,size[3]};
+	cv::Mat paddedImage;//=cv::Mat(3,sizePaddedImage,CV_64FC1,0.0);
+	int radiusWindow=2;
+	cv::copyMakeBorder(image,paddedImage,radiusWindow,radiusWindow,radiusWindow,radiusWindow,cv::BORDER_CONSTANT,cv::Scalar(0));
+	// cv::Mat paddedImagei;
+	// printContentsOf3DCVMat(image,true,"image");
+	// printContentsOf3DCVMat(paddedImage,true,"paddedImage");
 	// double intensityNeighbors[8];
-	for (int i=2;i<size[0]-2;i++)
+	for (int i=0;i<size[0];i++)
 	{
 		getRow3D(ternaryCensusSignature,i,ternaryCensusSignaturei);
-		getRow3D(image,i,imagei);
+		getRow3D(paddedImage,i+radiusWindow,imagei); //row  i of image is row i+radiusWindow of paddedImage
 
-		for (int j=2;j<size[1]-2;j++)
+		for (int j=0;j<size[1];j++)
 		{
 			double * ternaryCensusSignatureij =ternaryCensusSignaturei.ptr<double>(j);
-			intensityNeighbors=image(cv::Range(i-2,i+3),cv::Range(j-2,j+3));
-			// printContentsOf3DCVMat(intensityNeighbors,true,"intensityNeighborsBefore");
-			double Icur=imagei.at<double>(j);
-			// intensityNeighbors=intensityNeighbors-Icur;
-			// printContentsOf3DCVMat(intensityNeighbors,true,"intensityNeighborsAfter");
-			// printContentsOf3DCVMat(intensityNeighbors,true,"intensityNeighbors");
+			intensityNeighbors=paddedImage(cv::Range(i-2+radiusWindow,i+3+radiusWindow),cv::Range(j-2+radiusWindow,j+3+radiusWindow));
+			//pixel (i,j) from image is pixel (i+radiusWindow,j+radiusWindow) of the paddedImage
+			double Icur=imagei.at<double>(j+radiusWindow);
+			// same justification
 			intensityNeighbors=intensityNeighbors.clone().reshape(0,1);
 			// printContentsOf3DCVMat(intensityNeighbors,true,"intensityNeighbors");
 			for (int k=0;k<size[2];k++)
@@ -106,7 +111,7 @@ void Census::computeDataTerm()
 	// printContentsOf3DCVMat(m_CensusSignature_2,true,"m_CensusSignature_2");
 
 
-		for (int i=2;i<m_dataterm.size[0]-2;i++)
+		for (int i=0;i<m_dataterm.size[0];i++)
 		{
 			// double * deltaxPtr=deltax.ptr<double>(0);
 			// const double * image1iPtr= image1.ptr<double>(i);
@@ -118,7 +123,7 @@ void Census::computeDataTerm()
 			// printContentsOf3DCVMat(m_CensusSignature_2i,true,"m_CensusSignature_2i");
 			
 			getRow3D(m_dataterm,i,m_datatermi);
-			for (int j=2;j<m_dataterm.size[1]-2;j++)
+			for (int j=0;j<m_dataterm.size[1];j++)
 			{
 				getRow2D(m_CensusSignature_1i,j,m_CensusSignature_1ij);
 				getRow2D(m_datatermi,j,m_datatermij);
@@ -127,8 +132,8 @@ void Census::computeDataTerm()
 				// printContentsOf3DCVMat(m_CensusSignature_2ijmk,true,"m_CensusSignature_2ijmk");
 							
 				// double * gij=gi.ptr<double>(j);
-				int maxk=std::min(intOffset+m_dataterm.size[2]-1,(m_CensusSignature_2i.size[0]-3)-j);
-				int mink=std::max(intOffset,2-j);
+				int maxk=std::min(intOffset+m_dataterm.size[2]-1,(m_CensusSignature_2i.size[0]-1)-j);
+				int mink=std::max(intOffset,-j);
 				for(int k=mink;k<=maxk;k++)
 				{
 					// double * m_CensusSignature_2ijmk =m_CensusSignature_2i.ptr<double>(j-k);
