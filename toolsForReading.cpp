@@ -76,7 +76,7 @@ void read_option(int argc, char* argv[],cv::Mat &image1,cv::Mat &image2,std::str
           printf ("\n");
           break;
         case 'a':
-          printf ("path to image 1 (image on the right) `%s'\n", optarg);
+          printf ("path to image 1 :image to which the computed disparity is applied ,(disparities computed from image 1 to image 2) `%s'\n", optarg);
           readAndConvertImageToGray(optarg,image1);
           // image1=cv::imread(optarg,cv::IMREAD_LOAD_GDAL);
           // image1.convertTo(image1,CV_32FC1);
@@ -85,7 +85,7 @@ void read_option(int argc, char* argv[],cv::Mat &image1,cv::Mat &image2,std::str
           break;
 
         case 'b':
-          printf ("path to image 2 (image on the left )`%s'\n", optarg);
+          printf ("path to image 2 :target image with whom the first image should be matched,(disparities computed from image 1 to image 2) `%s'\n", optarg);
           readAndConvertImageToGray(optarg,image2);
           // image2=cv::imread(optarg,cv::IMREAD_LOAD_GDAL);
           // image2.convertTo(image2,CV_32FC1);
@@ -105,11 +105,11 @@ void read_option(int argc, char* argv[],cv::Mat &image1,cv::Mat &image2,std::str
           Niter=atoi(optarg);
           break;
         case 'e':
-          printf ("length of the interval of disparity `%s'\n", optarg);
+          printf ("length of the interval of disparity, `%s'\n", optarg);
           tsize=atoi(optarg);
           break;
         case 'f':
-          printf ("offset is the smallest algebrical value of the disparity`%s'\n", optarg);
+          printf ("offset is the smallest algebrical value of the disparity, disparities computed from the left to the right`%s'\n", optarg);
           offset=atof(optarg);
           break;
         case 'g':

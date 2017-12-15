@@ -16,7 +16,7 @@ class Census {
 		// void computeNeighbors(const cv::Vec<int,2> &curPixel,std::vector< cv::Vec<int,2> > &neighbors);
 		// void getIntensityNeighbors(const cv::Vec<int,2> &curPixel,double intensityNeighbors[],const double * Im1,const double * I,const double * Ip1);
 		// void ternaryCensusSignature(const cv::Mat &image,cv::Mat &ternaryCensusSignature);
-		Census(const cv::Mat &image1,const cv::Mat &image2,cv::Mat &data_term);
+		Census(const cv::Mat &image1,const cv::Mat &image2,cv::Mat &data_term,double offset);
 		double hammingDistance(const cv::Mat &ternarySignature1,const cv::Mat &ternarySignature2);
 		void computeCensusSignature(const cv::Mat &image,cv::Mat &ternaryCensusSignature);
 		void computeDataTerm();
@@ -28,6 +28,7 @@ class Census {
 		cv::Mat  m_CensusSignature_1;
 		cv::Mat  m_CensusSignature_2;
 		cv::Mat m_dataterm;
+		double m_offset;
 		// int m_disparityExtent;
 
 

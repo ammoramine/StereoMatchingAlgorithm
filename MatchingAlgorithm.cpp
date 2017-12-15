@@ -129,12 +129,12 @@ if (m_dataTermOption=="absdiff")
 			for (int j=0;j<m_x_size;j++)
 			{
 				double * m_gij=m_gi.ptr<double>(j);
-				int maxk=std::min(j-int(floor(m_offset)),m_t_size-1);
-				int mink=std::max(j-int(floor(m_offset))-m_x_size,0);
+				int maxk=std::min(m_t_size-1+int(floor(m_offset)),(m_x_size-1)-j);
+				int mink=std::max(int(floor(m_offset)),-j);
 				for(int k=mink;k<=maxk;k++)
 				{
 			// for (int km
-					m_gij[k]=m_mu*abs(m_image1iPtr[j]-m_image2iPtr[j-k-int(floor(m_offset))]);
+					m_gij[k]=m_mu*abs(m_image1iPtr[j]-m_image2iPtr[j+k]);// observe that the same pixel associated to the image on the left, should be some pixels rights than the one associated to the right image  
 				}
 				// delete m_gij;
 			}
@@ -144,7 +144,7 @@ if (m_dataTermOption=="absdiff")
 	}
 else if (m_dataTermOption=="census")
 	{
-		Census census=Census(*m_image1,*m_image2,m_g); //normally g is preallocated
+		Census census=Census(*m_image1,*m_image2,m_g,m_offset); //normally g is preallocated
 		// cv::Mat m_glayer;getLayer3D(m_g,int(floor(m_g.size[2]/2)),m_glayer);
 		// printContentsOf3DCVMat(m_glayer,true,"m_glayer");
 		m_g=m_mu*m_g;
