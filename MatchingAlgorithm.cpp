@@ -114,6 +114,7 @@ void MatchingAlgorithm::data_term_effic() //(Im1,Im2,Nt,mu)
 
 int size[3] = { m_y_size, m_x_size, m_t_size };
 m_g=cv::Mat(3, size, CV_64FC1, 50000000.0);
+int intOffset=int(floor(m_offset));
 // printContentsOf3DCVMat(*m_image1,false);
 // cv::waitKey(100);
 // printContentsOf3DCVMat(*m_image2,false);return;
@@ -129,12 +130,12 @@ if (m_dataTermOption=="absdiff")
 			for (int j=0;j<m_x_size;j++)
 			{
 				double * m_gij=m_gi.ptr<double>(j);
-				int maxk=std::min(m_t_size-1+int(floor(m_offset)),(m_x_size-1)-j);
-				int mink=std::max(int(floor(m_offset)),-j);
+				int maxk=std::min(m_t_size-1+intOffset,(m_x_size-1)-j);
+				int mink=std::max(intOffset,-j);
 				for(int k=mink;k<=maxk;k++)
 				{
 			// for (int km
-					m_gij[k]=m_mu*abs(m_image1iPtr[j]-m_image2iPtr[j+k]);// observe that the same pixel associated to the image on the left, should be some pixels rights than the one associated to the right image  
+					m_gij[k-intOffset]=m_mu*abs(m_image1iPtr[j]-m_image2iPtr[j+k]);// observe that the same pixel associated to the image on the left, should be some pixels rights than the one associated to the right image  
 				}
 				// delete m_gij;
 			}

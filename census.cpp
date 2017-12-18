@@ -78,12 +78,12 @@ void Census::computeDataTerm()
 	// we suppose that the cv::Mat object have been initialized before to the value  g=cv::Mat(3, size, CV_64FC1, 500.0); with size linked to the size of images: image1 and image2.
 
 	 //the convention y,x,t
-	// the element of index i,j,k is associated to the pixels (i,j) of the image on the "right" (first one), and (i,j-(k+offset)) on the image on the "left" (second image), if the index can be reached, we associate to the dataTerm and infinite value
+	// the element of index i,j,k is associated to the pixels (i,j) of the first image, and (i,j+(k+offset)) on the second image ( target image), if the index can't be reached, we associate to the dataTerm an infinite value
 	//where the offset is the minimal value of the disparity and k goes throught the interval of the disparity.
 
 	//So that to recover the disparity, from an index (i,j,k), we should add the offset to the value of k 
 
-	// Convention: the disparity is positive when we move the image to the right, and  negative in the other direction
+	// Convention: the disparity is positive when we move the image to the right, and  negative in the other direction, algebrically the disparity is the algebrical distance from the first image to the second one
 
 	// g=cv::Mat(3, size, CV_64FC1, 0.0);
 	// cv::Mat ternaryCensusSignature1;
@@ -127,11 +127,8 @@ void Census::computeDataTerm()
 			{
 				getRow2D(m_CensusSignature_1i,j,m_CensusSignature_1ij);
 				getRow2D(m_datatermi,j,m_datatermij);
-				// double * m_CensusSignature_1ij =m_CensusSignature_1i.ptr<double>(j);
-				// printContentsOf3DCVMat(m_CensusSignature_1i,true,"m_CensusSignature_1i");
-				// printContentsOf3DCVMat(m_CensusSignature_2ijmk,true,"m_CensusSignature_2ijmk");
-							
-				// double * gij=gi.ptr<double>(j);
+				
+				//mink and maxk are the extremal values of the disparity
 				int maxk=std::min(intOffset+m_dataterm.size[2]-1,(m_CensusSignature_2i.size[0]-1)-j);
 				int mink=std::max(intOffset,-j);
 				for(int k=mink;k<=maxk;k++)
@@ -142,7 +139,7 @@ void Census::computeDataTerm()
 					// printContentsOf3DCVMat(m_CensusSignature_1ij,true,"m_CensusSignature_1ij");
 					// printContentsOf3DCVMat(m_CensusSignature_2ijmk,true,"m_CensusSignature_2ijmk");
 
-					m_datatermij.at<double>(k)=hammingDistance(m_CensusSignature_1ij,m_CensusSignature_2ijpk);
+					m_datatermij.at<double>(k-intOffset)=hammingDistance(m_CensusSignature_1ij,m_CensusSignature_2ijpk);// we should remove the offset, because there is no negative index on the opencv Objects
 
 				}
 				// printContentsOf3DCVMat(m_datatermij,true,"m_datatermij");
