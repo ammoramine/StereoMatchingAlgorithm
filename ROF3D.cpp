@@ -478,7 +478,7 @@ void ROF3D::computeMinSumTV()
 void ROF3D::computeDisparity()
 {
 	//TODO: resolve the problems between using float or double
-	m_disparity=cv::Mat(m_u.size[0],m_u.size[1],CV_64FC1,m_offset);
+	m_disparity=cv::Mat(m_u.size[0],m_u.size[1],CV_64FC1,m_offset-1);// the solution is such that the first term of m_uij: m_uij[0] is always equal to 1, and it refers to the minimal disparity
 	cv::Mat m_ui;
 	// cv::Mat thresholded = (m_u > 0.5);
 	// int z=thresholded.size[2];
