@@ -12,7 +12,10 @@
 #include "ROF.h"
 #include "ROF3D.h"
 #include "someTools.h"
+#include "computeOcclusion.h"
 #include <fstream>
+#include "computeOcclusion.h"
+#include "interpolation.h"
 // #define IIO_DISABLE_LIBJPEG
 extern "C"
 {
@@ -38,29 +41,81 @@ int main(int argc, char* argv[])
 	int t_size;double offset;int Niter;std::string path_to_disparity;int nbmaxThreadPoolThreading;std::string method;std::string path_to_initial_disparity;double ratioGap;
 	read_option(argc,argv,image1,image2,data_term_option,t_size,offset,ratioGap,Niter,path_to_disparity,path_to_initial_disparity,nbmaxThreadPoolThreading,method);
 	MatchingAlgorithm theAlgorithm = MatchingAlgorithm(image1,image2,data_term_option, t_size,offset,ratioGap,Niter,path_to_disparity,path_to_initial_disparity,nbmaxThreadPoolThreading,method);
+
+	int found=path_to_disparity.find_first_of(".");
+	std::string path_to_disparity_reverse=path_to_disparity;
+	path_to_disparity_reverse.insert(found,"_reverse");
+
+	MatchingAlgorithm theAlgorithm_reverse = MatchingAlgorithm(image2,image1,data_term_option, t_size,-(offset+t_size),ratioGap,Niter,path_to_disparity_reverse,path_to_initial_disparity,nbmaxThreadPoolThreading,method);
+
+	int found1=path_to_disparity.find_first_of(".");
+	std::string path_to_disparity_no_occlusion=path_to_disparity;
+	path_to_disparity_no_occlusion.insert(found,"_noOcclusion");
+	Occlusion occlusion=Occlusion(path_to_disparity,path_to_disparity_reverse,path_to_disparity_no_occlusion);
 }
 else
 {//here is place from some dirty tests
-	// int w, h, pixeldim;
-	// float *x = iio_read_image_float_vec("-", &w, &h, &pixeldim);
-	// fprintf(stderr, "got a %dx%d image with %d channels\n", w, h, pixeldim);
-	// iio_save_image_float_vec("-", x, w, h, pixeldim);
-	// free(x);
+	
+ //  cv::Mat disparity=cv::imread("disparityGrayMars_census.tif",cv::IMREAD_LOAD_GDAL); disparity.convertTo(disparity, CV_64FC1); 
+ //  cv::Mat disparityReverse=cv::imread("disparityGrayArt_census_reverse.tif",cv::IMREAD_LOAD_GDAL);disparityReverse.convertTo(disparityReverse, CV_64FC1);
+	// Occlusion occlusion=Occlusion("disparityGrayMars_census.tif","disparityGrayMars_census_reverse.tif","disparityGrayMars_census_noOcclusion_beta.tif");
+	cv::Mat image=imread("image1_gray_Art.tif",cv::IMREAD_LOAD_GDAL);image.convertTo(image,CV_64FC1);
+	cv::Mat interpolatedImage;
+	Interpolation interpolation=Interpolation(image,2,interpolatedImage);
 
-// return 0;
-	// testLayer3D();
-  // cv::Mat mgmFile=cv::imread("mgm_disp_neg.tif");
-  cv::Mat outputTemp=cv::imread("mgm_disp_neg.tif",cv::IMREAD_LOAD_GDAL);
-  printContentsOf3DCVMat(outputTemp,true,"image1Content");
-	// typedef mpl::vector<rgb8_image_t,  rgb16_image_t, gray8_image_t, gray16_image_t> img_types;
-	// typedef gil::any_image<img_types> my_any_image_t;
-	// my_any_image_t dyn_img;
-	// boost::gil::tiff_read_image("mgm_disp_neg.tif", dyn_img);
-  iio_write_image_float("image1.tif",(float*)outputTemp.data,outputTemp.size[1],outputTemp.size[0]);
-  
-  cv::Mat m_disparity=cv::Mat(outputTemp.size[0],outputTemp.size[1],CV_32FC1,10.0);
-  printContentsOf3DCVMat(m_disparity,true,"image2Content");
-  iio_write_image_float("image2.tif",(float*)m_disparity.data,m_disparity.size[1],m_disparity.size[0]);
+	// Occlusion occlusion=Occlusion("disparityGrayArt_absdiff.tif","disparityGrayArt_absdiff_reverse.tif",disparityNoOcclusion);
+  // cv::Mat image1=cv::imread("image1_gray_Art.tif",cv::IMREAD_LOAD_GDAL);
+  // cv::Mat image2=cv::imread("image2_gray_Art.tif",cv::IMREAD_LOAD_GDAL);
+
+  // cv::Mat image1i;
+  // cv::Mat disparityi;cv::Mat disparityReversei;cv::Mat maski;
+  // cv:: Mat mask=cv::Mat(2, disparity.size,CV_64FC1, 0.0);
+  // cv::Mat   maskBinary;
+
+  // // printContentsOf3DCVMat(disparity,true,"disparity");
+  // // printContentsOf3DCVMat(disparityReverse,true,"disparityReverse");
+
+
+  // for (int i=0;i<mask.size[0];i++)
+  // 	{
+  // 		// getRow2D(image1,i,image1i);
+  // 		getRow2D(disparity,i,disparityi);
+  // 		getRow2D(disparityReverse,i,disparityReversei);
+  // 		getRow2D(mask,i,maski);
+  // 		for (int j=0;j<mask.size[1];j++)
+  // 			{
+  // 				int disparityij=int(floor(disparityi.at<double>(j)));
+		// 		// printContentsOf3DCVMat(disparityi,true,"disparityi");
+  // 				int correspondingCol=j+disparityij;
+  // 				maski.at<double>(j)=disparityi.at<double>(j)+disparityReversei.at<double>(correspondingCol);
+  // 				// maski.at<double>(j)=-maski.at<double>(j);
+  // 			}
+  // 	}
+  // 		cv::threshold(mask,maskBinary,1.0,1.0,cv::THRESH_BINARY_INV);
+  		
+  // 		// printContentsOf3DCVMat(disparity,true,"disparity");
+
+  // 		cv::Mat disparityCopy=disparity.mul(maskBinary);
+
+  // 	  	// printContentsOf3DCVMat(disparityCopy,true,"disparityAfter");
+  	  	
+  // 	  	// printContentsOf3DCVMat(mask,true,"mask");
+  // 	  	// printContentsOf3DCVMat(maskBinary,true,"maskBinary");
+		
+		// // cv::Mat disparityCopy=disparity.clone();
+  //      	disparityCopy.convertTo(disparityCopy,CV_32FC1);
+  //   	iio_write_image_float("disparityAfter.tif",(float *)disparityCopy.data,disparityCopy.size[1],disparityCopy.size[0]);
+       	// printContentsOf3DCVMat(disparityCopy,true,"disparityCopy");
+
+	// printContentsOf3DCVMat(disparityCopy,true,"disparityCopy");
+	// bool continuity=disparityCopy.isContinuous();s
+    // cv::imwrite(m_path_to_disparity,m_disparity);
+  // iio_write_image_float("mask.tif",(float*)mask.data,mask.size[1],mask.size[0]);
+  // disparity=disparity.mul(mask);
+
+  // cv::Mat m_disparity=cv::Mat(outputTemp.size[0],outputTemp.size[1],CV_32FC1,10.0);
+  // printContentsOf3DCVMat(m_disparity,true,"image2Content");
+  // iio_write_image_float("image2.tif",(float*)m_disparity.data,m_disparity.size[1],m_disparity.size[0]);
 
 
   // int a=outputTemp.channels();

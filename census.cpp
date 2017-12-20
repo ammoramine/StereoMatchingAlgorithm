@@ -39,14 +39,14 @@ void Census::computeCensusSignature(const cv::Mat &image, cv::Mat &ternaryCensus
 	cv::Mat paddedImage;//=cv::Mat(3,sizePaddedImage,CV_64FC1,0.0);
 	int radiusWindow=2;
 	cv::copyMakeBorder(image,paddedImage,radiusWindow,radiusWindow,radiusWindow,radiusWindow,cv::BORDER_CONSTANT,cv::Scalar(0));
+	// cv::Mat paddedImageClone=paddedImage.clone();
 	// cv::Mat paddedImagei;
 	// printContentsOf3DCVMat(image,true,"image");
-	// printContentsOf3DCVMat(paddedImage,true,"paddedImage");
 	// double intensityNeighbors[8];
 	for (int i=0;i<size[0];i++)
 	{
 		getRow3D(ternaryCensusSignature,i,ternaryCensusSignaturei);
-		getRow3D(paddedImage,i+radiusWindow,imagei); //row  i of image is row i+radiusWindow of paddedImage
+		getRow2D(paddedImage,i+radiusWindow,imagei); //row  i of image is row i+radiusWindow of paddedImage
 
 		for (int j=0;j<size[1];j++)
 		{

@@ -177,17 +177,31 @@ void testLayer3D()
 
 
 
-cv::Mat getRow4D(const cv::Mat &Matrix4D,int numberRow,bool newOne)
-// get the  row numer numberRow from a 4D matrix
+// cv::Mat getRow4D(const cv::Mat &Matrix4D,int numberRow,bool newOne)
+// // get the  row numer numberRow from a 4D matrix
+// {
+
+// 	int dims[] = { Matrix4D.size[1], Matrix4D.size[2],Matrix4D.size[3]};
+// 	if (numberRow > Matrix4D.size[0] or numberRow < 0)
+// 		{
+// 			throw std::invalid_argument( "received false row" );
+// 		}
+// 	cv::Mat extractedMatrix(3,dims, CV_64FC1, Matrix4D.data + Matrix4D.step[0] * numberRow);
+// 	return extractedMatrix;
+// }
+
+ void getRow4D(const cv::Mat &Matrix4D,int numberRow,cv::Mat &extractedMatrix)
+// get the  row numer numberRow from a 4D matrix, not a copy but a reference to the real row
 {
 
-	int dims[] = { Matrix4D.size[1], Matrix4D.size[2],Matrix4D.size[3]};
+	int dims[] = { Matrix4D.size[1], Matrix4D.size[2], Matrix4D.size[3]};
 	if (numberRow > Matrix4D.size[0] or numberRow < 0)
 		{
 			throw std::invalid_argument( "received false row" );
 		}
-	cv::Mat extractedMatrix(3,dims, CV_64FC1, Matrix4D.data + Matrix4D.step[0] * numberRow);
-	return extractedMatrix;
+	// cv::Range ranges[]={cv::Range(numberRow,numberRow+1),cv::Range(0,Matrix3D.size[1]),cv::Range(0,Matrix3D.size[2])};
+	// extractedMatrix=cv::Mat(2,dims, CV_64FC1, Matrix3D(ranges).data);
+	extractedMatrix=cv::Mat(3,dims, CV_64FC1, Matrix4D.data + Matrix4D.step[0] * numberRow);
 }
 
  void getRow3D(const cv::Mat &Matrix3D,int numberRow,cv::Mat &extractedMatrix)
@@ -199,6 +213,8 @@ cv::Mat getRow4D(const cv::Mat &Matrix4D,int numberRow,bool newOne)
 		{
 			throw std::invalid_argument( "received false row" );
 		}
+	// cv::Range ranges[]={cv::Range(numberRow,numberRow+1),cv::Range(0,Matrix3D.size[1]),cv::Range(0,Matrix3D.size[2])};
+	// extractedMatrix=cv::Mat(2,dims, CV_64FC1, Matrix3D(ranges).data);
 	extractedMatrix=cv::Mat(2,dims, CV_64FC1, Matrix3D.data + Matrix3D.step[0] * numberRow);
 }
 
