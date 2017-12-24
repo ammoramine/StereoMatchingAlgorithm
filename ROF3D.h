@@ -53,8 +53,8 @@ class ROF3D
 		//argmin_{v}( Sigma g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+Sigma |v(i,j+1,k)-v(i,j,k)|+Sigma |v(i+1,j,k)-v(i,j,k)|+m_tau/2*Sigma |v(i,j,k)-m_f(i,j,k)|^2) with v(i,j,k)
 		// the data_term should be
 		// the disparity is deduced from the solution of the 3D ROF problem, by adding an offset
-		ROF3D(const cv::Mat & data_term,int m_Niter,const std::string &path_to_disparity,const std::string &path_to_initial_disparity,size_t nbMaxThreads,double offset,double ratioGap,const double &stepDisparity=1.0,double precision=0.0000001);
-		ROF3D(const cv::Mat & data_term,int Niter,const std::string &path_to_disparity,size_t nbMaxThreads,double offset,double ratioGap,const cv::Mat &x1Current,const cv::Mat &x2Current,const cv::Mat &x3Current,const double &stepDisparity,double precision=0.0000001);
+		ROF3D(const DataTerm & dataTerm,int Niter,const std::string &path_to_disparity,const std::string &path_to_initial_disparity,size_t nbMaxThreads,double ratioGap,double precision=0.0000001);
+		ROF3D(const DataTerm & dataTerm,int Niter,const std::string &path_to_disparity,size_t nbMaxThreads,double ratioGap,const cv::Mat &x1Current,const cv::Mat &x2Current,const cv::Mat &x3Current,double precision=0.0000001);
 
 		void initf(double delta=1000);
 

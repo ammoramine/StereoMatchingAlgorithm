@@ -50,7 +50,7 @@ MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2
 		// printContentsOf3DCVMat(image2,true,"image2");
 		// cv::Mat m_glayer;getLayer3D(m_g,int(floor(m_g.size[2]/2)),m_glayer);
 		// printContentsOf3DCVMat(m_glayer,true,"m_glayerHalf");
-		ROF3D rof3D=ROF3D(m_g,m_Niter,m_path_to_disparity,m_path_to_initial_disparity,nbmaxThreadPoolThreading,m_offset,m_ratioGap);
+		ROF3D rof3D=ROF3D(m_dataTerm,m_Niter,m_path_to_disparity,m_path_to_initial_disparity,nbmaxThreadPoolThreading,m_ratioGap);
 		
 		// std::cout<<"\n local test"<<std::endl;
 		// rof3D.testMinimalityOfSolution(10,0.0001);

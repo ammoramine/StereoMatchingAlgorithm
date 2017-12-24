@@ -57,12 +57,16 @@ void ROF3D::testContraintOnSolution(const cv::Mat &argminToTest)
 	std::cout<<" result of the test : "<<succes<<std::endl;
 }
 
-ROF3D::ROF3D(const cv::Mat & data_term,int Niter,const std::string &path_to_disparity,const std::string &path_to_initial_disparity,size_t nbMaxThreads,double offset,double ratioGap,const double &stepDisparity,double precision) : m_nbMaxThreads(nbMaxThreads),m_offset(offset/stepDisparity),m_stepDisparity(stepDisparity),m_precision(precision)
+ROF3D::ROF3D(const DataTerm & dataTerm,int Niter,const std::string &path_to_disparity,const std::string &path_to_initial_disparity,size_t nbMaxThreads,double ratioGap,double precision): m_nbMaxThreads(nbMaxThreads),m_precision(precision)
+
 //this function resolve argmin_{v}( Sigma g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+Sigma |v(i,j+1,k)-v(i,j,k)|+Sigma |v(i+1,j,k)-v(i,j,k)|+m_tau/2*Sigma |v(i,j,k)-m_f(i,j,k)|^2) with v(i,j,k)
 // on R
 {
-	
-	data_term.copyTo(m_g);
+	//extract information about the dataTerm
+	m_stepDisparity=dataTerm.stepDisparity;
+	m_offset=dataTerm.offset;
+	(dataTerm.matrix).copyTo(m_g);
+	//initialize algorithm
 	m_y_size=m_g.size[0];
 	m_x_size=m_g.size[1];
 	m_t_size=m_g.size[2]+1;// the cost must have a size smaller than 1 dimension for the last extension
@@ -90,12 +94,16 @@ ROF3D::ROF3D(const cv::Mat & data_term,int Niter,const std::string &path_to_disp
 	
 }
 
-ROF3D::ROF3D(const cv::Mat & data_term,int Niter,const std::string &path_to_disparity,size_t nbMaxThreads,double offset,double ratioGap,const cv::Mat &x1Current,const cv::Mat &x2Current,const cv::Mat &x3Current,const double &stepDisparity ,double precision) : m_nbMaxThreads(nbMaxThreads),m_stepDisparity(stepDisparity),m_offset(offset/stepDisparity),m_precision(precision)
+ROF3D::ROF3D(const DataTerm & dataTerm,int Niter,const std::string &path_to_disparity,size_t nbMaxThreads,double ratioGap,const cv::Mat &x1Current,const cv::Mat &x2Current,const cv::Mat &x3Current,double precision) : m_nbMaxThreads(nbMaxThreads),m_precision(precision)
 //this function resolve argmin_{v}( Sigma g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+Sigma |v(i,j+1,k)-v(i,j,k)|+Sigma |v(i+1,j,k)-v(i,j,k)|+m_tau/2*Sigma |v(i,j,k)-m_f(i,j,k)|^2) with v(i,j,k)
 // on R
 {
 	
-	data_term.copyTo(m_g);
+	//extract information about the dataTerm
+	m_stepDisparity=dataTerm.stepDisparity;
+	m_offset=dataTerm.offset;
+	(dataTerm.matrix).copyTo(m_g);
+	//initialize algorithm
 	m_y_size=m_g.size[0];
 	m_x_size=m_g.size[1];
 	m_t_size=m_g.size[2]+1;// the cost must have a size smaller than 1 dimension for the last extension
