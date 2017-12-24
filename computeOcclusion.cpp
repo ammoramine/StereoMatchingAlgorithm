@@ -7,7 +7,7 @@ Occlusion::Occlusion(const std::string &disparityPath,const std::string &dispari
 	
 	// m_disparity=disparity;
 	// m_disparityReverse=disparityReverse;
-	computeCrossCheckingMask(m_maskNotOcclusion,0.0);
+	computeCrossCheckingMask(m_maskNotOcclusion,1.0);
 	computeDisparityWithOcclusion();
 	m_disparityNoOcclusionPath=disparityNoOcclusionPath;
 	writeDisparity();
