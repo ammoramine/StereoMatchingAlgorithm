@@ -23,14 +23,16 @@ LINK_PARAMS=$(foreach d, $(LINK), -L$d)
 # édition de liens
 
 exec: $(OBJ)
-	g++ -o $@ $^ iio.o -g  `pkg-config opencv --libs` -ljpeg -ltiff -lpng $(EXRLIB) -lpthread
+	g++ -o $@ $^ iio.o zoom_r2c.o -g  `pkg-config opencv --libs` -ljpeg -ltiff -lpng -lfftw3 $(EXRLIB) -lpthread
 # assemblage
 
 %.o: %.cpp %.h
 	g++ -o $@ -c $< $(CFFLAGS) `pkg-config opencv --cflags` -std=c++11 
+
 iio.o: iio.c iio.h
 	gcc -o iio.o -c iio.c -g -I$CPATH -DI_CAN_HAS_LINUX -DIIO_SHOW_DEBUG_MESSAGES -D_GNU_SOURCE
-
+zoom_r2c.o: zoom_r2c.c zoom.h
+	gcc -o zoom_r2c.o -c zoom_r2c.c #-lpng -ltiff -ljpeg -lfftw3 -O3
 main.o : main.cpp
 	g++ -o $@ -c $< $(CFFLAGS) `pkg-config opencv --cflags` -std=c++11
 # édition de liens
