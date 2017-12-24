@@ -57,7 +57,7 @@ void ROF3D::testContraintOnSolution(const cv::Mat &argminToTest)
 	std::cout<<" result of the test : "<<succes<<std::endl;
 }
 
-ROF3D::ROF3D(const cv::Mat & data_term,int Niter,const std::string &path_to_disparity,const std::string &path_to_initial_disparity,size_t nbMaxThreads,double offset,double ratioGap,double precision) : m_nbMaxThreads(nbMaxThreads),m_offset(offset),m_precision(precision)
+ROF3D::ROF3D(const cv::Mat & data_term,int Niter,const std::string &path_to_disparity,const std::string &path_to_initial_disparity,size_t nbMaxThreads,double offset,double ratioGap,const double &stepDisparity,double precision) : m_nbMaxThreads(nbMaxThreads),m_offset(offset/stepDisparity),m_stepDisparity(stepDisparity),m_precision(precision)
 //this function resolve argmin_{v}( Sigma g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+Sigma |v(i,j+1,k)-v(i,j,k)|+Sigma |v(i+1,j,k)-v(i,j,k)|+m_tau/2*Sigma |v(i,j,k)-m_f(i,j,k)|^2) with v(i,j,k)
 // on R
 {
@@ -82,34 +82,45 @@ ROF3D::ROF3D(const cv::Mat & data_term,int Niter,const std::string &path_to_disp
 	m_path_to_disparity=path_to_disparity;
 	m_path_to_initial_disparity=path_to_initial_disparity;
 	m_ratioGap=ratioGap;
-
+	// m_stepDisparity=stepDisparity;
 	initf();
-	// cv::Mat input(3, size, CV_64FC1, 5.0);
-	// cv::Mat output=cv::Mat(3,size,CV_64FC1, 0.0);
-	// proxTVhOnTau(input,output);
-	// printContentsOf3DCVMat(output,true,"output");
-	// double costArgmin=computeCostForArgumentTVh(m_x3Current,output);
-	// testMinimialityOfSolutionTVH(input,output,25,10);
-	// proxTVl(m_f,output);
-	// testMinimialityOfSolutionTVL(m_f,output,25,0.01);
-	// proxTVvOnTau(m_f,output);
-	// testMinimialityOfSolutionTVV(m_f,output,25,0.0001);
-	// testLab();
-	// throw std::invalid_argument( "testing the algorithm" );
-	// printContentsOf3DCVMat(data_term,true,"data_termj");
 	launch();
 	computeMinSumTV();
 	computeDisparity();
-	// testContraintOnSolution(m_u);
+	
+}
 
-	// proxTVhOnTau(m_f,output);
-	// testMinimialityOfSolutionTVH(m_f,output,25,0.0001);
-	// std::cout<<computeCostForArgumentTVl(m_tau,output);
-	// m_x3Current=cv::Mat(3, size, CV_64FC1, 0.0);m_x3Previous=cv::Mat(3, size, CV_64FC1, 0.0);
-	// MatchingAlgorithm::printContentsOf3DCVMat(MatchingAlgorithm::getLayer(m_f,0),false);
-	// MatchingAlgorithm::printContentsOf3DCVMat(MatchingAlgorithm::getLayer(m_f,m_t_size-1),false);
-	// MatchingAlgorithm::printContentsOf3DCVMat(MatchingAlgorithm::getLayer(m_f,3),false);
-	// MatchingAlgorithm::getLayer(m_f,m_t_size-1)=cv::Mat(3, size, CV_64FC1, 0.0);
+ROF3D::ROF3D(const cv::Mat & data_term,int Niter,const std::string &path_to_disparity,size_t nbMaxThreads,double offset,double ratioGap,const cv::Mat &x1Current,const cv::Mat &x2Current,const cv::Mat &x3Current,const double &stepDisparity ,double precision) : m_nbMaxThreads(nbMaxThreads),m_stepDisparity(stepDisparity),m_offset(offset/stepDisparity),m_precision(precision)
+//this function resolve argmin_{v}( Sigma g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+Sigma |v(i,j+1,k)-v(i,j,k)|+Sigma |v(i+1,j,k)-v(i,j,k)|+m_tau/2*Sigma |v(i,j,k)-m_f(i,j,k)|^2) with v(i,j,k)
+// on R
+{
+	
+	data_term.copyTo(m_g);
+	m_y_size=m_g.size[0];
+	m_x_size=m_g.size[1];
+	m_t_size=m_g.size[2]+1;// the cost must have a size smaller than 1 dimension for the last extension
+	m_tau=0.5;
+	m_lambda=1;
+	// initf();
+	int size[3] = { m_y_size,m_x_size,m_t_size};
+	m_x1Current=x1Current.clone();m_x1Previous=m_x1Current.clone();//m_x1Bar=cv::Mat(3, size, CV_64FC1, 0.0);
+	m_x2Current=x2Current.clone();m_x2Previous=m_x2Current.clone();//m_x2Bar=cv::Mat(3, size, CV_64FC1, 0.0);
+	m_x3Current=x3Current.clone();
+
+	// iterate_algorithm();
+	m_t_current=1;
+
+	m_Niter=Niter;
+	m_iteration=0;
+	m_path_to_disparity=path_to_disparity;
+	// m_path_to_initial_disparity=path_to_initial_disparity;
+	m_ratioGap=ratioGap;
+	// m_stepDisparity=stepDisparity;
+
+	initf();
+	launch();
+	computeMinSumTV();
+	computeDisparity();
 	
 }
 
@@ -511,6 +522,7 @@ void ROF3D::computeDisparity()
                        // disparityi[j]*=zoomFactor;
                }
        }
+       m_disparity=m_stepDisparity*m_disparity;
        // cv::Mat disparityCopy=cv::Mat(m_u.size[0],m_u.size[1],CV_32FC1,-10.0);
        // cv::Mat disparityCopy=m_disparity;
        // printContentsOf3DCVMat(m_disparity,true,"disparity");
@@ -956,10 +968,10 @@ void ROF3D::initf(double delta)
 		cv::Mat fi;cv::Mat fij;
 		for (int i = 0; i < m_y_size; i++)
 		{	
-			fi=MatchingAlgorithm::getRow3D(m_f,i);
+			getRow3D(m_f,i,fi);
   			for (int j = 0; j < m_x_size; j++)
     		{	
-    			fij=MatchingAlgorithm::getRow2D(fi,j);
+    			getRow2D(fi,j,fij);
     			// double a=pow(10,3);
 				fij.at<double>(0)=delta;
 				fij.at<double>(m_t_size-1)=-delta;

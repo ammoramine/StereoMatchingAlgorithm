@@ -12,10 +12,14 @@
 #include <time.h>
 #include <fstream>
 #include <math.h>
-#include "census_computation.h"
 #include "ROF3D.h"
+#include "someTools.h"
+extern "C"
+{
+#include "zoom.h"
+}
 #include "census.h"
-
+// struct DataTerm;
 class MatchingAlgorithm
 {
 
@@ -41,7 +45,11 @@ class MatchingAlgorithm
 		void helpDebug();
 		void showImages();
 		void data_term();
-		void data_term_effic();
+		void data_term_effic(const cv::Mat &image1,const cv::Mat &image2,const double &offset);
+		
+		void data_term_effic_subPixel(const cv::Mat &image1,const cv::Mat &image2,const double &offset,int zoom);
+
+
 		void init();
 		double computePrimalDualGap();
 
@@ -86,6 +94,7 @@ class MatchingAlgorithm
 		std::string m_dataTermOption;
 		std::string m_path_to_disparity;
 		std::string m_path_to_initial_disparity;
+		DataTerm m_dataTerm;
 		// std::vector<std::vector<double> > m_cost;
 		// std::deque<int> m_indexOrderedImages; //ordered index images that we wish to construct
 		// std::deque<int> m_distances;//equivalent distances of the m_indexOrderedImages

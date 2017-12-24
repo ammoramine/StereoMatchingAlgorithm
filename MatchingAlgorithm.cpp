@@ -31,7 +31,8 @@ MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2
 	m_iteration=0; // at the begining no iteration is done
 	m_dataTermOption=dataTermOption;
 	printProperties();
-	data_term_effic();
+	data_term_effic(*m_image1,*m_image2,m_offset);
+
 	if (method=="direct")
 	{
 	init();
@@ -50,6 +51,7 @@ MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2
 		// cv::Mat m_glayer;getLayer3D(m_g,int(floor(m_g.size[2]/2)),m_glayer);
 		// printContentsOf3DCVMat(m_glayer,true,"m_glayerHalf");
 		ROF3D rof3D=ROF3D(m_g,m_Niter,m_path_to_disparity,m_path_to_initial_disparity,nbmaxThreadPoolThreading,m_offset,m_ratioGap);
+		
 		// std::cout<<"\n local test"<<std::endl;
 		// rof3D.testMinimalityOfSolution(10,0.0001);
 		// std::cout<<"\n second test with farther arguments"<<std::endl;
@@ -101,7 +103,7 @@ MatchingAlgorithm::~MatchingAlgorithm()
 // }
 
 
-void MatchingAlgorithm::data_term_effic() //(Im1,Im2,Nt,mu)
+void MatchingAlgorithm::data_term_effic(const cv::Mat &image1,const cv::Mat &image2,const double &offset) //(Im1,Im2,Nt,mu)
 {
 
 // calcul le cost volume mais dans ce cas le déplacement n'est permis que dans un seul sens, il faut corriger ca !
@@ -124,8 +126,8 @@ if (m_dataTermOption=="absdiff")
 		for (int i=0;i<m_y_size;i++)
 		{
 			// double * deltaxPtr=deltax.ptr<double>(0);
-			double * m_image1iPtr= m_image1->ptr<double>(i);
-			double * m_image2iPtr= m_image2->ptr<double>(i);
+			const double * image1iPtr= image1.ptr<double>(i);
+			const double * image2iPtr= image2.ptr<double>(i);
 			cv::Mat m_gi=getRow3D(m_g,i);
 			for (int j=0;j<m_x_size;j++)
 			{
@@ -135,17 +137,17 @@ if (m_dataTermOption=="absdiff")
 				for(int k=mink;k<=maxk;k++)
 				{
 			// for (int km
-					m_gij[k-intOffset]=m_mu*abs(m_image1iPtr[j]-m_image2iPtr[j+k]);// observe that the same pixel associated to the image on the left, should be some pixels rights than the one associated to the right image  
+					m_gij[k-intOffset]=m_mu*abs(image1iPtr[j]-image2iPtr[j+k]);// observe that the same pixel associated to the image on the left, should be some pixels rights than the one associated to the right image  
 				}
 				// delete m_gij;
 			}
 		}
-			// delete m_image1iPtr;
+			// delete image1iPtr;
 			// delete m_image2iPtr;
 	}
 else if (m_dataTermOption=="census")
 	{
-		Census census=Census(*m_image1,*m_image2,m_g,m_offset); //normally g is preallocated
+		Census census=Census(image1,image2,m_g,m_offset); //normally g is preallocated
 		// cv::Mat m_glayer;getLayer3D(m_g,int(floor(m_g.size[2]/2)),m_glayer);
 		// printContentsOf3DCVMat(m_glayer,true,"m_glayer");
 		m_g=m_mu*m_g;
@@ -157,7 +159,13 @@ else
 {
 	throw std::invalid_argument( "intern problem on MatchingAlgorithm.cpp" );
 }
+m_dataTerm.matrix=m_g;
+m_dataTerm.stepDisparity=1.0;	
+m_dataTerm.offset=offset;
 }
+
+
+
 cv::Mat  MatchingAlgorithm::projCh(const cv::Mat &v)
 {
 

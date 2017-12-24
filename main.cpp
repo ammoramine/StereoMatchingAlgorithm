@@ -10,16 +10,16 @@
 #include "MatchingAlgorithm.h"
 #include "toolsForReading.h"
 #include "ROF.h"
-#include "ROF3D.h"
+#include "ROF3DMultiscale.h"
 #include "someTools.h"
 #include "computeOcclusion.h"
 #include <fstream>
 #include "computeOcclusion.h"
-#include "interpolation.h"
 // #define IIO_DISABLE_LIBJPEG
 extern "C"
 {
 #include "iio.h"
+#include "zoom.h"
 }
 int main(int argc, char* argv[])
 {
@@ -40,18 +40,28 @@ int main(int argc, char* argv[])
 	// read_option(argc,argv,image1,image2,data_term_option);
 	int t_size;double offset;int Niter;std::string path_to_disparity;int nbmaxThreadPoolThreading;std::string method;std::string path_to_initial_disparity;double ratioGap;
 	read_option(argc,argv,image1,image2,data_term_option,t_size,offset,ratioGap,Niter,path_to_disparity,path_to_initial_disparity,nbmaxThreadPoolThreading,method);
+	// MatchingAlgorithm theAlgorithm = MatchingAlgorithm(image1,image2,data_term_option, t_size,offset,ratioGap,Niter,path_to_disparity,path_to_initial_disparity,nbmaxThreadPoolThreading,method);
+
+	// int zoom=1;
+	// cv::Mat image1_resized;cv::Mat image1Copy=image1.clone();
+	// resizeWithShannonInterpolation(image1Copy,image1_resized,zoom);
+	// cv::Mat image2_resized;cv::Mat image2Copy=image2.clone();
+	// resizeWithShannonInterpolation(image2Copy,image2_resized,zoom);
+
+
 	MatchingAlgorithm theAlgorithm = MatchingAlgorithm(image1,image2,data_term_option, t_size,offset,ratioGap,Niter,path_to_disparity,path_to_initial_disparity,nbmaxThreadPoolThreading,method);
+	
 
-	int found=path_to_disparity.find_first_of(".");
-	std::string path_to_disparity_reverse=path_to_disparity;
-	path_to_disparity_reverse.insert(found,"_reverse");
+	// int found=path_to_disparity.find_first_of(".");
+	// std::string path_to_disparity_reverse=path_to_disparity;
+	// path_to_disparity_reverse.insert(found,"_reverse");
 
-	MatchingAlgorithm theAlgorithm_reverse = MatchingAlgorithm(image2,image1,data_term_option, t_size,-(offset+t_size),ratioGap,Niter,path_to_disparity_reverse,path_to_initial_disparity,nbmaxThreadPoolThreading,method);
+	// MatchingAlgorithm theAlgorithm_reverse = MatchingAlgorithm(image2,image1,data_term_option, t_size,-(offset+t_size),ratioGap,Niter,path_to_disparity_reverse,path_to_initial_disparity,nbmaxThreadPoolThreading,method);
 
-	int found1=path_to_disparity.find_first_of(".");
-	std::string path_to_disparity_no_occlusion=path_to_disparity;
-	path_to_disparity_no_occlusion.insert(found,"_noOcclusion");
-	Occlusion occlusion=Occlusion(path_to_disparity,path_to_disparity_reverse,path_to_disparity_no_occlusion);
+	// int found1=path_to_disparity.find_first_of(".");
+	// std::string path_to_disparity_no_occlusion=path_to_disparity;
+	// path_to_disparity_no_occlusion.insert(found,"_noOcclusion");
+	// Occlusion occlusion=Occlusion(path_to_disparity,path_to_disparity_reverse,path_to_disparity_no_occlusion);
 }
 else
 {//here is place from some dirty tests
@@ -59,9 +69,9 @@ else
  //  cv::Mat disparity=cv::imread("disparityGrayMars_census.tif",cv::IMREAD_LOAD_GDAL); disparity.convertTo(disparity, CV_64FC1); 
  //  cv::Mat disparityReverse=cv::imread("disparityGrayArt_census_reverse.tif",cv::IMREAD_LOAD_GDAL);disparityReverse.convertTo(disparityReverse, CV_64FC1);
 	// Occlusion occlusion=Occlusion("disparityGrayMars_census.tif","disparityGrayMars_census_reverse.tif","disparityGrayMars_census_noOcclusion_beta.tif");
-	cv::Mat image=imread("image1_gray_Art.tif",cv::IMREAD_LOAD_GDAL);image.convertTo(image,CV_64FC1);
-	cv::Mat interpolatedImage;
-	Interpolation interpolation=Interpolation(image,2,interpolatedImage);
+	// cv::Mat image=imread("image1_gray_Art.tif",cv::IMREAD_LOAD_GDAL);image.convertTo(image,CV_64FC1);
+	// cv::Mat interpolatedImage;
+	// Interpolation interpolation=Interpolation(image,2,interpolatedImage);
 
 	// Occlusion occlusion=Occlusion("disparityGrayArt_absdiff.tif","disparityGrayArt_absdiff_reverse.tif",disparityNoOcclusion);
   // cv::Mat image1=cv::imread("image1_gray_Art.tif",cv::IMREAD_LOAD_GDAL);

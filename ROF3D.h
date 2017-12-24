@@ -2,7 +2,7 @@
 #define ROF3D_INCLUDED
 #include <stdlib.h>
 #include "ROF.h"
-#include "MatchingAlgorithm.h"
+// #include "MatchingAlgorithm.h"
 #include "someTools.h"
 #include <string>
 #include <opencv/highgui.h>
@@ -17,21 +17,45 @@
 #include <time.h>
 #include <fstream>
 #include <math.h>
-#include "census_computation.h"
 #include <thread>
 #include "threadpool.h"
 #include <math.h>
 #include <opencv2/opencv.hpp>
+// #include "ROF3DMultiscale.h" 
+
 // #include "iio.h"
+
 extern "C"
 {
 #include "iio.h"
 }
+// a more compact structure to represent the dataTerm
+// The 3D data term data_term is the main input for the ROF3D algorithm, that computes the solution of the Rudin–Osher–Fatem problem: 
+	//argmin_{v}( Sigma g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+Sigma |v(i,j+1,k)-v(i,j,k)|+Sigma |v(i+1,j,k)-v(i,j,k)|+m_tau/2*Sigma |v(i,j,k)-m_f(i,j,k)|^2) with v(i,j,k)
+//(with g=data_term)
+	//from the term v, we  the disparity map is computed.
+
+	// the term data_term(i,j,k) represents the cost  for matching the pixel (i,j) of the image 1 to the pixel (i,j+k*stepDisparity+offset) of the image 2, the offset being the smallest term of the interval of disparity that could be negative
+
+	//These information on the disparity, are not be necessary to compute the solution of the ROF problem, but for the purpose of debugging, the disparity is computed each step of the algorithm.
+	//In order to keep these informations about the disparity, and efficiently compute it inside this class, this structure is created, containing, the dataTerm (a 3D matrix) called matrix, the offset and the step as doubles. 
+	// the step should be an inverse of integer. This term should be computed in the MatchingAlgorithm.h
+struct DataTerm
+{
+	cv::Mat matrix;
+	double offset;
+	double stepDisparity;
+};
 class ROF3D
 {
 	public:
-		// void computeROFSolution(const double &tau,const std::vector<double> &l,const std::vector<double> &costij,double * outputij);
-		ROF3D(const cv::Mat & data_term,int m_Niter,const std::string &path_to_disparity,const std::string &path_to_initial_disparity,size_t nbMaxThreads,double offset,double ratioGap,double precision=0.0000001);
+		// the constructor of ROF3D, compute the solution of the 3D ROF problem: 
+		//argmin_{v}( Sigma g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+Sigma |v(i,j+1,k)-v(i,j,k)|+Sigma |v(i+1,j,k)-v(i,j,k)|+m_tau/2*Sigma |v(i,j,k)-m_f(i,j,k)|^2) with v(i,j,k)
+		// the data_term should be
+		// the disparity is deduced from the solution of the 3D ROF problem, by adding an offset
+		ROF3D(const cv::Mat & data_term,int m_Niter,const std::string &path_to_disparity,const std::string &path_to_initial_disparity,size_t nbMaxThreads,double offset,double ratioGap,const double &stepDisparity=1.0,double precision=0.0000001);
+		ROF3D(const cv::Mat & data_term,int Niter,const std::string &path_to_disparity,size_t nbMaxThreads,double offset,double ratioGap,const cv::Mat &x1Current,const cv::Mat &x2Current,const cv::Mat &x3Current,const double &stepDisparity,double precision=0.0000001);
+
 		void initf(double delta=1000);
 
 		void launch();
@@ -92,7 +116,7 @@ class ROF3D
 		cv::Mat getSolutionOfOriginalProblem();
 
 
-	private:
+	protected:
 		cv::Mat m_g;
 		int m_x_size;
 		int m_y_size;
@@ -119,6 +143,7 @@ class ROF3D
 		double m_CurrentRatioGap;// the ratio before stopping
 		double m_intialDualPrimalGap;
 
+		double m_stepDisparity;// linked with m_g, we should have that m_g/size[2]/m_stepDisparity= the interval of disparity
 		size_t m_nbMaxThreads;
 
 		int m_iteration;
@@ -127,5 +152,5 @@ class ROF3D
 		std::string m_path_to_disparity;
 		std::string m_path_to_initial_disparity;
 };
-
+// #include "ROF3DMultiscale.h"
 #endif

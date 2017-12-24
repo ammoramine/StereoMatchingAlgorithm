@@ -7,7 +7,6 @@
 #include <opencv/highgui.h>
 #include <iostream>
 #include <vector>
-#include "census_computation.h"
 #include "MatchingAlgorithm.h"
 #include "someTools.h"
 
