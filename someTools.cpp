@@ -231,6 +231,26 @@ void getRow2D(const cv::Mat &Matrix2D,int numberRow,cv::Mat &extractedMatrix)
 	// return extractedMatrix;
 }
 
+
+
+void setRow3D(const cv::Mat &Matrix3Di,int i,cv::Mat &Matrix3D)
+{
+	cv::Mat Matrix3DiOld;getRow3D(Matrix3D,i,Matrix3DiOld);
+
+	cv::MatConstIterator_<double> itMat3Di=Matrix3Di.begin<double>();
+	cv::MatConstIterator_<double>  itMat3DiEnd=Matrix3Di.end<double>();
+
+	cv::MatIterator_<double> itMat3DiOld=Matrix3DiOld.begin<double>();
+	cv::MatIterator_<double> itMat3DiOldEnd=Matrix3DiOld.end<double>();
+
+	
+
+	while ( itMat3Di!= itMat3DiEnd and itMat3DiOld!= itMat3DiOldEnd) {
+		(*itMat3DiOld)=(*itMat3Di);
+		itMat3DiOld++;itMat3Di++;
+	}
+
+}
 void printContentsOf3DCVMat(const cv::Mat &matrix,bool writeOnFile,std::string filename)
 {
 	if (writeOnFile==false)
@@ -321,4 +341,32 @@ void cast3DMatrixTo2DMatrix(const cv::Mat &matrix3D, cv::Mat &matrix2D)
 		(*itMat2D)=(*itMat3D);
 		itMat2D++;itMat3D++;
 	}
+}
+void writeImageOnFloat(const cv::Mat &image,const std::string &name)
+{
+	cv::Mat imageCopy=image.clone();
+	imageCopy.convertTo(imageCopy,CV_32FC1);
+	iio_write_image_float(strdup(name.c_str()),(float *)imageCopy.data,imageCopy.size[1],imageCopy.size[0]);
+}
+
+void resizeWithShannonInterpolation(cv::Mat &image,cv::Mat &resizedImage,int zoom)
+{
+	// std::vector<cv::Mat> data_terms(1,m_g);
+		image.convertTo(image,CV_32FC1);
+		int size[2] = { zoom*image.size[0], zoom*image.size[1]};
+		resizedImage=cv::Mat(2,size,CV_32FC1,0.0);//image1_resized.convertTo(image1_resized,CV_32FC1);
+		image_zoom_2d((float*)image.data,(float*)resizedImage.data,image.size[1],image.size[0],resizedImage.size[1],resizedImage.size[0]);
+		image.convertTo(image,CV_64FC1);
+		resizedImage.convertTo(resizedImage,CV_64FC1);
+
+		// printContentsOf3DCVMat(*m_image1,true,"image1");
+		// printContentsOf3DCVMat(image1_resized,true,"image1_resized");
+		// // writeImageOnFloat(*m_image1,"m_image1.tif");
+		// // writeImageOnFloat(image1_resized,"image1_resized.tif");
+
+		// image.convertTo(image,CV_64FC1);
+		// resizedImage.convertTo(resizedImage,CV_64FC1);
+		
+		// printContentsOf3DCVMat(*m_image1,true,"image164");
+		// printContentsOf3DCVMat(image1_resized,true,"image1_resized64");
 }

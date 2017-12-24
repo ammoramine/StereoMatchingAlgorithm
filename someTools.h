@@ -13,6 +13,11 @@
 #include <time.h>
 #include <fstream>
 #include <math.h>
+extern "C"
+{
+#include "iio.h"
+#include "zoom.h"
+}
 // #include </home/amine/opencv_install/opencv/modules/core/include/opencv2/core/types.hpp>
 
 cv::Mat getLayer(const cv::Mat Matrix3D,int layer_number);
@@ -27,13 +32,17 @@ cv::Mat getRow4D(const cv::Mat &Matrix4D,int numberRow,bool newOne=false);
 void getRow4D(const cv::Mat &Matrix4D,int numberRow,cv::Mat &extractedMatrix);
 void getRow3D(const cv::Mat &Matrix3D,int numberRow,cv::Mat &extractedMatrix);
 void getRow2D(const cv::Mat &Matrix2D,int numberRow,cv::Mat &extractedMatrix);
+
+void setRow3D(const cv::Mat &Matrix3Di,int i,cv::Mat &Matrix3D);
+
 void printContentsOf3DCVMat(const cv::Mat &matrix,bool writeOnFile=true,std::string filename="FileStorage.txt");
 void castCVMatTovector_double(const cv::Mat &matrix,std::vector<double> &vector);
 void testLayer3D();
 void testLayer2D();
 void testLayer2DBis();
 
-
+void writeImageOnFloat(const cv::Mat &image,const std::string &name);
+void resizeWithShannonInterpolation( cv::Mat &image,cv::Mat &resizedImage,int zoom=2);
 
 
 
