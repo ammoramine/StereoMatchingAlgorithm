@@ -1,6 +1,6 @@
 #include "MatchingAlgorithm.h"
 
-MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2,std::string dataTermOption,int t_size,double offset,double ratioGap,int Niter,const std::string &path_to_disparity,const std::string &path_to_initial_disparity,int zoom,int nbmaxThreadPoolThreading,std::string method)
+MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2,std::string dataTermOption,int t_size,double offset,double ratioGap,int Niter,const std::string &path_to_disparity,const std::string &path_to_initial_disparity,double zoom,int nbmaxThreadPoolThreading,std::string method)
 // tahe as input two gray images
 {
 	m_image1=new cv::Mat(image1.size(),image1.type());
@@ -31,8 +31,20 @@ MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2
 	m_iteration=0; // at the begining no iteration is done
 	m_dataTermOption=dataTermOption;
 	printProperties();
-	// data_term_effic(*m_image1,*m_image2,m_offset);
-	data_term_effic_subPixel(*m_image1,*m_image2,m_offset,zoom);
+	// data_term_effic(*m_image1,*m_image2,m_offset,m_t_size);
+	if (zoom>=1)
+	{
+		data_term_effic_subPixel(*m_image1,*m_image2,m_offset,int(zoom));
+	}
+	else
+	{
+		data_term_effic_OnPixel(*m_image1,*m_image2,m_offset,zoom);
+	}
+// 		cv::Mat image1_resized;cv::Mat image1Copy=image1.clone();
+// resizeWithShannonInterpolation(image1Copy,image1_resized,double(zoom));
+// cv::Mat image2_resized;cv::Mat image2Copy=image2.clone();
+// resizeWithShannonInterpolation(image2Copy,image2_resized,double(zoom));
+	// }
 	// double regulation=0.6;
 	if (method=="direct")
 	{
@@ -93,18 +105,22 @@ MatchingAlgorithm::~MatchingAlgorithm()
 // }
 
 
-void MatchingAlgorithm::data_term_effic(const cv::Mat &image1,const cv::Mat &image2,const double &offset) //(Im1,Im2,Nt,mu)
+void MatchingAlgorithm::data_term_effic(const cv::Mat &image1,const cv::Mat &image2,const double &offset,const int t_size) //(Im1,Im2,Nt,mu)
 {
 //compute the data term for the method direct! for the method "accelerated", we should divide the data-term by m_mu, before applying it
 
 //Inputs:
 // image1, the image on which the disparity is computed
 // image2, the target image for the computation of the disparity map
-// the data_term is a matrix g_{i,j,k} computed as a function of image1(i,j) and image2(i,j+k), it is in fact a structure defined on ROF3D, that contraints also the offset and the disparity step for which we aim to compute the disparity
+// offset is the smallest value of disparity in terms of pixel
+// t_size is the intervall of disparity
+
+//output
+// the data_term is a matrix g_{i,j,k} computed as a function of image1(i,j) and image2(i,j+k), it is in fact a structure defined on ROF3D, that contraints also the offset (in terms of pixels) and the disparity step for which we aim to compute the disparity (in this case equal to 1)
 
 
 
-int size[3] = { m_y_size, m_x_size, m_t_size };
+int size[3] = { image1.size[0], image1.size[1], t_size };
 
 //initiate the dataTerm
 m_g=cv::Mat(3, size, CV_64FC1, 50000000.0);
@@ -119,16 +135,16 @@ int intOffset=int(floor(m_offset));
 if (m_dataTermOption=="absdiff")
 	{
 
-		for (int i=0;i<m_y_size;i++)
+		for (int i=0;i<size[0];i++)
 		{
 			// double * deltaxPtr=deltax.ptr<double>(0);
 			const double * image1iPtr= image1.ptr<double>(i);
 			const double * image2iPtr= image2.ptr<double>(i);
 			cv::Mat m_gi=getRow3D(m_g,i);
-			for (int j=0;j<m_x_size;j++)
+			for (int j=0;j<size[1];j++)
 			{
 				double * m_gij=m_gi.ptr<double>(j);
-				int maxk=std::min(m_t_size-1+intOffset,(m_x_size-1)-j);
+				int maxk=std::min(size[2]-1+intOffset,(size[1]-1)-j);
 				int mink=std::max(intOffset,-j);
 				for(int k=mink;k<=maxk;k++)
 				{
@@ -167,11 +183,11 @@ void MatchingAlgorithm::data_term_effic_subPixel(const cv::Mat &image1,const cv:
 //Inputs:
 // image1, the image on which the disparity is computed
 // image2, the target image for the computation of the disparity map
-// the data_term is a matrix g_{i,j,k} computed as a function of image1(i,j) and image2(i,j+k), it is in fact a structure defined on ROF3D, that contraints also the offset and the disparity step for which we aim to compute the disparity
+// the data_term is a matrix g_{i,j,k} computed as a function of image1(i,j) and image2(i,j+k), it is in fact a structure defined on ROF3D, that contraints also the offset (but this time in the size of the disparity scale defined by zoom ) and the disparity step for which we aim to compute the disparity,but the case considered here is when zoom is an integer !!!
 
 // this version is similar to the one above, in the difference that it permits the computation of a subpixelic dataTerm
 
-int size[3] = { m_y_size, m_x_size, zoom*m_t_size };
+int size[3] = { image1.size[0], image1.size[1], zoom*m_t_size };
 
 //initiate the dataTerm
 m_g=cv::Mat(3, size, CV_64FC1, 50000000.0);
@@ -183,9 +199,9 @@ m_dataTerm.offset=offset*zoom;
 int intZoomOffset=int(floor(zoom*m_offset));
 
 cv::Mat image1_resized;cv::Mat image1Copy=image1.clone();
-resizeWithShannonInterpolation(image1Copy,image1_resized,zoom);
+resizeWithShannonInterpolation(image1Copy,image1_resized,double(zoom));
 cv::Mat image2_resized;cv::Mat image2Copy=image2.clone();
-resizeWithShannonInterpolation(image2Copy,image2_resized,zoom);
+resizeWithShannonInterpolation(image2Copy,image2_resized,double(zoom));
 
 // printContentsOf3DCVMat(*m_image1,false);
 // cv::waitKey(100);
@@ -193,7 +209,7 @@ resizeWithShannonInterpolation(image2Copy,image2_resized,zoom);
 if (m_dataTermOption=="absdiff")
 	{
 
-		for (int i=0;i<m_y_size;i++)
+		for (int i=0;i<size[0];i++)
 		{
 			// double * deltaxPtr=deltax.ptr<double>(0);
 			const double * image1iPtr= image1.ptr<double>(i);
@@ -201,12 +217,12 @@ if (m_dataTermOption=="absdiff")
 			const double * image1_resizedizoomPtr= image1_resized.ptr<double>(i*zoom);
 			const double * image2_resizedizoomPtr= image2_resized.ptr<double>(i*zoom);
 			cv::Mat m_gi=getRow3D(m_g,i);
-			for (int j=0;j<m_x_size;j++)
+			for (int j=0;j<size[1];j++)
 			{
 				double * m_gij=m_gi.ptr<double>(j);
 				// int maxk=std::min(m_t_size-1+intOffset,(m_x_size-1)-j);
 				// int mink=std::max(intOffset,-j);
-				int maxk=std::min(m_t_size*zoom-1+intZoomOffset,(zoom*m_x_size-1)-j*zoom);
+				int maxk=std::min(size[2]-1+intZoomOffset,(zoom*size[1]-1)-j*zoom);
 				int mink=std::max(intZoomOffset,-j*zoom);
 				for(int k=mink;k<=maxk;k++)
 				{
@@ -242,7 +258,36 @@ else
 m_dataTerm.matrix=zoom*m_g;// multiply by zoom, it is linked to the discretization, m_dataTerm.matrix(i,j,k) is equal equal to the cost coefficient divided by the step of the disparity
 }
 
+void MatchingAlgorithm::data_term_effic_OnPixel(const cv::Mat &image1,const cv::Mat &image2,const double &offset,double zoom) 
+{
 
+//compute the data term for the method direct! for the method "accelerated", we should divide the data-term by m_mu, before applying it
+
+//Inputs:
+// image1, the image on which the disparity is computed
+// image2, the target image for the computation of the disparity map
+// the data_term is a matrix g_{i,j,k} computed as a function of image1(i,j) and image2(i,j+k), it is in fact a structure defined on ROF3D, that contraints also the offset and the disparity step for which we aim to compute the disparity,but the case considered here is when zoom is an integer !!!
+
+// this version is similar to the one above, in the difference that it permits the computation of an onpixelic dataTerm
+
+// in this case the images are smaller, and for simplicity and efficiency, we apply the algorithm on the resized images
+cv::Mat image1_resized;cv::Mat image1Copy=image1.clone();
+resizeWithShannonInterpolation(image1Copy,image1_resized,zoom);
+cv::Mat image2_resized;cv::Mat image2Copy=image2.clone();
+resizeWithShannonInterpolation(image2Copy,image2_resized,zoom);
+
+writeImageOnFloat(image1,"image1.tif");
+writeImageOnFloat(image2,"image2.tif");
+writeImageOnFloat(image1_resized,"image1_resized.tif");
+writeImageOnFloat(image2_resized,"image2_resized.tif");
+
+data_term_effic(image1_resized,image2_resized,offset*zoom,int(floor(zoom*m_t_size)));// after this step, the dataTerm m_dataTerm is computed for a lower resolution of images , with its correpsond offset, and interal of disparity
+
+
+// m_dataTerm.stepDisparity=1.0;// we don't divide by zoom because, we would resize	
+// m_dataTerm.offset=zoom*offset;
+// m_dataTerm.matrix=zoom*m_g;// multiply by zoom, it is linked to the discretization, m_dataTerm.matrix(i,j,k) is equal equal to the cost coefficient divided by the step of the disparity
+}
 
 cv::Mat  MatchingAlgorithm::projCh(const cv::Mat &v)
 {

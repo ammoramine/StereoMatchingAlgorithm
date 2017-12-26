@@ -177,9 +177,9 @@ void Census::computeDataTermSubPixel()
 	int zoom=int(1/m_stepDisparity);
 	
 	cv::Mat image1_resized;cv::Mat image1Copy=m_image1.clone();
-	resizeWithShannonInterpolation(image1Copy,image1_resized,zoom);
+	resizeWithShannonInterpolation(image1Copy,image1_resized,double(zoom));
 	cv::Mat image2_resized;cv::Mat image2Copy=m_image2.clone();
-	resizeWithShannonInterpolation(image2Copy,image2_resized,zoom);
+	resizeWithShannonInterpolation(image2Copy,image2_resized,double(zoom));
 
 	// writeImageOnFloat(m_image1,"m_image1.tif");
 	// writeImageOnFloat(m_image2,"m_image2.tif");

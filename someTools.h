@@ -42,7 +42,7 @@ void testLayer2D();
 void testLayer2DBis();
 
 void writeImageOnFloat(const cv::Mat &image,const std::string &name);
-void resizeWithShannonInterpolation( cv::Mat &image,cv::Mat &resizedImage,int zoom=2);
+void resizeWithShannonInterpolation( cv::Mat &image,cv::Mat &resizedImage,double zoom=2.0);
 
 
 

@@ -349,11 +349,11 @@ void writeImageOnFloat(const cv::Mat &image,const std::string &name)
 	iio_write_image_float(strdup(name.c_str()),(float *)imageCopy.data,imageCopy.size[1],imageCopy.size[0]);
 }
 
-void resizeWithShannonInterpolation(cv::Mat &image,cv::Mat &resizedImage,int zoom)
+void resizeWithShannonInterpolation(cv::Mat &image,cv::Mat &resizedImage,double zoom)
 {
 	// std::vector<cv::Mat> data_terms(1,m_g);
 		image.convertTo(image,CV_32FC1);
-		int size[2] = { zoom*image.size[0], zoom*image.size[1]};
+		int size[2] = { int(floor(zoom*image.size[0])), int(floor(zoom*image.size[1]))};
 		resizedImage=cv::Mat(2,size,CV_32FC1,0.0);//image1_resized.convertTo(image1_resized,CV_32FC1);
 		image_zoom_2d((float*)image.data,(float*)resizedImage.data,image.size[1],image.size[0],resizedImage.size[1],resizedImage.size[0]);
 		image.convertTo(image,CV_64FC1);

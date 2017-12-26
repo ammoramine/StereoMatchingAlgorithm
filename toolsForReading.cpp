@@ -23,7 +23,7 @@ std::string compare_on_list(char * option,const char* listOfElements[],int sizeO
 }
 
 
-void read_option(int argc, char* argv[],cv::Mat &image1,cv::Mat &image2,std::string  &data_term_option,int &tsize,double &offset,double &ratioGap,int &Niter,int &zoom,std::string &path_to_disparity,std::string &path_to_initial_disparity,int &nbmaxThreadPoolThreading,std::string &method)
+void read_option(int argc, char* argv[],cv::Mat &image1,cv::Mat &image2,std::string  &data_term_option,int &tsize,double &offset,double &ratioGap,int &Niter,double &zoom,std::string &path_to_disparity,std::string &path_to_initial_disparity,int &nbmaxThreadPoolThreading,std::string &method)
 {
 	int c;
   //
@@ -142,8 +142,9 @@ void read_option(int argc, char* argv[],cv::Mat &image1,cv::Mat &image2,std::str
         case 'l':
           // if (optarg!=NULL)
           // {
-            printf ("step of the disparity is the inverse of the value of the zoom,which is equal to :, `%s'\n", optarg);
-            zoom=atoi(optarg);
+            printf ("step of the disparity is the inverse of the value of the zoom,which is equal to : `%s'\n", optarg);
+            printf("it should be of the form 2^{n} with n in Z");
+            zoom=atof(optarg);
           // }
           // else
           // {
