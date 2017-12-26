@@ -23,12 +23,13 @@ std::string compare_on_list(char * option,const char* listOfElements[],int sizeO
 }
 
 
-void read_option(int argc, char* argv[],cv::Mat &image1,cv::Mat &image2,std::string  &data_term_option,int &tsize,double &offset,double &ratioGap,int &Niter,std::string &path_to_disparity,std::string &path_to_initial_disparity,int &nbmaxThreadPoolThreading,std::string &method)
+void read_option(int argc, char* argv[],cv::Mat &image1,cv::Mat &image2,std::string  &data_term_option,int &tsize,double &offset,double &ratioGap,int &Niter,int &zoom,std::string &path_to_disparity,std::string &path_to_initial_disparity,int &nbmaxThreadPoolThreading,std::string &method)
 {
 	int c;
   //
   path_to_initial_disparity="";
   ratioGap=0.0;
+  zoom=1;
 	while (1)
     {
       static struct option long_options[] =
@@ -50,6 +51,7 @@ void read_option(int argc, char* argv[],cv::Mat &image1,cv::Mat &image2,std::str
           {"method",required_argument,0,'i'},
           {"path_to_initial_disparity",required_argument,0,'j'},
           {"ratioGap",required_argument,0,'k'},
+          {"zoom",required_argument,0,'l'},
           {0, 0, 0, 0}
         };
       /* getopt_long stores the option index here. */
@@ -137,6 +139,11 @@ void read_option(int argc, char* argv[],cv::Mat &image1,cv::Mat &image2,std::str
                   throw std::invalid_argument( "the ratio gap should be between 0 and 1" );
 
             }
+        case 'l':
+          // if (optarg!=NULL)
+          // {
+            printf ("step of the disparity is the inverse of the value of the zoom,which is equal to :, `%s'\n", optarg);
+            zoom=atoi(optarg);
           // }
           // else
           // {

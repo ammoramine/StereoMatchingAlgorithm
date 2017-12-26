@@ -1,6 +1,6 @@
 #include "MatchingAlgorithm.h"
 
-MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2,std::string dataTermOption,int t_size,double offset,double ratioGap,int Niter,const std::string &path_to_disparity,const std::string &path_to_initial_disparity,int nbmaxThreadPoolThreading,std::string method)
+MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2,std::string dataTermOption,int t_size,double offset,double ratioGap,int Niter,const std::string &path_to_disparity,const std::string &path_to_initial_disparity,int zoom,int nbmaxThreadPoolThreading,std::string method)
 // tahe as input two gray images
 {
 	m_image1=new cv::Mat(image1.size(),image1.type());
@@ -31,8 +31,9 @@ MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2
 	m_iteration=0; // at the begining no iteration is done
 	m_dataTermOption=dataTermOption;
 	printProperties();
-	data_term_effic(*m_image1,*m_image2,m_offset);
-
+	// data_term_effic(*m_image1,*m_image2,m_offset);
+	data_term_effic_subPixel(*m_image1,*m_image2,m_offset,zoom);
+	// double regulation=0.6;
 	if (method=="direct")
 	{
 	init();
@@ -44,20 +45,9 @@ MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2
 	}
 	else if(method=="accelerated")
 	{
-		// cv::Mat image1Converted;cv::Mat image2Converted;
-		// image1.convertTo(image1Converted,CV_32FC1);image2.convertTo(image2Converted,CV_32FC1);
-		// printContentsOf3DCVMat(image1,true,"image1");
-		// printContentsOf3DCVMat(image2,true,"image2");
-		// cv::Mat m_glayer;getLayer3D(m_g,int(floor(m_g.size[2]/2)),m_glayer);
-		// printContentsOf3DCVMat(m_glayer,true,"m_glayerHalf");
+		// there is a trade-off for the optimal ratio between the data_term and the regularization term
+		// m_dataTerm.matrix=regulation*(1/m_mu)*m_dataTerm.matrix;
 		ROF3D rof3D=ROF3D(m_dataTerm,m_Niter,m_path_to_disparity,m_path_to_initial_disparity,nbmaxThreadPoolThreading,m_ratioGap);
-		
-		// std::cout<<"\n local test"<<std::endl;
-		// rof3D.testMinimalityOfSolution(10,0.0001);
-		// std::cout<<"\n second test with farther arguments"<<std::endl;
-		// rof3D.testMinimalityOfSolution(100,0.1);
-		// std::cout<<"\n third test with farther arguments"<<std::endl;
-		// rof3D.testMinimalityOfSolution(100,100);
 	}
 
 }
@@ -105,17 +95,23 @@ MatchingAlgorithm::~MatchingAlgorithm()
 
 void MatchingAlgorithm::data_term_effic(const cv::Mat &image1,const cv::Mat &image2,const double &offset) //(Im1,Im2,Nt,mu)
 {
+//compute the data term for the method direct! for the method "accelerated", we should divide the data-term by m_mu, before applying it
 
-// calcul le cost volume mais dans ce cas le déplacement n'est permis que dans un seul sens, il faut corriger ca !
+//Inputs:
+// image1, the image on which the disparity is computed
+// image2, the target image for the computation of the disparity map
+// the data_term is a matrix g_{i,j,k} computed as a function of image1(i,j) and image2(i,j+k), it is in fact a structure defined on ROF3D, that contraints also the offset and the disparity step for which we aim to compute the disparity
 
-// calcule le cost-volume g(i,j,k) = mu * sum_{R,G,B} abs(Im1(i,j) - Im2(i,j-k))
-// %Im1 : image de gauche
-// %Im2 : image de droite (deplacement de camera de gauche vers la droite)
 
-//m_t_size should be smaller than m_x_size and m_y_size
 
 int size[3] = { m_y_size, m_x_size, m_t_size };
+
+//initiate the dataTerm
 m_g=cv::Mat(3, size, CV_64FC1, 50000000.0);
+m_dataTerm.matrix=m_g;
+m_dataTerm.stepDisparity=1.0;	
+m_dataTerm.offset=offset;
+
 int intOffset=int(floor(m_offset));
 // printContentsOf3DCVMat(*m_image1,false);
 // cv::waitKey(100);
@@ -147,9 +143,10 @@ if (m_dataTermOption=="absdiff")
 	}
 else if (m_dataTermOption=="census")
 	{
-		Census census=Census(image1,image2,m_g,m_offset); //normally g is preallocated
+		Census census=Census(image1,image2,m_dataTerm); //normally g is preallocated
 		// cv::Mat m_glayer;getLayer3D(m_g,int(floor(m_g.size[2]/2)),m_glayer);
 		// printContentsOf3DCVMat(m_glayer,true,"m_glayer");
+		m_g=m_dataTerm.matrix;
 		m_g=m_mu*m_g;
 		// data_term_census(*m_image1,*m_image2,m_g);
 		// printContentsOf3DCVMat(m_g,true,"m_g_original");
@@ -160,8 +157,89 @@ else
 	throw std::invalid_argument( "intern problem on MatchingAlgorithm.cpp" );
 }
 m_dataTerm.matrix=m_g;
-m_dataTerm.stepDisparity=1.0;	
-m_dataTerm.offset=offset;
+}
+
+void MatchingAlgorithm::data_term_effic_subPixel(const cv::Mat &image1,const cv::Mat &image2,const double &offset,int zoom) 
+{
+
+//compute the data term for the method direct! for the method "accelerated", we should divide the data-term by m_mu, before applying it
+
+//Inputs:
+// image1, the image on which the disparity is computed
+// image2, the target image for the computation of the disparity map
+// the data_term is a matrix g_{i,j,k} computed as a function of image1(i,j) and image2(i,j+k), it is in fact a structure defined on ROF3D, that contraints also the offset and the disparity step for which we aim to compute the disparity
+
+// this version is similar to the one above, in the difference that it permits the computation of a subpixelic dataTerm
+
+int size[3] = { m_y_size, m_x_size, zoom*m_t_size };
+
+//initiate the dataTerm
+m_g=cv::Mat(3, size, CV_64FC1, 50000000.0);
+m_dataTerm.matrix=m_g;
+m_dataTerm.stepDisparity=1.0/double(zoom);	
+m_dataTerm.offset=offset*zoom;
+
+// int intOffset=int(floor(m_offset));
+int intZoomOffset=int(floor(zoom*m_offset));
+
+cv::Mat image1_resized;cv::Mat image1Copy=image1.clone();
+resizeWithShannonInterpolation(image1Copy,image1_resized,zoom);
+cv::Mat image2_resized;cv::Mat image2Copy=image2.clone();
+resizeWithShannonInterpolation(image2Copy,image2_resized,zoom);
+
+// printContentsOf3DCVMat(*m_image1,false);
+// cv::waitKey(100);
+// printContentsOf3DCVMat(*m_image2,false);return;
+if (m_dataTermOption=="absdiff")
+	{
+
+		for (int i=0;i<m_y_size;i++)
+		{
+			// double * deltaxPtr=deltax.ptr<double>(0);
+			const double * image1iPtr= image1.ptr<double>(i);
+			const double * image2iPtr= image2.ptr<double>(i);
+			const double * image1_resizedizoomPtr= image1_resized.ptr<double>(i*zoom);
+			const double * image2_resizedizoomPtr= image2_resized.ptr<double>(i*zoom);
+			cv::Mat m_gi=getRow3D(m_g,i);
+			for (int j=0;j<m_x_size;j++)
+			{
+				double * m_gij=m_gi.ptr<double>(j);
+				// int maxk=std::min(m_t_size-1+intOffset,(m_x_size-1)-j);
+				// int mink=std::max(intOffset,-j);
+				int maxk=std::min(m_t_size*zoom-1+intZoomOffset,(zoom*m_x_size-1)-j*zoom);
+				int mink=std::max(intZoomOffset,-j*zoom);
+				for(int k=mink;k<=maxk;k++)
+				{
+			// for (int km
+					// m_gij[k-intOffset]=m_mu*abs(image1iPtr[j]-image2iPtr[j+k]);// observe that the same pixel associated to the image on the left, should be some pixels rights than the one associated to the right image  
+					m_gij[k-intZoomOffset]=m_mu*abs(image1iPtr[j]-image2_resizedizoomPtr[j*zoom+k]);// observe that the same pixel associated to the image on the left, should be some pixels rights than the one associated to the right image  
+
+				}
+				// delete m_gij;
+			}
+		}
+			// delete image1iPtr;
+			// delete m_image2iPtr;
+		// m_dataTerm.matrix=m_g;
+	}
+else if (m_dataTermOption=="census")
+	{
+		Census census=Census(image1,image2,m_dataTerm); //normally g is preallocated
+		// cv::Mat m_glayer;getLayer3D(m_g,int(floor(m_g.size[2]/2)),m_glayer);
+		// printContentsOf3DCVMat(m_glayer,true,"m_glayer");
+		// m_g=m_dataTerm.matrix;
+		m_g=m_dataTerm.matrix;
+		m_g=m_mu*m_g;
+		// data_term_census(*m_image1,*m_image2,m_g);
+		// printContentsOf3DCVMat(m_g,true,"m_g_original");
+		// m_g=m_mu*m_g;
+		// m_dataTerm.matrix=m_g;
+	}
+else 
+{
+	throw std::invalid_argument( "intern problem on MatchingAlgorithm.cpp" );
+}
+m_dataTerm.matrix=zoom*m_g;// multiply by zoom, it is linked to the discretization, m_dataTerm.matrix(i,j,k) is equal equal to the cost coefficient divided by the step of the disparity
 }
 
 

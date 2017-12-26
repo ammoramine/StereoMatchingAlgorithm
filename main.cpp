@@ -38,8 +38,8 @@ int main(int argc, char* argv[])
 	cv::Mat image2;//=cv::imread("input_pair/rectified_sec.tif");//, cv::IMREAD_LOAD_GDAL);
 	std::string data_term_option;
 	// read_option(argc,argv,image1,image2,data_term_option);
-	int t_size;double offset;int Niter;std::string path_to_disparity;int nbmaxThreadPoolThreading;std::string method;std::string path_to_initial_disparity;double ratioGap;
-	read_option(argc,argv,image1,image2,data_term_option,t_size,offset,ratioGap,Niter,path_to_disparity,path_to_initial_disparity,nbmaxThreadPoolThreading,method);
+	int t_size;double offset;int Niter;std::string path_to_disparity;int nbmaxThreadPoolThreading;int zoom;std::string method;std::string path_to_initial_disparity;double ratioGap;
+	read_option(argc,argv,image1,image2,data_term_option,t_size,offset,ratioGap,Niter,zoom,path_to_disparity,path_to_initial_disparity,nbmaxThreadPoolThreading,method);
 	// MatchingAlgorithm theAlgorithm = MatchingAlgorithm(image1,image2,data_term_option, t_size,offset,ratioGap,Niter,path_to_disparity,path_to_initial_disparity,nbmaxThreadPoolThreading,method);
 
 	// int zoom=1;
@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
 	// resizeWithShannonInterpolation(image2Copy,image2_resized,zoom);
 
 
-	MatchingAlgorithm theAlgorithm = MatchingAlgorithm(image1,image2,data_term_option, t_size,offset,ratioGap,Niter,path_to_disparity,path_to_initial_disparity,nbmaxThreadPoolThreading,method);
+	MatchingAlgorithm theAlgorithm = MatchingAlgorithm(image1,image2,data_term_option, t_size,offset,ratioGap,Niter,path_to_disparity,path_to_initial_disparity,zoom,nbmaxThreadPoolThreading,method);
 	
 
 	// int found=path_to_disparity.find_first_of(".");

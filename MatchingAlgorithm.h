@@ -24,7 +24,7 @@ class MatchingAlgorithm
 {
 
 	public:
-		MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2,std::string dataTermOption,int tsize,double offset,double ratioGap,int Niter,const std::string &path_to_disparity,const std::string &path_to_initial_disparity,int nbmaxThreadPoolThreading,std::string method);
+		MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2,std::string dataTermOption,int tsize,double offset,double ratioGap,int Niter,const std::string &path_to_disparity,const std::string &path_to_initial_disparity,int zoom,int nbmaxThreadPoolThreading,std::string method);
 		~MatchingAlgorithm();
 		
 		static cv::Mat  projCh(const cv::Mat &v);
@@ -48,7 +48,6 @@ class MatchingAlgorithm
 		void data_term_effic(const cv::Mat &image1,const cv::Mat &image2,const double &offset);
 		
 		void data_term_effic_subPixel(const cv::Mat &image1,const cv::Mat &image2,const double &offset,int zoom);
-
 
 		void init();
 		double computePrimalDualGap();
