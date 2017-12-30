@@ -94,6 +94,7 @@ class ROF3D
 
 		double computeCostPrimal(const cv::Mat &argument);
 		double computeCostDual(const cv::Mat &x1,const cv::Mat &x2,const cv::Mat &x3);
+		void computeInitialGap();
 		// double computeGapInfBorn(const cv::Mat &x1,const cv::Mat &x2,const cv::Mat &x3,const cv::Mat &primal);
 
 		double computeTVHStar(const cv::Mat & argument);
@@ -115,7 +116,8 @@ class ROF3D
 		void testContraintOnSolution(const cv::Mat &argminToTest);
 		cv::Mat getSolutionOfOriginalProblem();
 
-
+		void computeDisparityFromPrimal(std::string path_to_disparity);
+		void getPrimal(cv::Mat &x1,cv::Mat &x2,cv::Mat &x3);
 	protected:
 		cv::Mat m_g;
 		int m_x_size;
@@ -152,5 +154,5 @@ class ROF3D
 		std::string m_path_to_disparity;
 		std::string m_path_to_initial_disparity;
 };
-// #include "ROF3DMultiscale.h"
+#include "ROF3DMultiscale.h"
 #endif

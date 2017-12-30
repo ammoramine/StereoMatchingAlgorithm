@@ -1,6 +1,6 @@
 #include "MatchingAlgorithm.h"
 
-MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2,std::string dataTermOption,int t_size,double offset,double ratioGap,int Niter,const std::string &path_to_disparity,const std::string &path_to_initial_disparity,double zoom,int nbmaxThreadPoolThreading,std::string method)
+MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2,std::string dataTermOption,int t_size,double offset,double ratioGap,int Niter,const std::string &path_to_disparity,const std::string &path_to_initial_disparity,double zoom,int nbmaxThreadPoolThreading,std::string method,const bool &multiscale)
 // tahe as input two gray images
 {
 	m_image1=new cv::Mat(image1.size(),image1.type());
@@ -32,14 +32,14 @@ MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2
 	m_dataTermOption=dataTermOption;
 	printProperties();
 	// data_term_effic(*m_image1,*m_image2,m_offset,m_t_size);
-	if (zoom>=1)
-	{
-		data_term_effic_subPixel(*m_image1,*m_image2,m_offset,int(zoom));
-	}
-	else
-	{
-		data_term_effic_OnPixel(*m_image1,*m_image2,m_offset,zoom);
-	}
+	// if (zoom>=1)
+	// {
+	// 	data_term_effic_subPixel(*m_image1,*m_image2,m_offset,m_t_size,int(zoom));
+	// }
+	// else
+	// {
+	// 	data_term_effic_OnPixel(*m_image1,*m_image2,m_offset,m_t_size,zoom);
+	// }
 // 		cv::Mat image1_resized;cv::Mat image1Copy=image1.clone();
 // resizeWithShannonInterpolation(image1Copy,image1_resized,double(zoom));
 // cv::Mat image2_resized;cv::Mat image2Copy=image2.clone();
@@ -48,6 +48,8 @@ MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2
 	// double regulation=0.6;
 	if (method=="direct")
 	{
+	data_term_effic(*m_image1,*m_image2,m_offset,m_t_size);
+
 	init();
 
 	launch();
@@ -57,9 +59,33 @@ MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2
 	}
 	else if(method=="accelerated")
 	{
+		std::vector<DataTerm> dataTerms;
+		// data_term_effic_OnPixel(*m_image1,*m_image2,m_offset,m_t_size,0.7);dataTerms.push_back(m_dataTerm);
+		// data_term_effic_OnPixel(*m_image1,*m_image2,m_offset,m_t_size,0.8);dataTerms.push_back(m_dataTerm);
+		if (multiscale==true)
+		{
+		data_term_effic_OnPixel(*m_image1,*m_image2,m_offset,m_t_size,0.9);dataTerms.push_back(m_dataTerm);
+		// data_term_effic_OnPixel(*m_image1,*m_image2,m_offset,0.9);dataTerms.push_back(m_dataTerm);
+		data_term_effic_subPixel(*m_image1,*m_image2,m_offset,m_t_size,1);dataTerms.push_back(m_dataTerm);
+
+			ROF3DMultiscale rof3D=ROF3DMultiscale(dataTerms,m_Niter,m_path_to_disparity,m_path_to_initial_disparity,nbmaxThreadPoolThreading,m_ratioGap);
+		}
+		else
+		{
+					// data_term_effic_subPixel(*m_image1,*m_image2,m_offset,m_t_size,1);//dataTerms.push_back(m_dataTerm);
+			if (zoom>=1)
+			{
+				data_term_effic_subPixel(*m_image1,*m_image2,m_offset,m_t_size,int(zoom));
+			}
+			else
+			{
+				data_term_effic_OnPixel(*m_image1,*m_image2,m_offset,m_t_size,zoom);
+			}
+			ROF3D rof3D=ROF3D(m_dataTerm,m_Niter,m_path_to_disparity,m_path_to_initial_disparity,nbmaxThreadPoolThreading,m_ratioGap);
+
+		}
 		// there is a trade-off for the optimal ratio between the data_term and the regularization term
 		// m_dataTerm.matrix=regulation*(1/m_mu)*m_dataTerm.matrix;
-		ROF3D rof3D=ROF3D(m_dataTerm,m_Niter,m_path_to_disparity,m_path_to_initial_disparity,nbmaxThreadPoolThreading,m_ratioGap);
 	}
 
 }
@@ -175,7 +201,7 @@ else
 m_dataTerm.matrix=m_g;
 }
 
-void MatchingAlgorithm::data_term_effic_subPixel(const cv::Mat &image1,const cv::Mat &image2,const double &offset,int zoom) 
+void MatchingAlgorithm::data_term_effic_subPixel(const cv::Mat &image1,const cv::Mat &image2,const double &offset,const int t_size,int zoom) 
 {
 
 //compute the data term for the method direct! for the method "accelerated", we should divide the data-term by m_mu, before applying it
@@ -187,7 +213,7 @@ void MatchingAlgorithm::data_term_effic_subPixel(const cv::Mat &image1,const cv:
 
 // this version is similar to the one above, in the difference that it permits the computation of a subpixelic dataTerm
 
-int size[3] = { image1.size[0], image1.size[1], zoom*m_t_size };
+int size[3] = { image1.size[0], image1.size[1], zoom*t_size };
 
 //initiate the dataTerm
 m_g=cv::Mat(3, size, CV_64FC1, 50000000.0);
@@ -258,7 +284,7 @@ else
 m_dataTerm.matrix=zoom*m_g;// multiply by zoom, it is linked to the discretization, m_dataTerm.matrix(i,j,k) is equal equal to the cost coefficient divided by the step of the disparity
 }
 
-void MatchingAlgorithm::data_term_effic_OnPixel(const cv::Mat &image1,const cv::Mat &image2,const double &offset,double zoom) 
+void MatchingAlgorithm::data_term_effic_OnPixel(const cv::Mat &image1,const cv::Mat &image2,const double &offset,const int t_size,double zoom) 
 {
 
 //compute the data term for the method direct! for the method "accelerated", we should divide the data-term by m_mu, before applying it
@@ -282,6 +308,8 @@ writeImageOnFloat(image1_resized,"image1_resized.tif");
 writeImageOnFloat(image2_resized,"image2_resized.tif");
 
 data_term_effic(image1_resized,image2_resized,offset*zoom,int(floor(zoom*m_t_size)));// after this step, the dataTerm m_dataTerm is computed for a lower resolution of images , with its correpsond offset, and interal of disparity
+// data_term_effic_subPixel(image1_resized,image2_resized,offset*zoom,int(floor(zoom*m_t_size)),int(floor((1/zoom))));
+// void MatchingAlgorithm::data_term_effic_subPixel(const cv::Mat &image1,const cv::Mat &image2,const double &offset,const int t_size,int zoom) 
 
 
 // m_dataTerm.stepDisparity=1.0;// we don't divide by zoom because, we would resize	

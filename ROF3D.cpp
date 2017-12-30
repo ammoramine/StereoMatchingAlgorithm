@@ -419,14 +419,29 @@ double ROF3D::computeTV1DStarWeighted(const cv::Mat & argument,const cv::Mat wei
 
 // }
 
-
+void ROF3D::computeInitialGap()
+//compute the gap between the primal and the dual if all the xi are set to zero
+{
+	int size[3] = { m_y_size,m_x_size,m_t_size};
+	cv:: Mat x1Current=cv::Mat(3, size, CV_64FC1, 0.0);//m_x1Previous=cv::Mat(3, size, CV_64FC1, 0.0);m_x1Bar=cv::Mat(3, size, CV_64FC1, 0.0);
+	cv::Mat x2Current=cv::Mat(3, size, CV_64FC1, 0.0);//m_x2Previous=cv::Mat(3, size, CV_64FC1, 0.0);m_x2Bar=cv::Mat(3, size, CV_64FC1, 0.0);
+	cv::Mat x3Current=cv::Mat(3, size, CV_64FC1, 0.0);
+	cv::Mat v=m_f-(1/m_lambda)*(x1Current+x2Current+x3Current);
+	double primalCost=computeCostPrimal(v);
+	double dualCost=computeCostDual(x1Current,x2Current,x3Current);
+	m_intialDualPrimalGap=primalCost-dualCost;
+}
 
 
 void ROF3D::launch()
 //after the methodes init has been launched
 {
+	computeInitialGap();
 	std::cout<<"\n\n\n solving ROF3D problem with a ratioGap limit: "<<m_ratioGap<<" and limit number of iterations"<< m_Niter <<"\n\n\n"<<std::endl;
 	m_CurrentRatioGap=2.0;// m_ratioGap should always be lower than 1.0
+
+
+
 	while( m_iteration < m_Niter and m_CurrentRatioGap>=m_ratioGap)// and ( m_gap >= m_factor*m_gapInit ) )
 	{
 		iterate_algorithm();
@@ -435,15 +450,15 @@ void ROF3D::launch()
 		computeDisparity();
 		double primalCost=computeCostPrimal(m_v);
 		double dualCost=computeCostDual(m_x1Current,m_x2Current,m_x3Current);
-		if (m_iteration==1)
-		{
-			m_intialDualPrimalGap=primalCost-dualCost;
-		}
+		// if (m_iteration==1)
+		// {
+		// 	m_intialDualPrimalGap=primalCost-dualCost;
+		// }
 		double currentDualPrimalGap=primalCost-dualCost;
 		m_CurrentRatioGap=currentDualPrimalGap/m_intialDualPrimalGap;
 		// std::cout<<"\n"<<std::endl;
 		std::cout<<" the cost of the primal is :"<<primalCost<<" and the cost of the dual is : "<<dualCost<<std::endl;
-		std::cout<<"the actual dual gap is : "<<currentDualPrimalGap<<" and the actual ratio is : "<<m_CurrentRatioGap <<std::endl;
+		std::cout<<"the actual dual gap is : "<<currentDualPrimalGap<<" the initial dual gap is :"<<m_intialDualPrimalGap<<" the actual ratio is : "<<m_CurrentRatioGap <<" and the ratio limit is :"<<m_ratioGap<<std::endl;
 		// std::cout<<"\n"<<std::endl;
 	}
 }
@@ -963,10 +978,49 @@ cv::Mat ROF3D::getSolutionOfOriginalProblem()
 
 
 
+void ROF3D::computeDisparityFromPrimal(std::string path_to_disparity)
+// from the values m_x1Current,m_x2Current,m_x3Current, evaluate the disparity map
+// this function would be used only for the  purpose of debugging !
+{
+	cv::Mat m_v=m_f-(1/m_lambda)*(m_x1Current+m_x2Current+m_x3Current);
+	// printContentsOf3DCVMat(getLayer3D(m_v,0),false);std::cout<<"over \n";throw std::invalid_argument( "testing the algorithm" );
+	// printContentsOf3DCVMat(m_v,true,"m_v");
+	// m_u=convertTo((m_v < 0.0),CV_64FC1);
+	// cv::Mat doubleV0;
+	cv::Mat m_u_bool=(m_v > 0.0);
+    m_u_bool.convertTo(m_u, CV_64FC1);
+    m_u=m_u/255.0;
+	m_disparity=cv::Mat(m_u.size[0],m_u.size[1],CV_64FC1,m_offset-1);// the solution is such that the first term of m_uij: m_uij[0] is always equal to 1, and it refers to the minimal disparity
+	cv::Mat m_ui;
 
+       for (int i = 0; i < m_u.size[0]; i++)
+       {
+               // cv::Mat m_ui = MatchingAlgorithm::getRow3D(m_u,i);
+               getRow3D(m_u,i,m_ui);
+               double * disparityi = m_disparity.ptr<double>(i);
+               for (int j = 0; j < m_u.size[1]; j++)
+               {
+                       double * m_uij = m_ui.ptr<double>(j);
+                       // disparityi[j]=0;
+                       for (int k=0;k< m_u.size[2];k++)
+                       {
+                               disparityi[j]+=m_uij[k];
+                       }
+               }
+       }
+       m_disparity=m_stepDisparity*m_disparity;
+       cv::Mat disparity=m_disparity.clone();
+       disparity.convertTo(disparity,CV_32FC1);
+    iio_write_image_float(strdup(path_to_disparity.c_str()),(float *)disparity.data,disparity.size[1],disparity.size[0]);
+    // cv::imwrite(m_path_to_disparity,m_disparity);
+}
 
-
-
+void ROF3D::getPrimal(cv::Mat &x1,cv::Mat &x2,cv::Mat &x3)
+{
+	x1=m_x1Current.clone();
+	x2=m_x2Current.clone();
+	x3=m_x3Current.clone();
+}
 
 
 void ROF3D::initf(double delta)
