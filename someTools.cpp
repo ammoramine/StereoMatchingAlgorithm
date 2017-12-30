@@ -156,6 +156,26 @@ void getLayer3DBeta(const cv::Mat &matrix3D,int layer_number,cv::Mat &layer1)
 
 }
 
+void getLayer3DReference(const cv::Mat &matrix3D,int layer_number,cv::Mat &layer1)
+// returns a reference on the 3D matrix matrix3D(.,.,layer_number), with a size of 1 on the last dimension
+{
+
+	cv::Range arrayOfRanges[]={cv::Range(0,matrix3D.size[0]),cv::Range(0,matrix3D.size[1]),cv::Range(layer_number,layer_number+1)};
+	// layer1=matrix3D(arrayOfRanges);// there is a problem when we take consider a header to the data, but when we consider the copy the problem is resolved ... (specially when we use the at method), why ? ... 
+	// cv::Mat layer1Temp;matrix3D(arrayOfRanges).copyTo(layer1Temp);
+	cv::Mat layer1Temp=cv::Mat(matrix3D,arrayOfRanges);//layer1Temp.copyTo(layer1);
+	cast3DMatrixTo2DMatrixKeepingReference(layer1Temp,layer1);
+	// getLayer3DReference(layer1Temp,layer);
+	// int sizeLayer[2] = { layer1Temp.size[0],layer1Temp.size[1]};
+	// size_t stepLayer[2] = { layer1Temp.step[0],layer1Temp.step[1]};
+	// layer1=cv::Mat(2,sizeLayer,layer1Temp.type(),layer1Temp.data,stepLayer);
+	// cast3DMatrixTo2DMatrix(layer1Temp,layer1);
+	// int sizeLayer[2] = { matrix3D.size[0],matrix3D.size[1]};
+	// layer1=layer1Temp.reshape(0,2,sizeLayer);
+	// layer1=layer1Temp.reshape(matrix3D.size[0],matrix3D.size[1]);
+
+}
+
 void testLayer3D()
 {
 	double m[3][3][3] = { {{0,1,2}, {3,4,5}, {6,7,8}}, {{10,11,12}, {13,14,15}, {16,17,18}},{{20,21,22}, {23,24,25}, {26,27,28}} };
@@ -251,6 +271,29 @@ void setRow3D(const cv::Mat &Matrix3Di,int i,cv::Mat &Matrix3D)
 	}
 
 }
+
+void setLayer3D(const cv::Mat &Matrix3Dk,int k,cv::Mat &Matrix3D)
+{
+	// cv::Mat Matrix3DkOld;getLayer3DReference(Matrix3D,k,Matrix3DkOld);
+	cv::Range arrayOfRanges[]={cv::Range(0,Matrix3D.size[0]),cv::Range(0,Matrix3D.size[1]),cv::Range(k,k+1)};
+	cv::Mat Matrix3DkOld=cv::Mat(Matrix3D,arrayOfRanges);//layer1Temp.copyTo(layer1);
+
+
+	cv::MatConstIterator_<double> itMat3Dk=Matrix3Dk.begin<double>();
+	cv::MatConstIterator_<double>  itMat3DkEnd=Matrix3Dk.end<double>();
+
+	cv::MatIterator_<double> itMat3DkOld=Matrix3DkOld.begin<double>();
+	cv::MatIterator_<double> itMat3DkOldEnd=Matrix3DkOld.end<double>();
+
+	
+
+	while ( itMat3Dk!= itMat3DkEnd and itMat3DkOld!= itMat3DkOldEnd) {
+		(*itMat3DkOld)=(*itMat3Dk);
+		itMat3DkOld++;itMat3Dk++;
+	}
+
+}
+
 void printContentsOf3DCVMat(const cv::Mat &matrix,bool writeOnFile,std::string filename)
 {
 	if (writeOnFile==false)
@@ -342,6 +385,22 @@ void cast3DMatrixTo2DMatrix(const cv::Mat &matrix3D, cv::Mat &matrix2D)
 		itMat2D++;itMat3D++;
 	}
 }
+
+void cast3DMatrixTo2DMatrixKeepingReference(const cv::Mat &matrix3D, cv::Mat &matrix2D)
+{
+	// Inputs:
+	// the matrix3D has a size on the form {size[0],size[1],1}, and the matrix matrix2D is the same matrix, but without the last dimension
+
+	int dims[] = { matrix3D.size[0], matrix3D.size[1]};
+
+	matrix2D=cv::Mat(2,dims, CV_64FC1, matrix3D.data);
+
+	// int dims[] = { Matrix2D.size[1]};
+
+	// extractedMatrix=cv::Mat(1,dims, CV_64FC1, Matrix2D.data + Matrix2D.step[0] * numberRow);
+
+}
+
 void writeImageOnFloat(const cv::Mat &image,const std::string &name)
 {
 	cv::Mat imageCopy=image.clone();
@@ -369,4 +428,12 @@ void resizeWithShannonInterpolation(cv::Mat &image,cv::Mat &resizedImage,double 
 		
 		// printContentsOf3DCVMat(*m_image1,true,"image164");
 		// printContentsOf3DCVMat(image1_resized,true,"image1_resized64");
+}
+
+std::string addSuffixFloatBeforeExtension(const std::string &nameInput,const float &suffix)
+{
+	int found=nameInput.find_first_of(".");
+	std::string nameOutput=nameInput;
+	nameOutput.insert(found,std::to_string(suffix));
+	return nameOutput;
 }
