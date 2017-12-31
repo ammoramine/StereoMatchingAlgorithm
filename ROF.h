@@ -5,8 +5,20 @@
 #include <stdexcept>
 #include <stdlib.h>
 #include <iostream>
-#include "MatchingAlgorithm.h"
-
+#include <opencv/highgui.h>
+#include <opencv2/core/core.hpp>
+#include <stdio.h>
+#include <math.h>
+#include <vector>
+#include <stdlib.h>
+#include <iostream>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <stdexcept>
+#include <time.h>
+#include <fstream>
+#include <math.h>
+#include "ROF3D.h"
+#include "someTools.h"
 
 class ROF 
 {
