@@ -12,14 +12,19 @@
 #include <time.h>
 #include <fstream>
 #include <math.h>
-#include "census_computation.h"
 #include "ROF3D.h"
-
+#include "someTools.h"
+extern "C"
+{
+#include "zoom.h"
+}
+#include "census.h"
+// struct DataTerm;
 class MatchingAlgorithm
 {
 
 	public:
-		MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2,std::string dataTermOption,int tsize,signed int offset,int Niter,std::string path_to_disparity,std::string method);
+		MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2,std::string dataTermOption,int tsize,double offset,double ratioGap,int Niter,const std::string &path_to_disparity,const std::string &path_to_initial_disparity,double zoom,int nbmaxThreadPoolThreading,std::string method,const bool &multiscale);
 		~MatchingAlgorithm();
 		
 		static cv::Mat  projCh(const cv::Mat &v);
@@ -40,7 +45,11 @@ class MatchingAlgorithm
 		void helpDebug();
 		void showImages();
 		void data_term();
-		void data_term_effic();
+		void data_term_effic(const cv::Mat &image1,const cv::Mat &image2,const double &offset,const int t_size);
+		
+		void data_term_effic_subPixel(const cv::Mat &image1,const cv::Mat &image2,const double &offset,const int t_size,int zoom);
+
+		void data_term_effic_OnPixel(const cv::Mat &image1,const cv::Mat &image2,const double &offset,const int t_size,double zoom);
 		void init();
 		double computePrimalDualGap();
 
@@ -71,18 +80,21 @@ class MatchingAlgorithm
 		double m_mu;
 		double m_tau;
 		double m_sigma;
+		double m_ratioGap;
 
-		int m_offset;
 		int m_iteration;
 		double m_gap;
 		double m_gapInit;
 		double m_factor;
+		double m_offset;
 
 		int m_Niter;
 		int m_t_size;
 		double m_s;
 		std::string m_dataTermOption;
 		std::string m_path_to_disparity;
+		std::string m_path_to_initial_disparity;
+		DataTerm m_dataTerm;
 		// std::vector<std::vector<double> > m_cost;
 		// std::deque<int> m_indexOrderedImages; //ordered index images that we wish to construct
 		// std::deque<int> m_distances;//equivalent distances of the m_indexOrderedImages

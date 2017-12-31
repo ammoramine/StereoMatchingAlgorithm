@@ -1,6 +1,6 @@
 #include "MatchingAlgorithm.h"
 
-MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2,std::string dataTermOption,int t_size,signed int offset,int Niter,std::string path_to_disparity,std::string method)
+MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2,std::string dataTermOption,int t_size,double offset,double ratioGap,int Niter,const std::string &path_to_disparity,const std::string &path_to_initial_disparity,double zoom,int nbmaxThreadPoolThreading,std::string method,const bool &multiscale)
 // tahe as input two gray images
 {
 	m_image1=new cv::Mat(image1.size(),image1.type());
@@ -10,6 +10,7 @@ MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2
 	m_y_size=m_image1->size().height;
 	m_x_size=m_image1->size().width;
 	m_path_to_disparity=path_to_disparity;
+	m_path_to_initial_disparity=path_to_initial_disparity;
 	// m_disparity=cv::Mat(m_y_size,m_x_size,CV_64FC1,0.0);
 	
 	m_mu = 75.0/255.0;
@@ -22,6 +23,7 @@ MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2
 	m_factor=0.05;
 	m_t_size = t_size ; //need to impose that m_t_size is smaller than m_x_size
 	m_offset=offset;
+	m_ratioGap=ratioGap;
 	// m_offset=int(-double(m_t_size)/2.0);
 	// m_disorderedImages= new std::vector<cv::Mat>;
 	// m_g.resize(m_t_size);
@@ -29,9 +31,25 @@ MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2
 	m_iteration=0; // at the begining no iteration is done
 	m_dataTermOption=dataTermOption;
 	printProperties();
-	data_term_effic();
+	// data_term_effic(*m_image1,*m_image2,m_offset,m_t_size);
+	// if (zoom>=1)
+	// {
+	// 	data_term_effic_subPixel(*m_image1,*m_image2,m_offset,m_t_size,int(zoom));
+	// }
+	// else
+	// {
+	// 	data_term_effic_OnPixel(*m_image1,*m_image2,m_offset,m_t_size,zoom);
+	// }
+// 		cv::Mat image1_resized;cv::Mat image1Copy=image1.clone();
+// resizeWithShannonInterpolation(image1Copy,image1_resized,double(zoom));
+// cv::Mat image2_resized;cv::Mat image2Copy=image2.clone();
+// resizeWithShannonInterpolation(image2Copy,image2_resized,double(zoom));
+	// }
+	// double regulation=0.6;
 	if (method=="direct")
 	{
+	data_term_effic(*m_image1,*m_image2,m_offset,m_t_size);
+
 	init();
 
 	launch();
@@ -41,13 +59,33 @@ MatchingAlgorithm::MatchingAlgorithm(const cv::Mat &image1,const cv::Mat &image2
 	}
 	else if(method=="accelerated")
 	{
-		ROF3D rof3D=ROF3D(m_g,m_Niter,m_path_to_disparity);
-		std::cout<<"\n local test"<<std::endl;
-		rof3D.testMinimalityOfSolution(10,0.1);
-		std::cout<<"\n second test with farther arguments"<<std::endl;
-		rof3D.testMinimalityOfSolution(100,0.1);
-		std::cout<<"\n third test with farther arguments"<<std::endl;
-		rof3D.testMinimalityOfSolution(100,100);
+		std::vector<DataTerm> dataTerms;
+		// data_term_effic_OnPixel(*m_image1,*m_image2,m_offset,m_t_size,0.7);dataTerms.push_back(m_dataTerm);
+		// data_term_effic_OnPixel(*m_image1,*m_image2,m_offset,m_t_size,0.8);dataTerms.push_back(m_dataTerm);
+		if (multiscale==true)
+		{
+		data_term_effic_OnPixel(*m_image1,*m_image2,m_offset,m_t_size,0.9);dataTerms.push_back(m_dataTerm);
+		// data_term_effic_OnPixel(*m_image1,*m_image2,m_offset,0.9);dataTerms.push_back(m_dataTerm);
+		data_term_effic_subPixel(*m_image1,*m_image2,m_offset,m_t_size,1);dataTerms.push_back(m_dataTerm);
+
+			ROF3DMultiscale rof3D=ROF3DMultiscale(dataTerms,m_Niter,m_path_to_disparity,m_path_to_initial_disparity,nbmaxThreadPoolThreading,m_ratioGap);
+		}
+		else
+		{
+					// data_term_effic_subPixel(*m_image1,*m_image2,m_offset,m_t_size,1);//dataTerms.push_back(m_dataTerm);
+			if (zoom>=1)
+			{
+				data_term_effic_subPixel(*m_image1,*m_image2,m_offset,m_t_size,int(zoom));
+			}
+			else
+			{
+				data_term_effic_OnPixel(*m_image1,*m_image2,m_offset,m_t_size,zoom);
+			}
+			ROF3D rof3D=ROF3D(m_dataTerm,m_Niter,m_path_to_disparity,m_path_to_initial_disparity,nbmaxThreadPoolThreading,m_ratioGap);
+
+		}
+		// there is a trade-off for the optimal ratio between the data_term and the regularization term
+		// m_dataTerm.matrix=regulation*(1/m_mu)*m_dataTerm.matrix;
 	}
 
 }
@@ -59,91 +97,226 @@ MatchingAlgorithm::~MatchingAlgorithm()
 }
 
 
-void MatchingAlgorithm::data_term() //(Im1,Im2,Nt,mu)
-{
+// void MatchingAlgorithm::data_term() //(Im1,Im2,Nt,mu)
+// {
 
-// calcul le cost volume mais dans ce cas le déplacement n'est permis que dans un seul sens, il faut corriger ca !
+// // calcul le cost volume mais dans ce cas le déplacement n'est permis que dans un seul sens, il faut corriger ca !
 
-// calcule le cost-volume g(i,j,k) = mu * sum_{R,G,B} abs(Im1(i,j) - Im2(i,j-k))
-// %Im1 : image de gauche
-// %Im2 : image de droite (deplacement de camera de gauche vers la droite)
+// // calcule le cost-volume g(i,j,k) = mu * sum_{R,G,B} abs(Im1(i,j) - Im2(i,j-k))
+// // %Im1 : image de gauche
+// // %Im2 : image de droite (deplacement de camera de gauche vers la droite)
 
 
-	int size[3] = { m_y_size, m_x_size, m_t_size };
-	m_g=cv::Mat(3, size, CV_64FC1, 500.0);
+// 	int size[3] = { m_y_size, m_x_size, m_t_size };
+// 	m_g=cv::Mat(3, size, CV_64FC1, 500.0);
 
-		for (int i=0;i<m_y_size;i++)
-		{
-			// const uchar* data_in_1_line_i= m_image1->ptr<uchar>(i);
-			// const uchar* data_in_2_line_i= m_image2->ptr<uchar>(i);
-			// uchar* data_out_line_i= m_g[k].ptr<uchar>(i);
-			// std::cout<<"data 1 : "<<(*data_in_1_line_i) <<std::endl;
-			// std::cout<<"data 2 : "<<(*data_in_2_line_i) <<std::endl;
-			for (int k=0;k<m_t_size;k++)
-				{
-					for (int j=k;j<m_x_size;j++)
-						{
+// 		for (int i=0;i<m_y_size;i++)
+// 		{
+// 			// const uchar* data_in_1_line_i= m_image1->ptr<uchar>(i);
+// 			// const uchar* data_in_2_line_i= m_image2->ptr<uchar>(i);
+// 			// uchar* data_out_line_i= m_g[k].ptr<uchar>(i);
+// 			// std::cout<<"data 1 : "<<(*data_in_1_line_i) <<std::endl;
+// 			// std::cout<<"data 2 : "<<(*data_in_2_line_i) <<std::endl;
+// 			for (int k=0;k<m_t_size;k++)
+// 				{
+// 					for (int j=k;j<m_x_size;j++)
+// 						{
 
-					// data_out_line_i[j]=m_mu*abs(data_in_1_line_i[j]-data_in_2_line_i[j-k]);
-							m_g.at<double>(i,j,k)=m_mu*abs(m_image1->at<double>(i,j)-m_image2->at<double>(i,j-k));
-						}
-				}
-		}
+// 					// data_out_line_i[j]=m_mu*abs(data_in_1_line_i[j]-data_in_2_line_i[j-k]);
+// 							m_g.at<double>(i,j,k)=m_mu*abs(m_image1->at<double>(i,j)-m_image2->at<double>(i,j-k));
+// 						}
+// 				}
+// 		}
 	
-}
+// }
 
 
-void MatchingAlgorithm::data_term_effic() //(Im1,Im2,Nt,mu)
+void MatchingAlgorithm::data_term_effic(const cv::Mat &image1,const cv::Mat &image2,const double &offset,const int t_size) //(Im1,Im2,Nt,mu)
 {
+//compute the data term for the method direct! for the method "accelerated", we should divide the data-term by m_mu, before applying it
 
-// calcul le cost volume mais dans ce cas le déplacement n'est permis que dans un seul sens, il faut corriger ca !
+//Inputs:
+// image1, the image on which the disparity is computed
+// image2, the target image for the computation of the disparity map
+// offset is the smallest value of disparity in terms of pixel
+// t_size is the intervall of disparity
 
-// calcule le cost-volume g(i,j,k) = mu * sum_{R,G,B} abs(Im1(i,j) - Im2(i,j-k))
-// %Im1 : image de gauche
-// %Im2 : image de droite (deplacement de camera de gauche vers la droite)
+//output
+// the data_term is a matrix g_{i,j,k} computed as a function of image1(i,j) and image2(i,j+k), it is in fact a structure defined on ROF3D, that contraints also the offset (in terms of pixels) and the disparity step for which we aim to compute the disparity (in this case equal to 1)
 
-//m_t_size should be smaller than m_x_size and m_y_size
 
-int size[3] = { m_y_size, m_x_size, m_t_size };
-m_g=cv::Mat(3, size, CV_64FC1, 500.0);
+
+int size[3] = { image1.size[0], image1.size[1], t_size };
+
+//initiate the dataTerm
+m_g=cv::Mat(3, size, CV_64FC1, 50000000.0);
+m_dataTerm.matrix=m_g;
+m_dataTerm.stepDisparity=1.0;	
+m_dataTerm.offset=offset;
+
+int intOffset=int(floor(m_offset));
 // printContentsOf3DCVMat(*m_image1,false);
 // cv::waitKey(100);
 // printContentsOf3DCVMat(*m_image2,false);return;
 if (m_dataTermOption=="absdiff")
 	{
 
-		for (int i=0;i<m_y_size;i++)
+		for (int i=0;i<size[0];i++)
 		{
 			// double * deltaxPtr=deltax.ptr<double>(0);
-			double * m_image1iPtr= m_image1->ptr<double>(i);
-			double * m_image2iPtr= m_image2->ptr<double>(i);
+			const double * image1iPtr= image1.ptr<double>(i);
+			const double * image2iPtr= image2.ptr<double>(i);
 			cv::Mat m_gi=getRow3D(m_g,i);
-			for (int j=0;j<m_x_size;j++)
+			for (int j=0;j<size[1];j++)
 			{
 				double * m_gij=m_gi.ptr<double>(j);
-				int maxk=std::min(j-m_offset,m_t_size-1);
-				int mink=std::max(j-m_offset-m_x_size,0);
+				int maxk=std::min(size[2]-1+intOffset,(size[1]-1)-j);
+				int mink=std::max(intOffset,-j);
 				for(int k=mink;k<=maxk;k++)
 				{
 			// for (int km
-					m_gij[k]=m_mu*abs(m_image1iPtr[j]-m_image2iPtr[j-k-m_offset]);
+					m_gij[k-intOffset]=m_mu*abs(image1iPtr[j]-image2iPtr[j+k]);// observe that the same pixel associated to the image on the left, should be some pixels rights than the one associated to the right image  
 				}
 				// delete m_gij;
 			}
 		}
-			// delete m_image1iPtr;
+			// delete image1iPtr;
 			// delete m_image2iPtr;
 	}
 else if (m_dataTermOption=="census")
 	{
-		data_term_census(*m_image1,*m_image2,m_g);
+		Census census=Census(image1,image2,m_dataTerm); //normally g is preallocated
+		// cv::Mat m_glayer;getLayer3D(m_g,int(floor(m_g.size[2]/2)),m_glayer);
+		// printContentsOf3DCVMat(m_glayer,true,"m_glayer");
+		m_g=m_dataTerm.matrix;
 		m_g=m_mu*m_g;
+		// data_term_census(*m_image1,*m_image2,m_g);
+		// printContentsOf3DCVMat(m_g,true,"m_g_original");
+		// m_g=m_mu*m_g;
 	}
 else 
 {
 	throw std::invalid_argument( "intern problem on MatchingAlgorithm.cpp" );
 }
+m_dataTerm.matrix=m_g;
 }
+
+void MatchingAlgorithm::data_term_effic_subPixel(const cv::Mat &image1,const cv::Mat &image2,const double &offset,const int t_size,int zoom) 
+{
+
+//compute the data term for the method direct! for the method "accelerated", we should divide the data-term by m_mu, before applying it
+
+//Inputs:
+// image1, the image on which the disparity is computed
+// image2, the target image for the computation of the disparity map
+// the data_term is a matrix g_{i,j,k} computed as a function of image1(i,j) and image2(i,j+k), it is in fact a structure defined on ROF3D, that contraints also the offset (but this time in the size of the disparity scale defined by zoom ) and the disparity step for which we aim to compute the disparity,but the case considered here is when zoom is an integer !!!
+
+// this version is similar to the one above, in the difference that it permits the computation of a subpixelic dataTerm
+
+int size[3] = { image1.size[0], image1.size[1], zoom*t_size };
+
+//initiate the dataTerm
+m_g=cv::Mat(3, size, CV_64FC1, 50000000.0);
+m_dataTerm.matrix=m_g;
+m_dataTerm.stepDisparity=1.0/double(zoom);	
+m_dataTerm.offset=offset*zoom;
+
+// int intOffset=int(floor(m_offset));
+int intZoomOffset=int(floor(zoom*m_offset));
+
+cv::Mat image1_resized;cv::Mat image1Copy=image1.clone();
+resizeWithShannonInterpolation(image1Copy,image1_resized,double(zoom));
+cv::Mat image2_resized;cv::Mat image2Copy=image2.clone();
+resizeWithShannonInterpolation(image2Copy,image2_resized,double(zoom));
+
+// printContentsOf3DCVMat(*m_image1,false);
+// cv::waitKey(100);
+// printContentsOf3DCVMat(*m_image2,false);return;
+if (m_dataTermOption=="absdiff")
+	{
+
+		for (int i=0;i<size[0];i++)
+		{
+			// double * deltaxPtr=deltax.ptr<double>(0);
+			const double * image1iPtr= image1.ptr<double>(i);
+			const double * image2iPtr= image2.ptr<double>(i);
+			const double * image1_resizedizoomPtr= image1_resized.ptr<double>(i*zoom);
+			const double * image2_resizedizoomPtr= image2_resized.ptr<double>(i*zoom);
+			cv::Mat m_gi=getRow3D(m_g,i);
+			for (int j=0;j<size[1];j++)
+			{
+				double * m_gij=m_gi.ptr<double>(j);
+				// int maxk=std::min(m_t_size-1+intOffset,(m_x_size-1)-j);
+				// int mink=std::max(intOffset,-j);
+				int maxk=std::min(size[2]-1+intZoomOffset,(zoom*size[1]-1)-j*zoom);
+				int mink=std::max(intZoomOffset,-j*zoom);
+				for(int k=mink;k<=maxk;k++)
+				{
+			// for (int km
+					// m_gij[k-intOffset]=m_mu*abs(image1iPtr[j]-image2iPtr[j+k]);// observe that the same pixel associated to the image on the left, should be some pixels rights than the one associated to the right image  
+					m_gij[k-intZoomOffset]=m_mu*abs(image1iPtr[j]-image2_resizedizoomPtr[j*zoom+k]);// observe that the same pixel associated to the image on the left, should be some pixels rights than the one associated to the right image  
+
+				}
+				// delete m_gij;
+			}
+		}
+			// delete image1iPtr;
+			// delete m_image2iPtr;
+		// m_dataTerm.matrix=m_g;
+	}
+else if (m_dataTermOption=="census")
+	{
+		Census census=Census(image1,image2,m_dataTerm); //normally g is preallocated
+		// cv::Mat m_glayer;getLayer3D(m_g,int(floor(m_g.size[2]/2)),m_glayer);
+		// printContentsOf3DCVMat(m_glayer,true,"m_glayer");
+		// m_g=m_dataTerm.matrix;
+		m_g=m_dataTerm.matrix;
+		m_g=m_mu*m_g;
+		// data_term_census(*m_image1,*m_image2,m_g);
+		// printContentsOf3DCVMat(m_g,true,"m_g_original");
+		// m_g=m_mu*m_g;
+		// m_dataTerm.matrix=m_g;
+	}
+else 
+{
+	throw std::invalid_argument( "intern problem on MatchingAlgorithm.cpp" );
+}
+m_dataTerm.matrix=zoom*m_g;// multiply by zoom, it is linked to the discretization, m_dataTerm.matrix(i,j,k) is equal equal to the cost coefficient divided by the step of the disparity
+}
+
+void MatchingAlgorithm::data_term_effic_OnPixel(const cv::Mat &image1,const cv::Mat &image2,const double &offset,const int t_size,double zoom) 
+{
+
+//compute the data term for the method direct! for the method "accelerated", we should divide the data-term by m_mu, before applying it
+
+//Inputs:
+// image1, the image on which the disparity is computed
+// image2, the target image for the computation of the disparity map
+// the data_term is a matrix g_{i,j,k} computed as a function of image1(i,j) and image2(i,j+k), it is in fact a structure defined on ROF3D, that contraints also the offset and the disparity step for which we aim to compute the disparity,but the case considered here is when zoom is an integer !!!
+
+// this version is similar to the one above, in the difference that it permits the computation of an onpixelic dataTerm
+
+// in this case the images are smaller, and for simplicity and efficiency, we apply the algorithm on the resized images
+cv::Mat image1_resized;cv::Mat image1Copy=image1.clone();
+resizeWithShannonInterpolation(image1Copy,image1_resized,zoom);
+cv::Mat image2_resized;cv::Mat image2Copy=image2.clone();
+resizeWithShannonInterpolation(image2Copy,image2_resized,zoom);
+
+writeImageOnFloat(image1,"image1.tif");
+writeImageOnFloat(image2,"image2.tif");
+writeImageOnFloat(image1_resized,"image1_resized.tif");
+writeImageOnFloat(image2_resized,"image2_resized.tif");
+
+data_term_effic(image1_resized,image2_resized,offset*zoom,int(floor(zoom*m_t_size)));// after this step, the dataTerm m_dataTerm is computed for a lower resolution of images , with its correpsond offset, and interal of disparity
+// data_term_effic_subPixel(image1_resized,image2_resized,offset*zoom,int(floor(zoom*m_t_size)),int(floor((1/zoom))));
+// void MatchingAlgorithm::data_term_effic_subPixel(const cv::Mat &image1,const cv::Mat &image2,const double &offset,const int t_size,int zoom) 
+
+
+// m_dataTerm.stepDisparity=1.0;// we don't divide by zoom because, we would resize	
+// m_dataTerm.offset=zoom*offset;
+// m_dataTerm.matrix=zoom*m_g;// multiply by zoom, it is linked to the discretization, m_dataTerm.matrix(i,j,k) is equal equal to the cost coefficient divided by the step of the disparity
+}
+
 cv::Mat  MatchingAlgorithm::projCh(const cv::Mat &v)
 {
 
@@ -685,7 +858,7 @@ void MatchingAlgorithm::printProperties()
 {
 	// printf("images of type: ")
 	printf ("size_of_images: width (y variable) : %i height (x variable) : %i \n", m_x_size, m_y_size);
-	printf("value of mu : %4.2f, tau %4.2f, sigma %4.2f, s %4.2f, Niter %i, m_factor %4.2f, t_size %i and offset %i",m_mu,m_tau,m_sigma,m_s,m_Niter,m_factor,m_t_size,m_offset);
+	printf("value of mu : %4.2f, tau %4.2f, sigma %4.2f, s %4.2f, Niter %i, m_factor %4.2f, t_size %i and offset %4.2f",m_mu,m_tau,m_sigma,m_s,m_Niter,m_factor,m_t_size,m_offset);
 	// m_mu = 75.0/255.0;
 	// m_tau = 1.0/sqrt(12.0) ;
 	// m_sigma = 1.0/sqrt(12.0) ;
