@@ -23,9 +23,14 @@ std::string compare_on_list(char * option,const char* listOfElements[],int sizeO
 }
 
 
-void read_option(int argc, char* argv[],cv::Mat &image1,cv::Mat &image2,std::string  &data_term_option,int &tsize,signed int &offset,int &Niter,std::string &path_to_disparity,int &nbmaxThreadPoolThreading,std::string &method)
+void read_option(int argc, char* argv[],cv::Mat &image1,cv::Mat &image2,std::string  &data_term_option,int &tsize,double &offset,double &ratioGap,int &Niter,double &zoom,std::string &path_to_disparity,std::string &path_to_initial_disparity,int &nbmaxThreadPoolThreading,std::string &method,bool &multiScale)
 {
 	int c;
+  //
+  path_to_initial_disparity="";
+  ratioGap=0.0;
+  zoom=1;
+  multiScale=false;
 	while (1)
     {
       static struct option long_options[] =
@@ -45,12 +50,16 @@ void read_option(int argc, char* argv[],cv::Mat &image1,cv::Mat &image2,std::str
           {"path_to_disparity",  required_argument, 0, 'g'},
           {"threadsMax",required_argument,0,'h'},
           {"method",required_argument,0,'i'},
+          {"path_to_initial_disparity",required_argument,0,'j'},
+          {"ratioGap",required_argument,0,'k'},
+          {"zoom",required_argument,0,'l'},
+          {"multiscale",no_argument,0,'m'},
           {0, 0, 0, 0}
         };
       /* getopt_long stores the option index here. */
       int option_index = 0;
 
-      c = getopt_long (argc, argv, "a:b:",
+      c = getopt_long (argc, argv, "a:b:c:d:e:f:g:h:i:j::",
                        long_options, &option_index);
 
       /* Detect the end of the options. */
@@ -71,13 +80,21 @@ void read_option(int argc, char* argv[],cv::Mat &image1,cv::Mat &image2,std::str
           printf ("\n");
           break;
         case 'a':
-          printf ("path to image 1 (image on the right) `%s'\n", optarg);
-          image1=cv::imread(optarg);
+          printf ("path to image 1 :image to which the computed disparity is applied ,(disparities computed from image 1 to image 2) `%s'\n", optarg);
+          readAndConvertImageToGray(optarg,image1);
+          // image1=cv::imread(optarg,cv::IMREAD_LOAD_GDAL);
+          // image1.convertTo(image1,CV_32FC1);
+          // iio_write_image_float("image1_gray.tif",(float*)image1.clone().data,image1.clone().size[1],image1.clone().size[0]);
+
           break;
 
         case 'b':
-          printf ("path to image 2 (image on the left )`%s'\n", optarg);
-          image2=cv::imread(optarg);
+          printf ("path to image 2 :target image with whom the first image should be matched,(disparities computed from image 1 to image 2) `%s'\n", optarg);
+          readAndConvertImageToGray(optarg,image2);
+          // image2=cv::imread(optarg,cv::IMREAD_LOAD_GDAL);
+          // image2.convertTo(image2,CV_32FC1);
+          // iio_write_image_float("image2_gray.tif",(float*)image2.data,image2.size[1],image2.size[0]);
+          
           break;
         case 'c':
         {
@@ -92,12 +109,12 @@ void read_option(int argc, char* argv[],cv::Mat &image1,cv::Mat &image2,std::str
           Niter=atoi(optarg);
           break;
         case 'e':
-          printf ("length of the interval of disparity `%s'\n", optarg);
+          printf ("length of the interval of disparity, `%s'\n", optarg);
           tsize=atoi(optarg);
           break;
         case 'f':
-          printf ("offset is the smallest algebrical value of the disparity`%s'\n", optarg);
-          offset=atoi(optarg);
+          printf ("offset is the smallest algebrical value of the disparity, disparities computed from the left to the right`%s'\n", optarg);
+          offset=atof(optarg);
           break;
         case 'g':
           printf ("prefix of the name of the disparity image`%s'\n", optarg);
@@ -111,6 +128,44 @@ void read_option(int argc, char* argv[],cv::Mat &image1,cv::Mat &image2,std::str
           printf ("method used`%s'\n", optarg);
           method=std::string(optarg);
           break;
+        case 'j':
+          // if (optarg!=NULL)
+          // {
+            printf ("initial disparity used and path to the image is  `%s'\n", optarg);
+            path_to_initial_disparity=std::string(optarg);
+        case 'k':
+            printf("ratio between the intial primal dual gap and the current primal dual gap before stopping is '%s'\n",optarg);
+            ratioGap=atof(optarg);
+            if (ratioGap>1.0 or ratioGap<0.0)
+            {
+                  throw std::invalid_argument( "the ratio gap should be between 0 and 1" );
+
+            }
+        case 'l':
+          // if (optarg!=NULL)
+          // {
+            printf ("step of the disparity is the inverse of the value of the zoom,which is equal to : `%s'\n", optarg);
+            printf("it should be of the form 2^{n} with n in Z");
+            zoom=atof(optarg);
+          // }
+          // else
+          // {
+            // path_to_initial_disparity="";
+          // }
+          break;
+        case 'm':
+          // if (optarg!=NULL)
+          // {
+            printf ("multiscale strategy used for the computation of the disparity : `%s'\n", optarg);
+            multiScale=true;
+          // }
+          // else
+          // {
+            // path_to_initial_disparity="";
+          // }
+          break;
+                  // {"initialDisparity",optional_argument,0,'j'},
+
         // case 'c':
         //   printf ("number of maximal iteration `%s'\n", optarg);
         //   Niter=atoi(optarg);
@@ -140,3 +195,30 @@ void read_option(int argc, char* argv[],cv::Mat &image1,cv::Mat &image2,std::str
     }
 
 }
+void readAndConvertImageToGray(const std::string &pathToImage,cv::Mat &output)
+{
+
+  cv::Mat outputTemp=cv::imread(pathToImage,cv::IMREAD_LOAD_GDAL);
+  int nbChannels=outputTemp.channels();
+  // printContentsOf3DCVMat(output,true,"output");
+  // cv::Mat outputGrayDouble;
+  if (nbChannels==3)
+  {
+    cv::Mat outputGray;
+    cv::cvtColor(outputTemp, outputGray, CV_RGB2GRAY);
+    outputGray.convertTo(output, CV_64FC1);
+  }
+  else if (nbChannels==1)
+  {
+    outputTemp.convertTo(output, CV_64FC1);
+  }
+  else
+  {
+    throw std::invalid_argument( "this kind of image is not managed in the code ..." );
+
+  }
+  // printContentsOf3DCVMat(output,true,"output32");
+  // cv::imread(optarg,cv::IMREAD_LOAD_GDAL);
+
+}
+

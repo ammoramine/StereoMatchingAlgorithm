@@ -57,18 +57,22 @@ void ROF3D::testContraintOnSolution(const cv::Mat &argminToTest)
 	std::cout<<" result of the test : "<<succes<<std::endl;
 }
 
-ROF3D::ROF3D(const cv::Mat & data_term,int Niter,const std::string &path_to_disparity,size_t nbMaxThreads,double precision) : m_nbMaxThreads(nbMaxThreads),m_precision(precision)
+ROF3D::ROF3D(const DataTerm & dataTerm,int Niter,const std::string &path_to_disparity,const std::string &path_to_initial_disparity,size_t nbMaxThreads,double ratioGap,double precision): m_nbMaxThreads(nbMaxThreads),m_precision(precision)
+
 //this function resolve argmin_{v}( Sigma g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+Sigma |v(i,j+1,k)-v(i,j,k)|+Sigma |v(i+1,j,k)-v(i,j,k)|+m_tau/2*Sigma |v(i,j,k)-m_f(i,j,k)|^2) with v(i,j,k)
 // on R
 {
-	
-	data_term.copyTo(m_g);
+	//extract information about the dataTerm
+	m_stepDisparity=dataTerm.stepDisparity;
+	m_offset=dataTerm.offset;
+	(dataTerm.matrix).copyTo(m_g);
+	//initialize algorithm
 	m_y_size=m_g.size[0];
 	m_x_size=m_g.size[1];
 	m_t_size=m_g.size[2]+1;// the cost must have a size smaller than 1 dimension for the last extension
 	m_tau=0.5;
 	m_lambda=1;
-	initf();
+	// initf();
 	int size[3] = { m_y_size,m_x_size,m_t_size};
 	m_x1Current=cv::Mat(3, size, CV_64FC1, 0.0);m_x1Previous=cv::Mat(3, size, CV_64FC1, 0.0);m_x1Bar=cv::Mat(3, size, CV_64FC1, 0.0);
 	m_x2Current=cv::Mat(3, size, CV_64FC1, 0.0);m_x2Previous=cv::Mat(3, size, CV_64FC1, 0.0);m_x2Bar=cv::Mat(3, size, CV_64FC1, 0.0);
@@ -80,40 +84,75 @@ ROF3D::ROF3D(const cv::Mat & data_term,int Niter,const std::string &path_to_disp
 	m_Niter=Niter;
 	m_iteration=0;
 	m_path_to_disparity=path_to_disparity;
-	// m_threadpool=new ThreadPool(32);
-	// cv::Mat input(3, size, CV_64FC1, 5.0);
-	// cv::Mat output=cv::Mat(3,size,CV_64FC1, 0.0);
-	// proxTVhOnTau(input,output);
-	// printContentsOf3DCVMat(output,true,"output");
-	// double costArgmin=computeCostForArgumentTVh(m_x3Current,output);
-	// testMinimialityOfSolutionTVH(input,output,25,10);
-	// proxTVl(m_f,output);
-	// testMinimialityOfSolutionTVL(m_f,output,25,0.01);
-	// proxTVvOnTau(m_f,output);
-	// testMinimialityOfSolutionTVV(m_f,output,25,0.0001);
-	// testLab();
-	// throw std::invalid_argument( "testing the algorithm" );
-	// printContentsOf3DCVMat(data_term,true,"data_termj");
+// <<<<<<< HEAD
+// 	// m_threadpool=new ThreadPool(32);
+// 	// cv::Mat input(3, size, CV_64FC1, 5.0);
+// 	// cv::Mat output=cv::Mat(3,size,CV_64FC1, 0.0);
+// 	// proxTVhOnTau(input,output);
+// 	// printContentsOf3DCVMat(output,true,"output");
+// 	// double costArgmin=computeCostForArgumentTVh(m_x3Current,output);
+// 	// testMinimialityOfSolutionTVH(input,output,25,10);
+// 	// proxTVl(m_f,output);
+// 	// testMinimialityOfSolutionTVL(m_f,output,25,0.01);
+// 	// proxTVvOnTau(m_f,output);
+// 	// testMinimialityOfSolutionTVV(m_f,output,25,0.0001);
+// 	// testLab();
+// 	// throw std::invalid_argument( "testing the algorithm" );
+// 	// printContentsOf3DCVMat(data_term,true,"data_termj");
+// =======
+	m_path_to_initial_disparity=path_to_initial_disparity;
+	m_ratioGap=ratioGap;
+	// m_stepDisparity=stepDisparity;
+	initf();
 	launch();
 	computeMinSumTV();
 	computeDisparity();
-	// testContraintOnSolution(m_u);
-
-	// proxTVhOnTau(m_f,output);
-	// testMinimialityOfSolutionTVH(m_f,output,25,0.0001);
-	// std::cout<<computeCostForArgumentTVl(m_tau,output);
-	// m_x3Current=cv::Mat(3, size, CV_64FC1, 0.0);m_x3Previous=cv::Mat(3, size, CV_64FC1, 0.0);
-	// MatchingAlgorithm::printContentsOf3DCVMat(MatchingAlgorithm::getLayer(m_f,0),false);
-	// MatchingAlgorithm::printContentsOf3DCVMat(MatchingAlgorithm::getLayer(m_f,m_t_size-1),false);
-	// MatchingAlgorithm::printContentsOf3DCVMat(MatchingAlgorithm::getLayer(m_f,3),false);
-	// MatchingAlgorithm::getLayer(m_f,m_t_size-1)=cv::Mat(3, size, CV_64FC1, 0.0);
 	
 }
 
-ROF3D::~ROF3D()
+ROF3D::ROF3D(const DataTerm & dataTerm,int Niter,const std::string &path_to_disparity,size_t nbMaxThreads,double ratioGap,const cv::Mat &x1Current,const cv::Mat &x2Current,const cv::Mat &x3Current,double precision) : m_nbMaxThreads(nbMaxThreads),m_precision(precision)
+//this function resolve argmin_{v}( Sigma g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+Sigma |v(i,j+1,k)-v(i,j,k)|+Sigma |v(i+1,j,k)-v(i,j,k)|+m_tau/2*Sigma |v(i,j,k)-m_f(i,j,k)|^2) with v(i,j,k)
+// on R
 {
-	// delete m_threadpool;
+	
+	//extract information about the dataTerm
+	m_stepDisparity=dataTerm.stepDisparity;
+	m_offset=dataTerm.offset;
+	(dataTerm.matrix).copyTo(m_g);
+	//initialize algorithm
+	m_y_size=m_g.size[0];
+	m_x_size=m_g.size[1];
+	m_t_size=m_g.size[2]+1;// the cost must have a size smaller than 1 dimension for the last extension
+	m_tau=0.5;
+	m_lambda=1;
+	// initf();
+	int size[3] = { m_y_size,m_x_size,m_t_size};
+	m_x1Current=x1Current.clone();m_x1Previous=m_x1Current.clone();//m_x1Bar=cv::Mat(3, size, CV_64FC1, 0.0);
+	m_x2Current=x2Current.clone();m_x2Previous=m_x2Current.clone();//m_x2Bar=cv::Mat(3, size, CV_64FC1, 0.0);
+	m_x3Current=x3Current.clone();
+
+	// iterate_algorithm();
+	m_t_current=1;
+
+	m_Niter=Niter;
+	m_iteration=0;
+	m_path_to_disparity=path_to_disparity;
+	// m_path_to_initial_disparity=path_to_initial_disparity;
+	m_ratioGap=ratioGap;
+	// m_stepDisparity=stepDisparity;
+
+	initf();
+// >>>>>>> MultiThreadingPoolNotAsMember
+	launch();
+	computeMinSumTV();
+	computeDisparity();
+	
 }
+
+// ROF3D::~ROF3D()
+// {
+// 	// delete m_threadpool;
+// }
 
 void ROF3D::testMinimalityOfSolution(int numberOfTests,double margin)
 // test if ROF3D could computes the solution of the problem argmin(Sigma |v(i+1,j,k)-v(i,j,k)|+ Sigma |v(i,j+1,k)-v(i,j,k)|+ Sigma |v(i,j,k+1)-v(i,j,k)|*m_g(i,j,k) +Sigma (v(i,j,k)-m_f(i,j,k)))
@@ -401,14 +440,30 @@ double ROF3D::computeTV1DStarWeighted(const cv::Mat & argument,const cv::Mat wei
 
 // }
 
-
+void ROF3D::computeInitialGap()
+//compute the gap between the primal and the dual if all the xi are set to zero
+{
+	int size[3] = { m_y_size,m_x_size,m_t_size};
+	cv:: Mat x1Current=cv::Mat(3, size, CV_64FC1, 0.0);//m_x1Previous=cv::Mat(3, size, CV_64FC1, 0.0);m_x1Bar=cv::Mat(3, size, CV_64FC1, 0.0);
+	cv::Mat x2Current=cv::Mat(3, size, CV_64FC1, 0.0);//m_x2Previous=cv::Mat(3, size, CV_64FC1, 0.0);m_x2Bar=cv::Mat(3, size, CV_64FC1, 0.0);
+	cv::Mat x3Current=cv::Mat(3, size, CV_64FC1, 0.0);
+	cv::Mat v=m_f-(1/m_lambda)*(x1Current+x2Current+x3Current);
+	double primalCost=computeCostPrimal(v);
+	double dualCost=computeCostDual(x1Current,x2Current,x3Current);
+	m_intialDualPrimalGap=primalCost-dualCost;
+}
 
 
 void ROF3D::launch()
 //after the methodes init has been launched
 {
-	std::cout<<"solving ROF3D problem "<<std::endl;
-	while( m_iteration < m_Niter)// and ( m_gap >= m_factor*m_gapInit ) )
+	computeInitialGap();
+	std::cout<<"\n\n\n solving ROF3D problem with a ratioGap limit: "<<m_ratioGap<<" and limit number of iterations"<< m_Niter <<"\n\n\n"<<std::endl;
+	m_CurrentRatioGap=2.0;// m_ratioGap should always be lower than 1.0
+
+
+
+	while( m_iteration < m_Niter and m_CurrentRatioGap>=m_ratioGap)// and ( m_gap >= m_factor*m_gapInit ) )
 	{
 		iterate_algorithm();
 		// if(m_iteration%10==0) disparity_estimation();
@@ -416,8 +471,16 @@ void ROF3D::launch()
 		computeDisparity();
 		double primalCost=computeCostPrimal(m_v);
 		double dualCost=computeCostDual(m_x1Current,m_x2Current,m_x3Current);
+		// if (m_iteration==1)
+		// {
+		// 	m_intialDualPrimalGap=primalCost-dualCost;
+		// }
+		double currentDualPrimalGap=primalCost-dualCost;
+		m_CurrentRatioGap=currentDualPrimalGap/m_intialDualPrimalGap;
+		// std::cout<<"\n"<<std::endl;
 		std::cout<<" the cost of the primal is :"<<primalCost<<" and the cost of the dual is : "<<dualCost<<std::endl;
-		std::cout<<"the dual gap is : "<<primalCost-dualCost;
+		std::cout<<"the actual dual gap is : "<<currentDualPrimalGap<<" the initial dual gap is :"<<m_intialDualPrimalGap<<" the actual ratio is : "<<m_CurrentRatioGap <<" and the ratio limit is :"<<m_ratioGap<<std::endl;
+		// std::cout<<"\n"<<std::endl;
 	}
 }
 
@@ -451,6 +514,9 @@ void ROF3D::computeMinSumTV()
 	cv::Mat m_u_bool=(m_v > 0.0);
     m_u_bool.convertTo(m_u, CV_64FC1);
     m_u=m_u/255.0;
+	// printContentsOf3DCVMat(m_v,true,"m_v");
+	// printContentsOf3DCVMat(m_u_bool,true,"m_u_bool");
+	// printContentsOf3DCVMat(m_u,true,"m_u");
     // printContentsOf3DCVMat(getLayer3D(m_u,0),false);
     // printContentsOf3DCVMat(getLayer3D(m_u,m_t_size-1),false);
     // testContraintOnSolution(m_u);
@@ -466,8 +532,9 @@ void ROF3D::computeMinSumTV()
 
 void ROF3D::computeDisparity()
 {
-	m_disparity=cv::Mat(m_u.size[0],m_u.size[1],CV_64FC1,0.0);
-
+	//TODO: resolve the problems between using float or double
+	m_disparity=cv::Mat(m_u.size[0],m_u.size[1],CV_64FC1,m_offset-1);// the solution is such that the first term of m_uij: m_uij[0] is always equal to 1, and it refers to the minimal disparity
+	cv::Mat m_ui;
 	// cv::Mat thresholded = (m_u > 0.5);
 	// int z=thresholded.size[2];
 
@@ -475,29 +542,41 @@ void ROF3D::computeDisparity()
 	// cv::Mat doubleThresholded=cv::Mat(3, size, CV_64FC1, 0.0);
 	// thresholded.copyTo(doubleThresholded);
  //    thresholded.convertTo(doubleThresholded, CV_64FC1);
- //    // printContentsOf3DCVMat(doubleThresholded,true);
-	double zoomFactor=255.0/(double(m_u.size[2]));
+    // printContentsOf3DCVMat(m_u,true,"m_u");
+	// double zoomFactor=255.0/(double(m_u.size[2]));
 	// // cv::Mat thresholdedDouble;
  //    // thresholded.convertTo(thresholdedDouble, CV_64FC1);
  //    // int size[4]= {3,v.size[0],v.size[1],v.size[2]};
 	// 	// cv::Mat delta(4,size,CV_64FC1,0.0);
-	for (int i = 0; i < m_u.size[0]; i++)
-	{
-		cv::Mat m_ui = MatchingAlgorithm::getRow3D(m_u,i);
-		double * disparityi = m_disparity.ptr<double>(i);
-		for (int j = 0; j < m_u.size[1]; j++)
-		{
-			double * m_uij = m_ui.ptr<double>(j);
-			disparityi[j]=0;
-			for (int k=0;k< m_u.size[2];k++)
-			{
-				disparityi[j]+=m_uij[k];
-			}
-			disparityi[j]*=zoomFactor;
-		}
-	}
 
-    imwrite(m_path_to_disparity,m_disparity);
+
+       for (int i = 0; i < m_u.size[0]; i++)
+       {
+               // cv::Mat m_ui = MatchingAlgorithm::getRow3D(m_u,i);
+               getRow3D(m_u,i,m_ui);
+               double * disparityi = m_disparity.ptr<double>(i);
+               for (int j = 0; j < m_u.size[1]; j++)
+               {
+                       double * m_uij = m_ui.ptr<double>(j);
+                       // disparityi[j]=0;
+                       for (int k=0;k< m_u.size[2];k++)
+                       {
+                               disparityi[j]+=m_uij[k];
+                       }
+                       // disparityi[j]*=zoomFactor;
+               }
+       }
+       m_disparity=m_stepDisparity*m_disparity;
+       // cv::Mat disparityCopy=cv::Mat(m_u.size[0],m_u.size[1],CV_32FC1,-10.0);
+       // cv::Mat disparityCopy=m_disparity;
+       // printContentsOf3DCVMat(m_disparity,true,"disparity");
+       cv::Mat disparityCopy=m_disparity.clone();
+       	// printContentsOf3DCVMat(disparityCopy,true,"disparityCopy");
+       disparityCopy.convertTo(disparityCopy,CV_32FC1);
+	// printContentsOf3DCVMat(disparityCopy,true,"disparityCopy");
+	// bool continuity=disparityCopy.isContinuous();s
+    iio_write_image_float(strdup(m_path_to_disparity.c_str()),(float *)disparityCopy.data,disparityCopy.size[1],disparityCopy.size[0]);
+    // cv::imwrite(m_path_to_disparity,m_disparity);
 }
 
 cv::Mat ROF3D::getSolution()
@@ -527,45 +606,31 @@ void ROF3D::proxTVl(const cv::Mat &input,cv::Mat &output)
 
 // this function  computes prox(TVl(g))(input): it resolves the problem argmin( Sigma m_g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+m_tau/2*Sigma|v(i,j,k)-input(i,j,k)|) with v(i,j,k) on R, which is the element "output"
 // description: it resolves the problem argmin( Sigma m_g(i,j,k)*|v_{i,j}(k+1)-v_{i,j}(k)|+m_tau/2*Sigma|v_{i,j}(k)-input(i,j,k)|)
-{
-	
-	
+{	
 	int sizeInputy=input.size[0];
-	int sizeInputx=input.size[1];
-	int sizeInputt=input.size[2];
-	cv::Mat inputi;
-	std::vector<double> inputijVect;
-	cv::Mat gi;
-	std::vector<double> gijVect;
-	// std::vector<double> inputijVect;
-	// int size[3] = { sizeInputy,sizeInputX,sizeInputt};
-	// output=cv::Mat(3,size,CV_64FC1, 0.0);
-	// cv::Mat output;
-	cv::Mat outputi;
-	std::deque<double> outputijDeque;
+	int sizeBlock=1;
+	int N=int(sizeInputy/sizeBlock);
 	ThreadPool threadPool(m_nbMaxThreads);
+// <<<<<<< HEAD
 	threadPool.drainCounterAndSetLimitTasks(1);
 	for (int i=0;i<sizeInputy;i++)
+// =======
+// 	for (int i=0;i < N;i++)
+// >>>>>>> MultiThreadingPoolNotAsMember
 	{
-		getRow3D(input,i,inputi);
-		getRow3D(output,i,outputi);
-		getRow3D(m_g,i,gi);
-		// std::vector<std::thread> threads;
-		// for (int j=0;j<sizeInputx;j++)
-		// {
-		// 	threadPool.enqueue(&ROF3D::proxTVLij,*this,inputi,outputi,gi,j);
-		// 	// proxTVLij(inputi,outputi,gi,j);
+		// beginIncluded=i*sizeBlock;
+		// endExcluded=(i+1)*sizeBlock;
+		threadPool.enqueue(&ROF3D::proxTVLijExternMultiple,*this,input,output,sizeBlock*i,sizeBlock*(i+1));
 
-		// 	// threads.push_back(std::thread(&ROF3D::proxTVLij,*this,inputi,std::ref(outputi),gi,j));
-		// }
-		threadPool.enqueue(&ROF3D::proxTVLijExtern,*this,inputi,outputi,gi);
-		// for (int i=0;i<threads.size();i++)
-		// {
-		// 	threads[i].join();
-		// }
 	}
+// <<<<<<< HEAD
 	threadPool.temporaryWait();
 	// threadPool.~ThreadPool();
+// =======
+// 	// beginIncluded=N*sizeBlock;
+// 	// endExcluded=sizeInputy;
+// 	threadPool.enqueue(&ROF3D::proxTVLijExternMultiple,*this,input,output,sizeBlock*N,sizeInputy);// if sizeInputy=N*sizeBlock, nothing is done
+// >>>>>>> MultiThreadingPoolNotAsMember
 }
 
 
@@ -602,43 +667,50 @@ void ROF3D::proxTVLijExtern(const cv::Mat &inputi,cv::Mat &outputi,const cv::Mat
 			proxTVLij(inputi,outputi,gi,j);
 		}
 }
+void ROF3D::proxTVLijExternMultiple(const cv::Mat &input,cv::Mat &output,int beginIncluded,int endExcluded)
+// looping of the previous function: "proxTVLijExtern" ,it is still parralelizable
+{
+	// int sizeInputy=input.size[0];
+	cv::Mat inputi;
+	cv::Mat gi;
+	cv::Mat outputi;
+	for (int i=beginIncluded;i<endExcluded;i++)
+	{
+		getRow3D(input,i,inputi);
+		getRow3D(output,i,outputi);
+		getRow3D(m_g,i,gi);
+		proxTVLijExtern(inputi,outputi,gi);
 
+	}
+}
 void ROF3D::proxTVvOnTau(const cv::Mat &input,cv::Mat &output)
 
 // // this function  computes prox(1/m_tau*TVv(input): it resolves the problem argmin( Sigma |v(i+1,j,k)-v(i,j,k)|+m_tau/2*Sigma|v(i,j,k)-input(i,j,k)|) with v(i,j,k) on R
 {
 // // the m_f is intialized before and refer to the object introduced to transform the problem of minimization to a ROF problem
 	
-	
-	int sizeInputy=input.size[0];
-	int sizeInputx=input.size[1];
 	int sizeInputt=input.size[2];
-	cv::Mat inputppk;
-	// std::vector<double> inputpjkVect;
-	cv::Mat inputpjk;
-
-	cv::Mat outputppk;
-	std::deque<double> outputpjkDeque;
+	int sizeBlock=1;
+	int N=int(sizeInputt/sizeBlock);
 	ThreadPool threadPool(m_nbMaxThreads);
+// <<<<<<< HEAD
 	threadPool.drainCounterAndSetLimitTasks(1);
 	for (int k=0;k<sizeInputt;k++)
+// =======
+// 	for (int i=0;i < N;i++)
+// >>>>>>> MultiThreadingPoolNotAsMember
 	{
-		getLayer3D(input,k,inputppk);
-		getLayer3D(output,k,outputppk);
-		// std::vector<std::thread> threads;
-		// for (int j=0;j<sizeInputx;j++)
-		// {
-		// 	// proxTVvOnTaupjk(inputppk,output,j,k);
-		// 	threadPool.enqueue(&ROF3D::proxTVvOnTaupjk,*this,inputppk,output,j,k);
-		// 	// threads.push_back(std::thread(&ROF3D::proxTVvOnTaupjk,*this,inputppk,std::ref(output),j,k));
-		// }
-		threadPool.enqueue(&ROF3D::proxTVvOnTaupjkExtern,*this,inputppk,output,k);
-	// 	for (int i=0;i<threads.size();i++)
-	// {
-	// 	threads[i].join();
-	// }
+		// beginIncluded=i*sizeBlock;
+		// endExcluded=(i+1)*sizeBlock;
+		threadPool.enqueue(&ROF3D::proxTVvOnTaupjkExternMultiple,*this,input,output,sizeBlock*k,sizeBlock*(k+1));
 	}
+// <<<<<<< HEAD
 	threadPool.temporaryWait();
+// =======
+	// beginIncluded=N*sizeBlock;
+	// endExcluded=sizeInputy;
+// 	threadPool.enqueue(&ROF3D::proxTVvOnTaupjkExternMultiple,*this,input,output,sizeBlock*N,sizeInputt);// if sizeInputy=N*sizeBlock, nothing is done
+// >>>>>>> MultiThreadingPoolNotAsMember
 }
 
 
@@ -679,6 +751,23 @@ void ROF3D::proxTVvOnTaupjkExtern(const cv::Mat &inputppk, cv::Mat &output,int k
 		}
 }
 
+void ROF3D::proxTVvOnTaupjkExternMultiple(const cv::Mat &input,cv::Mat &output,int beginIncluded,int endExcluded)
+
+// // this function  computes prox(1/m_tau*TVv(input): it resolves the problem argmin( Sigma |v(i+1,j,k)-v(i,j,k)|+m_tau/2*Sigma|v(i,j,k)-input(i,j,k)|) with v(i,j,k) on R
+{
+// // the m_f is intialized before and refer to the object introduced to transform the problem of minimization to a ROF problem
+	
+	
+	// int sizeInputt=input.size[2];
+	cv::Mat inputppk;
+	for (int k=beginIncluded;k<endExcluded;k++)
+	{
+		getLayer3D(input,k,inputppk);
+		proxTVvOnTaupjkExtern(inputppk,output,k);
+	}
+}
+
+
 void ROF3D::proxTVhOnTau(const cv::Mat &input,cv::Mat &output)
 
 // // this function  computes prox(1/m_tau*TVv(input): it resolves the problem argmin( Sigma |v(i,j+1,k)-v(i,j,k)|+m_tau/2*Sigma|v(i,j,k)-input(i,j,k)|) with v(i,j,k) on R
@@ -687,39 +776,28 @@ void ROF3D::proxTVhOnTau(const cv::Mat &input,cv::Mat &output)
 	
 	
 	int sizeInputy=input.size[0];
-	int sizeInputx=input.size[1];
-	int sizeInputt=input.size[2];
-	cv::Mat inputi;
-	// std::vector<double> inputipkVect;
-	cv::Mat inputipk;
-	// cv::Mat gi;
-	// std::vector<double> gipkVect;
-	// std::vector<double> inputipkVect;
-	// int size[3] = { sizeInputy,sizeInputX,sizeInputt};
-	// output=cv::Mat(3,size,CV_64FC1, 0.0);
-	// cv::Mat output;
-	cv::Mat outputi;
-	std::deque<double> outputipkDeque;
+	int sizeBlock=1;
+	int N=int(sizeInputy/sizeBlock);
 	ThreadPool threadPool(m_nbMaxThreads);
+// <<<<<<< HEAD
 	threadPool.drainCounterAndSetLimitTasks(1);
 	for (int i=0;i<sizeInputy;i++)
+// =======
+// 	for (int i=0;i < N;i++)
+// >>>>>>> MultiThreadingPoolNotAsMember
 	{
-		getRow3D(input,i,inputi);
-		getRow3D(output,i,outputi);
-		// std::vector<std::thread> threads;
-		// for (int k=0;k<sizeInputt;k++)
-		// {
-		// 	threadPool.enqueue(&ROF3D::proxTVhOnTauipk,*this,inputi,outputi,k);
-		// 	// proxTVhOnTauipk(inputi,outputi,k);
-		// 	// threads.push_back(std::thread(&ROF3D::proxTVhOnTauipk,*this,inputi,std::ref(outputi),k));
-		// }
-		threadPool.enqueue(&ROF3D::proxTVhOnTauipkExtern,*this,inputi,outputi);
-		// for (int i=0;i<threads.size();i++)
-		// {
-		// 	threads[i].join();
-		// }
+		// beginIncluded=i*sizeBlock;
+		// endExcluded=(i+1)*sizeBlock;
+		threadPool.enqueue(&ROF3D::proxTVhOnTauipkExternMultiple,*this,input,output,sizeBlock*i,sizeBlock*(i+1));
 	}
+// <<<<<<< HEAD
 	threadPool.temporaryWait();
+// =======
+// 	// beginIncluded=N*sizeBlock;
+// 	// endExcluded=sizeInputy;
+// 	threadPool.enqueue(&ROF3D::proxTVhOnTauipkExternMultiple,*this,input,output,sizeBlock*N,sizeInputy);// if sizeInputy=N*sizeBlock, nothing is done
+
+// >>>>>>> MultiThreadingPoolNotAsMember
 }
 
 
@@ -756,6 +834,23 @@ void ROF3D::proxTVhOnTauipkExtern(const cv::Mat &inputi, cv::Mat &outputi)
 		}
 }
 
+void ROF3D::proxTVhOnTauipkExternMultiple(const cv::Mat &input,cv::Mat &output,int beginIncluded,int endExcluded)
+
+// // this function  computes prox(1/m_tau*TVv(input): it resolves the problem argmin( Sigma |v(i,j+1,k)-v(i,j,k)|+m_tau/2*Sigma|v(i,j,k)-input(i,j,k)|) with v(i,j,k) on R
+{
+// // the m_f is intialized before and refer to the object introduced to transform the problem of minimization to a ROF problem
+	
+	
+	// int sizeInputy=input.size[0];
+	cv::Mat inputi;
+	cv::Mat outputi;
+	for (int i=beginIncluded;i<endExcluded;i++)
+	{
+		getRow3D(input,i,inputi);
+		getRow3D(output,i,outputi);
+		proxTVhOnTauipkExtern(inputi,outputi);
+	}
+}
 
 void ROF3D::testMinimialityOfSolutionTVL(const cv::Mat &input,const cv::Mat &argmin,int numberOfTests,double margin)
 // test if proxTVl could computes prox(1/m_tau*TVl(g))(input): it resolves the problem argmin( Sigma m_g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+m_tau/2*Sigma|v(i,j,k)-input(i,j,k)|) with v(i,j,k) on R
@@ -932,26 +1027,65 @@ cv::Mat ROF3D::getSolutionOfOriginalProblem()
 
 
 
+void ROF3D::computeDisparityFromPrimal(std::string path_to_disparity)
+// from the values m_x1Current,m_x2Current,m_x3Current, evaluate the disparity map
+// this function would be used only for the  purpose of debugging !
+{
+	cv::Mat m_v=m_f-(1/m_lambda)*(m_x1Current+m_x2Current+m_x3Current);
+	// printContentsOf3DCVMat(getLayer3D(m_v,0),false);std::cout<<"over \n";throw std::invalid_argument( "testing the algorithm" );
+	// printContentsOf3DCVMat(m_v,true,"m_v");
+	// m_u=convertTo((m_v < 0.0),CV_64FC1);
+	// cv::Mat doubleV0;
+	cv::Mat m_u_bool=(m_v > 0.0);
+    m_u_bool.convertTo(m_u, CV_64FC1);
+    m_u=m_u/255.0;
+	m_disparity=cv::Mat(m_u.size[0],m_u.size[1],CV_64FC1,m_offset-1);// the solution is such that the first term of m_uij: m_uij[0] is always equal to 1, and it refers to the minimal disparity
+	cv::Mat m_ui;
 
+       for (int i = 0; i < m_u.size[0]; i++)
+       {
+               // cv::Mat m_ui = MatchingAlgorithm::getRow3D(m_u,i);
+               getRow3D(m_u,i,m_ui);
+               double * disparityi = m_disparity.ptr<double>(i);
+               for (int j = 0; j < m_u.size[1]; j++)
+               {
+                       double * m_uij = m_ui.ptr<double>(j);
+                       // disparityi[j]=0;
+                       for (int k=0;k< m_u.size[2];k++)
+                       {
+                               disparityi[j]+=m_uij[k];
+                       }
+               }
+       }
+       m_disparity=m_stepDisparity*m_disparity;
+       cv::Mat disparity=m_disparity.clone();
+       disparity.convertTo(disparity,CV_32FC1);
+    iio_write_image_float(strdup(path_to_disparity.c_str()),(float *)disparity.data,disparity.size[1],disparity.size[0]);
+    // cv::imwrite(m_path_to_disparity,m_disparity);
+}
 
-
-
+void ROF3D::getPrimal(cv::Mat &x1,cv::Mat &x2,cv::Mat &x3)
+{
+	x1=m_x1Current.clone();
+	x2=m_x2Current.clone();
+	x3=m_x3Current.clone();
+}
 
 
 void ROF3D::initf(double delta)
 {
-	int size[3] = { m_y_size,m_x_size,m_t_size};
-	m_f=cv::Mat(3, size, CV_64FC1, 0.0);
-	cv::Mat fi;cv::Mat fij;
-	for (int i = 0; i < m_y_size; i++)
-	{	
-		fi=MatchingAlgorithm::getRow3D(m_f,i);
-  		for (int j = 0; j < m_x_size; j++)
-    	{	
-    		fij=MatchingAlgorithm::getRow2D(fi,j);
-    		// double a=pow(10,3);
-			fij.at<double>(0)=delta;
-			fij.at<double>(m_t_size-1)=-delta;
+		int size[3] = { m_y_size,m_x_size,m_t_size};
+		m_f=cv::Mat(3, size, CV_64FC1, 0.0);
+		cv::Mat fi;cv::Mat fij;
+		for (int i = 0; i < m_y_size; i++)
+		{	
+			getRow3D(m_f,i,fi);
+  			for (int j = 0; j < m_x_size; j++)
+    		{	
+    			getRow2D(fi,j,fij);
+    			// double a=pow(10,3);
+				fij.at<double>(0)=delta;
+				fij.at<double>(m_t_size-1)=-delta;
+				}
 		}
-	}
 }
