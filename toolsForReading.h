@@ -4,11 +4,6 @@
 #include <stdlib.h>
 #include <opencv/highgui.h>
 #include <opencv2/opencv.hpp>
-// #include <opencv2/core/core.hpp>
-// #include <opencv2/gpu/gpu.hpp>
-// #include <opencv2/core/ocl.hpp>
-// #include "/usr/local/include/opencv3/include/opencv2/core/ocl.hpp"
-// #include <opencv2/imgproc/imgproc.hpp>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -22,12 +17,7 @@ extern "C"
 using namespace std;
 static int verbose_flag;
 
-// #include <opencv2/imgproc.hpp>
-// #include <opencv2/highgui.hpp>
-// extern char *optarg;
-// extern int optind, opterr, optopt;
-// extern const char** global_table_of_data_term;
-// extern const std::vector<std::string> global_table_of_data_term;
+// this module is used to read options given to the executable, it uses the  getopt and getopt_long functions that automate some of the chore involved in parsing typical unix command line options. 
 extern const char * global_table_of_data_term[];
 
 std::string compare_on_list(char * option,const char* listOfElements[],int sizeOflistOfElements,char * messageToPrint);

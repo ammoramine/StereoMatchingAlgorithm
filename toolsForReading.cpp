@@ -1,29 +1,26 @@
 #include "toolsForReading.h"
 
-//// global table of the data_term
+//// global table for the dataTerm and the used method
 
 const char *global_table_of_data_term[] = {"absdiff","census"};
 const char *method[]={"direct","accelerated"};
 
 
 std::string compare_on_list(char * option,const char* listOfElements[],int sizeOflistOfElements,char * messageToPrint)
-// this function search on the a list of 
+// this function search on a list of possibilities if the used std::string is correct
 {
-  // int sizeOfElements=sizeof(listOfElements)/sizeof(char*);
-  // int r=sizeOfElements;
    for(int i=0; i<sizeOflistOfElements; i++)
       if (strcmp(option,listOfElements[i])==0)
       { 
         return std::string(listOfElements[i]);
       }
-  // if(r==sizeOfElements)
-  //   { 
+
       throw std::invalid_argument( messageToPrint );
-    // }
 }
 
 
 void read_option(int argc, char* argv[],cv::Mat &image1,cv::Mat &image2,std::string  &data_term_option,int &tsize,double &offset,double &ratioGap,int &Niter,double &zoom,std::string &path_to_disparity,std::string &path_to_initial_disparity,int &nbmaxThreadPoolThreading,std::string &method,bool &multiScale)
+//function to read the options given to the executable
 {
 	int c;
   //
@@ -196,8 +193,8 @@ void read_option(int argc, char* argv[],cv::Mat &image1,cv::Mat &image2,std::str
 
 }
 void readAndConvertImageToGray(const std::string &pathToImage,cv::Mat &output)
+// read geo-tiff images and convert them to gray images
 {
-
   cv::Mat outputTemp=cv::imread(pathToImage,cv::IMREAD_LOAD_GDAL);
   int nbChannels=outputTemp.channels();
   // printContentsOf3DCVMat(output,true,"output");
@@ -217,8 +214,6 @@ void readAndConvertImageToGray(const std::string &pathToImage,cv::Mat &output)
     throw std::invalid_argument( "this kind of image is not managed in the code ..." );
 
   }
-  // printContentsOf3DCVMat(output,true,"output32");
-  // cv::imread(optarg,cv::IMREAD_LOAD_GDAL);
 
 }
 
