@@ -52,7 +52,7 @@ ROF3DMultiscale::ROF3DMultiscale(const std::vector<DataTerm>& data_terms,int Nit
 		if (i!=data_terms.size()-1)
 		{
 			ROF3D rof=ROF3D(refinedDataTerm,30,addSuffixFloatBeforeExtension(path_to_disparity,i),m_nbMaxThreads,ratioGap,x1Current_doubleTemp,x2Current_doubleTemp,x3Current_doubleTemp);
-			rof.getPrimal(m_x1Current,m_x2Current,m_x3Current);
+			rof.getDual(m_x1Current,m_x2Current,m_x3Current);
 		}
 		else
 		{

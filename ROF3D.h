@@ -29,17 +29,18 @@ extern "C"
 {
 #include "iio.h"
 }
-// a more compact structure to represent the dataTerm
-// The 3D data term data_term is the main input for the ROF3D algorithm, that computes the solution of the Rudin–Osher–Fatem problem: 
+// a more compact structure to represent the dataTerm and its properties
+// The 3D data term data_term is the main input for the ROF3D algorithm, that computes the solution of the Rudin–Osher–Fatem  problem (in 3D dimension): 
 	//argmin_{v}( Sigma g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+Sigma |v(i,j+1,k)-v(i,j,k)|+Sigma |v(i+1,j,k)-v(i,j,k)|+m_tau/2*Sigma |v(i,j,k)-m_f(i,j,k)|^2) with v(i,j,k)
 //(with g=data_term)
-	//from the term v, we  the disparity map is computed.
+	//from the term v,the disparity map is computed, by the 3D ROF algorithm
 
 	// the term data_term(i,j,k) represents the cost  for matching the pixel (i,j) of the image 1 to the pixel (i,j+k*stepDisparity+offset) of the image 2, the offset being the smallest term of the interval of disparity that could be negative
 
-	//These information on the disparity, are not be necessary to compute the solution of the ROF problem, but for the purpose of debugging, the disparity is computed each step of the algorithm.
+	//These information on the disparity, are not be necessary to compute the solution of the ROF3D problem, but for the purpose of debugging, the disparity is computed each step of the algorithm.
+
 	//In order to keep these informations about the disparity, and efficiently compute it inside this class, this structure is created, containing, the dataTerm (a 3D matrix) called matrix, the offset and the step as doubles. 
-	// the step should be an inverse of integer. This term should be computed in the MatchingAlgorithm.h
+	// the step should be an inverse of integer. This term should be computed in the "MatchingAlgorithm" class
 struct DataTerm
 {
 	cv::Mat matrix;
@@ -51,8 +52,9 @@ class ROF3D
 	public:
 		// the constructor of ROF3D, compute the solution of the 3D ROF problem: 
 		//argmin_{v}( Sigma g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+Sigma |v(i,j+1,k)-v(i,j,k)|+Sigma |v(i+1,j,k)-v(i,j,k)|+m_tau/2*Sigma |v(i,j,k)-m_f(i,j,k)|^2) with v(i,j,k)
-		// the data_term should be
 		// the disparity is deduced from the solution of the 3D ROF problem, by adding an offset
+
+// main functions for the 3D ROF algorithm
 		ROF3D(const DataTerm & dataTerm,int Niter,const std::string &path_to_disparity,const std::string &path_to_initial_disparity,size_t nbMaxThreads,double ratioGap,double precision=0.0000001);
 		ROF3D(const DataTerm & dataTerm,int Niter,const std::string &path_to_disparity,size_t nbMaxThreads,double ratioGap,const cv::Mat &x1Current,const cv::Mat &x2Current,const cv::Mat &x3Current,double precision=0.0000001);
 
@@ -80,7 +82,7 @@ class ROF3D
 // parallelisable block for the computation of the proximal operators
 		
 		void proxTVLij(const cv::Mat &inputi,cv::Mat &outputi,const cv::Mat &gi,int j);
-		void proxTVvOnTaupjk(const cv::Mat &inputppk, cv::Mat &output,int j,int k);//outputppk won't be used, but rather because the methods getLayer3D() and getLayer2D() return just a copy
+		void proxTVvOnTaupjk(const cv::Mat &inputppk, cv::Mat &output,int j,int k);
 		void proxTVhOnTauipk(const cv::Mat &inputi, cv::Mat &outputi,int k);
 
 		void proxTVLijExtern(const cv::Mat &inputi,cv::Mat &outputi,const cv::Mat &gi);
@@ -92,10 +94,13 @@ class ROF3D
 		void proxTVhOnTauipkExternMultiple(const cv::Mat &input,cv::Mat &output,int beginIncluded,int endExcluded);
 		// void step();
 
+
+
+// these functions computes
+
 		double computeCostPrimal(const cv::Mat &argument);
 		double computeCostDual(const cv::Mat &x1,const cv::Mat &x2,const cv::Mat &x3);
 		void computeInitialGap();
-		// double computeGapInfBorn(const cv::Mat &x1,const cv::Mat &x2,const cv::Mat &x3,const cv::Mat &primal);
 
 		double computeTVHStar(const cv::Mat & argument);
 		double computeTVVStar(const cv::Mat & argument);
@@ -109,6 +114,8 @@ class ROF3D
 		double computeCostForArgumentTVv(const cv::Mat &l,const cv::Mat &argument);
 		double computeCostForArgumentTVh(const cv::Mat &l,const cv::Mat &argument);
 
+
+//functions for debugging 
 		void testMinimialityOfSolutionTVL(const cv::Mat &input,const cv::Mat &argmin,int numberOfTests,double margin);
 		void testMinimialityOfSolutionTVV(const cv::Mat &input,const cv::Mat &argmin,int numberOfTests,double margin);
 		void testMinimialityOfSolutionTVH(const cv::Mat &input,const cv::Mat &argmin,int numberOfTests,double margin);
@@ -117,7 +124,7 @@ class ROF3D
 		cv::Mat getSolutionOfOriginalProblem();
 
 		void computeDisparityFromPrimal(std::string path_to_disparity);
-		void getPrimal(cv::Mat &x1,cv::Mat &x2,cv::Mat &x3);
+		void getDual(cv::Mat &x1,cv::Mat &x2,cv::Mat &x3);
 	protected:
 		cv::Mat m_g;
 		int m_x_size;

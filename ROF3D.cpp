@@ -2,65 +2,22 @@
 
 // int m_nbMaxThreads=m_nbMaxThreads;
 
-void ROF3D::testLab()
-// just to do some tests for debugging
-{
-	int size[3] = { m_y_size,m_x_size,m_t_size};
-	cv::Mat input=cv::Mat(3, size, CV_64FC1, 5.0);
-	cv::Mat output=cv::Mat(3,size,CV_64FC1, 0.0);
-	proxTVl(input,output);
-	printContentsOf3DCVMat(output,true,"output");
-	// double costArgmin=computeCostForArgumentTVh(m_x3Current,output);
-	// testMinimialityOfSolutionTVL(input,output,25,0.00001);
-	// throw std::invalid_argument( "testing the algorithm" );
 
-}
-void ROF3D::testContraintOnSolution(const cv::Mat &argminToTest)
-// test if argminToTest verify the following contraint of the solutino 0<u(i,j,k)<1 u(i,j,0)=1 , u(i,j,m_t_size)=0 and u(i,j,k)>u(i,j,k+1)
-{
-	bool succes=true;
-	cv::Mat argminToTesti;
-	cv::Mat argminToTestij;
-
-	std::cout<<"pixels for which the contraints are not verified"<<std::endl;
-	for (int i=0;i<m_y_size;i++)
-	{
-		getRow3D(argminToTest,i,argminToTesti);
-		for (int j=0;j<m_x_size;j++)
-		{
-			double * argminToTestij=argminToTesti.ptr<double>(j);
-			if (argminToTestij[0]!=1.0 )
-				{
-					std::cout<<"value of pixel (i,j,k) =  ("<<i<<","<<j<<",0)"<<"equal to :"<<argminToTestij[0]<<std::endl;
-					// throw std::invalid_argument( "u(i,j,0)!=1" );
-				}
-			if (argminToTestij[m_t_size-1]!=0.0 )
-				{
-					std::cout<<"value of pixel (i,j,k) =  ("<<i<<","<<j<<","<<m_t_size-1<<"equal to :"<<argminToTestij[m_t_size-1]<<std::endl;				
-					// throw std::invalid_argument( "u(i,j,m_t_size-1)!=0" );
-				}
-			for (int k=1;k<m_t_size-1;k++)
-			{
-				// std::cout<<"value of pixel (i,j,k) =  ("<<i<<","<<j<<","<<k<<" ) equal to :"<<argminToTestij[k]<<std::endl;
-				if(argminToTestij[k]<argminToTestij[k+1])
-				{
-					// for (int h=0;h<m_t_size;h++)
-					// {
-						std::cout<<"value of pixel (i,j,k) =  ("<<i<<","<<j<<","<<k<<" ) equal to :"<<argminToTestij[k]<<std::endl;
-						std::cout<<"value of pixel (i,j,k+1) =  ("<<i<<","<<j<<","<<k+1<<" ) equal to :"<<argminToTestij[k+1]<<std::endl;
-					// }
-					// throw std::invalid_argument( "u(i,j,k)<u(i,j,k+1)" );
-				}
-			}
-		}
-	}
-	std::cout<<" result of the test : "<<succes<<std::endl;
-}
 
 ROF3D::ROF3D(const DataTerm & dataTerm,int Niter,const std::string &path_to_disparity,const std::string &path_to_initial_disparity,size_t nbMaxThreads,double ratioGap,double precision): m_nbMaxThreads(nbMaxThreads),m_precision(precision)
 
-//this function resolve argmin_{v}( Sigma g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+Sigma |v(i,j+1,k)-v(i,j,k)|+Sigma |v(i+1,j,k)-v(i,j,k)|+m_tau/2*Sigma |v(i,j,k)-m_f(i,j,k)|^2) with v(i,j,k)
-// on R
+//this function resolve argmin_{v}( Sigma g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+Sigma |v(i,j+1,k)-v(i,j,k)|+Sigma |v(i+1,j,k)-v(i,j,k)|+m_tau/2*Sigma |v(i,j,k)-m_f(i,j,k)|^2) with v(i,j,k) on R
+
+//Inputs:
+// dataTerm : this is the main input, its form is defined on ROF3D.h
+// Niter : the number of maximal iterations for the algorithm
+// ratioGap : the minimal ratio between the "initial" primal-dual gap (when the primal variable m_xicurrent are set to 0), and the current primalDualGap,
+// nbMaxThreads : maximal number of threads used
+// precision : this term is used for the computation of the dual cost which is  infinite, nearly everywhere, apart on a convex-set contained on an hyper-plan, the numerical inaccuracy,makes it impossible to have a non infinite cost for the dual, if we don't consider a precision term
+//path_to_disparity : path where the disparity is written
+
+// path_to_initial_disparity : path from where the disparity is red in order to initialize the algorithm, this approach have not been sufficiently developped, and may not be efficient, as we cans see with the multiscale approach
+
 {
 	//extract information about the dataTerm
 	m_stepDisparity=dataTerm.stepDisparity;
@@ -95,8 +52,10 @@ ROF3D::ROF3D(const DataTerm & dataTerm,int Niter,const std::string &path_to_disp
 }
 
 ROF3D::ROF3D(const DataTerm & dataTerm,int Niter,const std::string &path_to_disparity,size_t nbMaxThreads,double ratioGap,const cv::Mat &x1Current,const cv::Mat &x2Current,const cv::Mat &x3Current,double precision) : m_nbMaxThreads(nbMaxThreads),m_precision(precision)
-//this function resolve argmin_{v}( Sigma g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+Sigma |v(i,j+1,k)-v(i,j,k)|+Sigma |v(i+1,j,k)-v(i,j,k)|+m_tau/2*Sigma |v(i,j,k)-m_f(i,j,k)|^2) with v(i,j,k)
-// on R
+//this function resolve argmin_{v}( Sigma g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+Sigma |v(i,j+1,k)-v(i,j,k)|+Sigma |v(i+1,j,k)-v(i,j,k)|+m_tau/2*Sigma |v(i,j,k)-m_f(i,j,k)|^2) with v(i,j,k) on R
+// this function is simillar to the previous one but uses  initial values for the primal algorithm
+// it is used on the multiscale approach
+
 {
 	
 	//extract information about the dataTerm
@@ -134,7 +93,13 @@ ROF3D::ROF3D(const DataTerm & dataTerm,int Niter,const std::string &path_to_disp
 
 
 void ROF3D::testMinimalityOfSolution(int numberOfTests,double margin)
-// test if ROF3D could computes the solution of the problem argmin(Sigma |v(i+1,j,k)-v(i,j,k)|+ Sigma |v(i,j+1,k)-v(i,j,k)|+ Sigma |v(i,j,k+1)-v(i,j,k)|*m_g(i,j,k) +Sigma (v(i,j,k)-m_f(i,j,k)))
+// test if the constructor of the ROF3D class, could computes the solution of the problem argmin(Sigma |v(i+1,j,k)-v(i,j,k)|+ Sigma |v(i,j+1,k)-v(i,j,k)|+ Sigma |v(i,j,k+1)-v(i,j,k)|*m_g(i,j,k) +Sigma (v(i,j,k)-m_f(i,j,k))), by perturbing the given solution and evaluating the cost.
+
+// Inputs:
+//margin is the perturbation applied to the solution
+// numberOfTests is the number of time this operation is applied
+// it prints in the console if the solution is correct.
+
 {
 	std::cout<<"test if ROF3D could computes the solution of the problem argmin(Sigma |v(i+1,j,k)-v(i,j,k)|+ Sigma |v(i,j+1,k)-v(i,j,k)|+ Sigma |v(i,j,k+1)-v(i,j,k)|*m_g(i,j,k) +Sigma (v(i,j,k)-m_f(i,j,k)))"<< std::endl;
 	std::cout<<"number of tests"<<numberOfTests<<"margin"<<margin<<std::endl;
@@ -150,12 +115,6 @@ void ROF3D::testMinimalityOfSolution(int numberOfTests,double margin)
 		double costArgument=computeCostPrimal(argument);
 		std::cout<<"cost of the minimum : "<<costArgmin<<" and cost of a neighbor argument number : "<<i<<" :"<<costArgument<<" and difference :"<<costArgument-costArgmin<<std::endl; 
 		succes=bool(costArgument-costArgmin>=0);
-		// std::ostringstream ss;
-		// ss << i;
-		// std::string stringi=std::to_string(i);
-		// printContentsOf3DCVMat(argument,true,"argument_"+ss.str()+".txt");
-		// std::cout<<" the argument is ( "<<"the matrix"<< argument<<",";
-		// std::cout<<" ) \n";
 	}
 	if (succes==true)
 		{
@@ -163,9 +122,10 @@ void ROF3D::testMinimalityOfSolution(int numberOfTests,double margin)
 		}
 }
 double ROF3D::computeCostPrimal(const cv::Mat &argument)
- //"argument" should de declared and initialized, this function compute the value of the cost function (the function to minimize):
- // "argument" is the primal variable of the primal problem
- // Sigma |v(i+1,j,k)-v(i,j,k)|+ Sigma |v(i,j+1,k)-v(i,j,k)|+ Sigma |v(i,j,k+1)-v(i,j,k)|*m_g(i,j,k) +m_lambda/2 Sigma (v(i,j,k)-m_f(i,j,k))
+//function to compute the primal cost of the current 3D ROF algoithm
+//Inputs:
+//argument is  the primal variable  v of the primal problem:
+ // Sigma |v(i+1,j,k)-v(i,j,k)|+ Sigma |v(i,j+1,k)-v(i,j,k)|+ Sigma |v(i,j,k+1)-v(i,j,k)|*m_g(i,j,k) +m_lambda/2 Sigma (v(i,j,k)-m_f(i,j,k)), it should be intitialized
 
 {
 	double result=0;
@@ -263,9 +223,10 @@ double ROF3D::computeCostPrimal(const cv::Mat &argument)
 
 
 double ROF3D::computeCostDual(const cv::Mat &x1,const cv::Mat &x2,const cv::Mat &x3)
-// compute the dual cost should always be smaller than the primal cost
+// compute the dual cost (it should always be smaller than the primal cost)
 // the expresion of the dual is the following:
 // -TVHStar(x1)-TVVStar(x2)-TVLStar(x3)+<x1+x2+x3/m_f>-1/(2lambda)*||x1+x2+x3||^2
+// Inputs: xi are the dual variable, they should be initialized
 {
 	double result=0;
 	result-=computeTVHStar(x1);
@@ -282,9 +243,9 @@ double ROF3D::computeCostDual(const cv::Mat &x1,const cv::Mat &x2,const cv::Mat 
 
 
 double ROF3D::computeTVHStar(const cv::Mat & argument)
-//compute the conjugate of the  TVH= Sigma |v(i,j+1,k)-v(i,j,k)|
-//The argument is an cv::Mat object of dimension 3 and of type double
-// the output is equal to infinity or 0
+//compute TVHStar the conjugate of the  TVH= Sigma_{i,j,k} |v(i,j+1,k)-v(i,j,k)|.
+//The argument is an cv::Mat object of dimension 3 and of type double and should be initialized.
+// the output is equal to infinity or 0.
 {
 	double result=0;
 	int size[]={argument.size[0],argument.size[1],argument.size[2]};
@@ -306,8 +267,10 @@ double ROF3D::computeTVHStar(const cv::Mat & argument)
 
 
 double ROF3D::computeTVVStar(const cv::Mat & argument)
-//compute the conjugate of t TVV=Sigma |v(i+1,j,k)-v(i,j,k)|.
-//The argument is an cv::Mat object of dimension 3 and of type double
+//compute TVVStar the conjugate of t TVV=Sigma_{i,j,k} |v(i+1,j,k)-v(i,j,k)|.
+//The argument is an cv::Mat object of dimension 3 and of type double and should be initialized.
+// the output is equal to infinity or 0.
+
 {
 	double result=0;
 	int size[]={argument.size[0],argument.size[1],argument.size[2]};
@@ -328,8 +291,8 @@ double ROF3D::computeTVVStar(const cv::Mat & argument)
 
 
 double ROF3D::computeTVLStar(const cv::Mat & argument)
-//compute the conjugate of  TVL=Sigma g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|.
-//The argument is an cv::Mat object of dimension 3 and of type double
+//compute TVLStar the conjugate of  TVL=Sigma g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|.
+//The argument is an cv::Mat object of dimension 3  of type double, and should be initialized
 // m_g is normaly computed at the initialisation step
 {
 	double result=0;
@@ -354,7 +317,7 @@ double ROF3D::computeTVLStar(const cv::Mat & argument)
 
 double ROF3D::computeTV1DStar(const cv::Mat & argument)
 //compute the conjugate of  TV1D. (with TV1D=Sigma_{1 <=j <= N-1} |u_{j+1}-u_{j}|)
-//The argument is an cv::Mat object of dimension 1 and of type double
+//The argument is an cv::Mat object of dimension 1  of type double, and is initialized.
 // the result is equal to zero only if |Sigma_{1<=k<=h} argument[k]| <=1 for all possible h and  Sigma_{k} argument[k]=0 (smaller then the term m_precision taking into account the numerical inmm_precision)
 {
 	// infinityOrNot=false;
@@ -420,11 +383,11 @@ double ROF3D::computeTV1DStarWeighted(const cv::Mat & argument,const cv::Mat wei
 // }
 
 void ROF3D::computeInitialGap()
-//compute the gap between the primal and the dual if all the xi are set to zero
+//compute the gap between the primal and the dual if all the xi are set to zero, it is not really the initial Gap 
 {
 	int size[3] = { m_y_size,m_x_size,m_t_size};
-	cv:: Mat x1Current=cv::Mat(3, size, CV_64FC1, 0.0);//m_x1Previous=cv::Mat(3, size, CV_64FC1, 0.0);m_x1Bar=cv::Mat(3, size, CV_64FC1, 0.0);
-	cv::Mat x2Current=cv::Mat(3, size, CV_64FC1, 0.0);//m_x2Previous=cv::Mat(3, size, CV_64FC1, 0.0);m_x2Bar=cv::Mat(3, size, CV_64FC1, 0.0);
+	cv:: Mat x1Current=cv::Mat(3, size, CV_64FC1, 0.0);
+	cv::Mat x2Current=cv::Mat(3, size, CV_64FC1, 0.0);
 	cv::Mat x3Current=cv::Mat(3, size, CV_64FC1, 0.0);
 	cv::Mat v=m_f-(1/m_lambda)*(x1Current+x2Current+x3Current);
 	double primalCost=computeCostPrimal(v);
@@ -434,7 +397,7 @@ void ROF3D::computeInitialGap()
 
 
 void ROF3D::launch()
-//after the methodes init has been launched
+//after the method init has been launched
 {
 	computeInitialGap();
 	std::cout<<"\n\n\n solving ROF3D problem with a ratioGap limit: "<<m_ratioGap<<" and limit number of iterations"<< m_Niter <<"\n\n\n"<<std::endl;
@@ -465,6 +428,7 @@ void ROF3D::launch()
 
 
 void ROF3D::iterate_algorithm()
+// the main iteration of the algorithm
 {
 	double t_next=(1+sqrt(1+4*pow(m_t_current,2)))/2;
 	m_x1Bar=m_x1Current+((m_t_current-1)/t_next)*(m_x1Current- m_x1Previous);
@@ -484,49 +448,22 @@ void ROF3D::iterate_algorithm()
 
 void ROF3D::computeMinSumTV()
 {
-	// m_x1Current.mul(m_f)-TVh
+	// this method transform the dual variable to a primal variable, and perform a thresholding operation that is intermediary to the computation of the disparity map
 	m_v=m_f-(1/m_lambda)*(m_x1Current+m_x2Current+m_x3Current);
-	// printContentsOf3DCVMat(getLayer3D(m_v,0),false);std::cout<<"over \n";throw std::invalid_argument( "testing the algorithm" );
-	// printContentsOf3DCVMat(m_v,true,"m_v");
-	// m_u=convertTo((m_v < 0.0),CV_64FC1);
-	// cv::Mat doubleV0;
+	
 	cv::Mat m_u_bool=(m_v > 0.0);
     m_u_bool.convertTo(m_u, CV_64FC1);
     m_u=m_u/255.0;
-	// printContentsOf3DCVMat(m_v,true,"m_v");
-	// printContentsOf3DCVMat(m_u_bool,true,"m_u_bool");
-	// printContentsOf3DCVMat(m_u,true,"m_u");
-    // printContentsOf3DCVMat(getLayer3D(m_u,0),false);
-    // printContentsOf3DCVMat(getLayer3D(m_u,m_t_size-1),false);
-    // testContraintOnSolution(m_u);
 
-    // cv::Mat v0 = (divv < 0.0);
-
-	// cv::Mat doubleV0;
-    // v0.convertTo(doubleV0, CV_64FC1);
-    // printContentsOf3DCVMat(m_f,false);
-    // printContentsOf3DCVMat(m_v,false);
 
 }
 
 void ROF3D::computeDisparity()
 {
-	//TODO: resolve the problems between using float or double
+// this method can be called at every iteration after that the dual variable has been initialized and computeMinSumTV() launched
 	m_disparity=cv::Mat(m_u.size[0],m_u.size[1],CV_64FC1,m_offset-1);// the solution is such that the first term of m_uij: m_uij[0] is always equal to 1, and it refers to the minimal disparity
 	cv::Mat m_ui;
-	// cv::Mat thresholded = (m_u > 0.5);
-	// int z=thresholded.size[2];
 
-	// int size[3] = { m_y_size, m_x_size, m_t_size };
-	// cv::Mat doubleThresholded=cv::Mat(3, size, CV_64FC1, 0.0);
-	// thresholded.copyTo(doubleThresholded);
- //    thresholded.convertTo(doubleThresholded, CV_64FC1);
-    // printContentsOf3DCVMat(m_u,true,"m_u");
-	// double zoomFactor=255.0/(double(m_u.size[2]));
-	// // cv::Mat thresholdedDouble;
- //    // thresholded.convertTo(thresholdedDouble, CV_64FC1);
- //    // int size[4]= {3,v.size[0],v.size[1],v.size[2]};
-	// 	// cv::Mat delta(4,size,CV_64FC1,0.0);
 
 
        for (int i = 0; i < m_u.size[0]; i++)
@@ -546,35 +483,33 @@ void ROF3D::computeDisparity()
                }
        }
        m_disparity=m_stepDisparity*m_disparity;
-       // cv::Mat disparityCopy=cv::Mat(m_u.size[0],m_u.size[1],CV_32FC1,-10.0);
-       // cv::Mat disparityCopy=m_disparity;
-       // printContentsOf3DCVMat(m_disparity,true,"disparity");
        cv::Mat disparityCopy=m_disparity.clone();
-       	// printContentsOf3DCVMat(disparityCopy,true,"disparityCopy");
        disparityCopy.convertTo(disparityCopy,CV_32FC1);
-	// printContentsOf3DCVMat(disparityCopy,true,"disparityCopy");
-	// bool continuity=disparityCopy.isContinuous();s
     iio_write_image_float(strdup(m_path_to_disparity.c_str()),(float *)disparityCopy.data,disparityCopy.size[1],disparityCopy.size[0]);
     // cv::imwrite(m_path_to_disparity,m_disparity);
 }
 
 cv::Mat ROF3D::getSolution()
+// a method that returns the primal variable
 {
 	return m_u;
 
 }
 
 void ROF3D::proxTVlStar(const cv::Mat &input,cv::Mat &output)
+// the conjuguate of proxTVl:the proximal operator of the weighted TVL
 {
 	proxTVl(input,output);
 	output=input-output;
 }
 void ROF3D::proxtauTVhStar(const cv::Mat &input,cv::Mat &output)
+// the conjuguate of proxTVhOnTau the proximal operator of TVH
 {
 	proxTVhOnTau((1/m_tau)*input,output);
 	output=input-m_tau*output;
 }
 void ROF3D::proxtauTVvStar(const cv::Mat &input,cv::Mat &output)
+// the conjuguate of proxTVvOnTau the proximal operator of TVV
 {
 	proxTVvOnTau((1/m_tau)*input,output);
 	output=input-m_tau*output;
@@ -607,6 +542,9 @@ void ROF3D::proxTVl(const cv::Mat &input,cv::Mat &output)
 
 
 void ROF3D::proxTVLij(const cv::Mat &inputi,cv::Mat &outputi,const cv::Mat &gi,int j)
+// this function resolves argmin_{u}( Sigma gij(k)|u(k+1)-u(k)|+1/2*Sigma|u(k)-inputij(k)|^2)
+//this function resolve argmin_{v(i,j,.)}( Sigma_{k} g(i,j,k)*|v(i,j,k+1)-v(i,j,k)|+1/2*Sigma_{k} |v(i,j,k)-l(i,j,k)|^2) with v(i,j,k) on R
+//which is equivalent to the resolution of argmin_{u}( Sigma_{k} g(i,j,k)*|u(k+1)-u(k)|+1/2*Sigma_{k} |u(k)-m_f(i,j,k)|^2) with v(i,j,k) on R
 {
 	const double * inputij=inputi.ptr<double>(j);
 	int sizeInputt=inputi.size[1];
@@ -703,6 +641,7 @@ void ROF3D::proxTVvOnTaupjk(const cv::Mat &inputppk, cv::Mat &output,int j,int k
 }
 
 void ROF3D::proxTVvOnTaupjkExtern(const cv::Mat &inputppk, cv::Mat &output,int k)
+// it is a looping o the previous function
 {
 	int sizeInputx=inputppk.size[1];
 	for (int j=0;j<sizeInputx;j++)
@@ -716,9 +655,6 @@ void ROF3D::proxTVvOnTaupjkExternMultiple(const cv::Mat &input,cv::Mat &output,i
 // // this function  computes prox(1/m_tau*TVv(input): it resolves the problem argmin( Sigma |v(i+1,j,k)-v(i,j,k)|+m_tau/2*Sigma|v(i,j,k)-input(i,j,k)|) with v(i,j,k) on R
 {
 // // the m_f is intialized before and refer to the object introduced to transform the problem of minimization to a ROF problem
-	
-	
-	// int sizeInputt=input.size[2];
 	cv::Mat inputppk;
 	for (int k=beginIncluded;k<endExcluded;k++)
 	{
@@ -741,12 +677,8 @@ void ROF3D::proxTVhOnTau(const cv::Mat &input,cv::Mat &output)
 	ThreadPool threadPool(m_nbMaxThreads);
 	for (int i=0;i < N;i++)
 	{
-		// beginIncluded=i*sizeBlock;
-		// endExcluded=(i+1)*sizeBlock;
 		threadPool.enqueue(&ROF3D::proxTVhOnTauipkExternMultiple,*this,input,output,sizeBlock*i,sizeBlock*(i+1));
 	}
-	// beginIncluded=N*sizeBlock;
-	// endExcluded=sizeInputy;
 	threadPool.enqueue(&ROF3D::proxTVhOnTauipkExternMultiple,*this,input,output,sizeBlock*N,sizeInputy);// if sizeInputy=N*sizeBlock, nothing is done
 
 }
@@ -754,6 +686,10 @@ void ROF3D::proxTVhOnTau(const cv::Mat &input,cv::Mat &output)
 
 
 void ROF3D::proxTVhOnTauipk(const cv::Mat &inputi, cv::Mat &outputi,int k)
+//linked to the method "proxTVhOnTau", this function resolves the problem argmin( Sigma |v(j+1)-v(j)|+m_tau/2*Sigma|v(j)-input(i,j,k)|) with v(i) on R and fixed j and k
+// arguments :
+// -intputi is the elements input(i,.,.) for i fixed 
+// output is the solution of the problem
 {
 	cv::Mat inputipk;
 	getLayer2D(inputi,k,inputipk);
@@ -777,6 +713,7 @@ void ROF3D::proxTVhOnTauipk(const cv::Mat &inputi, cv::Mat &outputi,int k)
 }
 
 void ROF3D::proxTVhOnTauipkExtern(const cv::Mat &inputi, cv::Mat &outputi)
+// iteration of the previous function for multipls valeu of k
 {
 	int sizeInputt=inputi.size[1];
 	for (int k=0;k<sizeInputt;k++)
@@ -885,6 +822,50 @@ void ROF3D::testMinimialityOfSolutionTVV(const cv::Mat &input,const cv::Mat &arg
 			std::cout<<"\n \n for the "<<numberOfTests<<" generated arguments the minimizer succeded to minimize the cost function"<<std::endl;
 		}
 }
+
+void ROF3D::testContraintOnSolution(const cv::Mat &argminToTest)
+// test if argminToTest verify the following contraint of the solutino 0<u(i,j,k)<1 u(i,j,0)=1 , u(i,j,m_t_size)=0 and u(i,j,k)>u(i,j,k+1)
+{
+	bool succes=true;
+	cv::Mat argminToTesti;
+	cv::Mat argminToTestij;
+
+	std::cout<<"pixels for which the contraints are not verified"<<std::endl;
+	for (int i=0;i<m_y_size;i++)
+	{
+		getRow3D(argminToTest,i,argminToTesti);
+		for (int j=0;j<m_x_size;j++)
+		{
+			double * argminToTestij=argminToTesti.ptr<double>(j);
+			if (argminToTestij[0]!=1.0 )
+				{
+					std::cout<<"value of pixel (i,j,k) =  ("<<i<<","<<j<<",0)"<<"equal to :"<<argminToTestij[0]<<std::endl;
+					// throw std::invalid_argument( "u(i,j,0)!=1" );
+				}
+			if (argminToTestij[m_t_size-1]!=0.0 )
+				{
+					std::cout<<"value of pixel (i,j,k) =  ("<<i<<","<<j<<","<<m_t_size-1<<"equal to :"<<argminToTestij[m_t_size-1]<<std::endl;				
+					// throw std::invalid_argument( "u(i,j,m_t_size-1)!=0" );
+				}
+			for (int k=1;k<m_t_size-1;k++)
+			{
+				// std::cout<<"value of pixel (i,j,k) =  ("<<i<<","<<j<<","<<k<<" ) equal to :"<<argminToTestij[k]<<std::endl;
+				if(argminToTestij[k]<argminToTestij[k+1])
+				{
+					// for (int h=0;h<m_t_size;h++)
+					// {
+						std::cout<<"value of pixel (i,j,k) =  ("<<i<<","<<j<<","<<k<<" ) equal to :"<<argminToTestij[k]<<std::endl;
+						std::cout<<"value of pixel (i,j,k+1) =  ("<<i<<","<<j<<","<<k+1<<" ) equal to :"<<argminToTestij[k+1]<<std::endl;
+					// }
+					// throw std::invalid_argument( "u(i,j,k)<u(i,j,k+1)" );
+				}
+			}
+		}
+	}
+	std::cout<<" result of the test : "<<succes<<std::endl;
+}
+
+
 
 
  double ROF3D::computeCostForArgumentTVv(const cv::Mat &l,const cv::Mat &argument)
@@ -1015,7 +996,8 @@ void ROF3D::computeDisparityFromPrimal(std::string path_to_disparity)
     // cv::imwrite(m_path_to_disparity,m_disparity);
 }
 
-void ROF3D::getPrimal(cv::Mat &x1,cv::Mat &x2,cv::Mat &x3)
+void ROF3D::getDual(cv::Mat &x1,cv::Mat &x2,cv::Mat &x3)
+//get the dual variables
 {
 	x1=m_x1Current.clone();
 	x2=m_x2Current.clone();
@@ -1024,6 +1006,7 @@ void ROF3D::getPrimal(cv::Mat &x1,cv::Mat &x2,cv::Mat &x3)
 
 
 void ROF3D::initf(double delta)
+//compute the constant m_f necessary for the 3D ROF problem, which is equal to 0 for all (i,j,k), except for k=0, where it is equal to delta, and k=m_t_size-1, where it is equal to -delta 
 {
 		int size[3] = { m_y_size,m_x_size,m_t_size};
 		m_f=cv::Mat(3, size, CV_64FC1, 0.0);
