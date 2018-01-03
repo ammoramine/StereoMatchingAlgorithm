@@ -1,7 +1,18 @@
 # StereoMatchingAlgorithm
+-Description:
+
 issued from the articles "global solutions of variationnal models woth convex regularisation" and "http://www.numdam.org/article/SMAI-JCM_2015__1__29_0.pdf" (the link to the report that summarizes the internship to be joined later)
 
-You need to install the version 3.3.1 of opencv, check that the older versions of opencv ar removed
+-Installation:
+
+You need to install the version 3.3.1 of opencv ( check also that the older versions of opencv are removed)
+
+https://docs.opencv.org/trunk/d7/d9f/tutorial_linux_install.html
+
+Add the following path to the profile script:
+export PKG_CONFIG_PATH=/usr/local/include/opencv3/lib/pkgconfig
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/include/opencv3/lib
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib/
 
 
 
