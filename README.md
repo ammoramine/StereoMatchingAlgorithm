@@ -17,6 +17,8 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib/
 
 
 Usage:
+There is two branch (the master branch which is functionnal, and the multithreading branch, that is not achieved, and that was created in order to find a way to reduce the creation of the threads for the pool Threading (design pattern) approach )
+
 once the executable is built, you should launch the algorithm with the following options:
 
 -im1: the first image from which the disprity is computed
