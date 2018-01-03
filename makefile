@@ -22,7 +22,7 @@ LINK_PARAMS=$(foreach d, $(LINK), -L$d)
 
 # édition de liens
 
-exec: $(OBJ) iio.o zoom_r2c.o
+convexStereoMatching: $(OBJ) iio.o zoom_r2c.o
 	g++ -o $@ $^ -g  `pkg-config opencv --libs` -ljpeg -ltiff -lpng -lfftw3 $(EXRLIB) -lpthread
 # assemblage
 
@@ -43,4 +43,4 @@ main.o : main.cpp
 clean:
 	rm -rf *.o
 mrproper: clean
-	rm -rf exec
+	rm -rf convexStereoMatching
