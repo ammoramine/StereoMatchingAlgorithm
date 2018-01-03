@@ -58,10 +58,10 @@ int main(int argc, char* argv[])
 
 	MatchingAlgorithm theAlgorithm_reverse = MatchingAlgorithm(image2,image1,data_term_option, t_size,-(offset+t_size),ratioGap,Niter,path_to_disparity_reverse,path_to_initial_disparity,zoom,nbmaxThreadPoolThreading,method,multiscale);
 
-	int found1=path_to_disparity.find_first_of(".");
-	std::string path_to_disparity_no_occlusion=path_to_disparity;
-	path_to_disparity_no_occlusion.insert(found,"_noOcclusion");
-	Occlusion occlusion=Occlusion(path_to_disparity,path_to_disparity_reverse,path_to_disparity_no_occlusion);
+	// int found1=path_to_disparity.find_first_of(".");
+	// std::string path_to_disparity_no_occlusion=path_to_disparity;
+	// path_to_disparity_no_occlusion.insert(found,"_noOcclusion");
+	Occlusion occlusion=Occlusion(path_to_disparity,path_to_disparity_reverse,path_to_disparity);
 }
 else
 {//here is place from some dirty tests
